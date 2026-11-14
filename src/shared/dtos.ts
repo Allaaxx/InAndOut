@@ -103,6 +103,7 @@ export interface StudentDTO {
   ra: string;
   fullName: string;
   publicName: string;
+  abbreviatedName?: string;
   classCode: string;
   specialTimeLimitMinutes?: number;
 }
@@ -114,6 +115,8 @@ export interface MovementDTO {
   studentRa: string;
   studentFullName: string;
   studentPublicName: string;
+  abbreviatedName?: string;
+  studentAbbreviatedName?: string;
   classCode: string;
   subject: string;
   roomId?: string;
@@ -137,6 +140,16 @@ export interface MovementDTO {
   resolutionNotes?: string;
   resolvedByUserId?: string;
   resolvedAt?: string;
+}
+
+export interface RequestExitRequestDTO {
+  ra: string;
+  sessionId?: string;
+  roomId?: string;
+}
+
+export interface RequestExitResponseDTO {
+  movement: MovementDTO;
 }
 
 export interface WaitingQueueDTO {

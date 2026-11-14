@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import { AppContainer, createContainer } from './container';
 import { registerAuthRoutes } from '@server/presentation/routes/authRoutes';
 import { registerSessionRoutes } from '@server/presentation/routes/sessionRoutes';
+import { registerMovementRoutes } from '@server/presentation/routes/movementRoutes';
 
 export interface CreateAppResult {
   app: FastifyInstance;
@@ -19,6 +20,7 @@ export async function createApp(
 
   await registerAuthRoutes(app, container);
   await registerSessionRoutes(app, container);
+  await registerMovementRoutes(app, container);
 
   return { app, container };
 }

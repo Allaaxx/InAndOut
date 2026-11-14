@@ -1,5 +1,6 @@
 import { ClassSession } from '@server/domain/entities/ClassSession';
 import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 import {
   EndSessionRequestDTO,
   EndSessionResponseDTO,
@@ -14,13 +15,18 @@ export class SessionNotFoundError extends Error {
 
 export class EndClassSessionUseCase {
   private readonly sessionRepo: IClassSessionRepository;
+  private readonly movementRepo?: IMovementRecordRepository;
   private readonly clock: () => Date;
 
   constructor(
     sessionRepo: IClassSessionRepository,
-    options: { clock?: () => Date } = {}
+    options: {
+      clock?: () => Date;
+      movementRepo?: IMovementRecordRepository;
+    } = {}
   ) {
     this.sessionRepo = sessionRepo;
+    this.movementRepo = options.movementRepo;
     this.clock = options.clock ?? (() => new Date());
   }
 
@@ -52,11 +58,14 @@ export class EndClassSessionUseCase {
     await this.sessionRepo.update(session);
 
     const elapsedMinutes = session.getElapsedMinutes(now);
+    const allMovements = this.movementRepo
+      ? await this.movementRepo.findBySessionId(session.id)
+      : [];
 
     return {
       session: session.toDTO(),
       metrics: {
-        totalExits: 0,
+        totalExits: allMovements.length,
         inTransitUnresolvedCount: 0,
         elapsedMinutes,
       },

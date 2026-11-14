@@ -21,6 +21,15 @@ export class SocketNotificationSender implements INotificationSender {
       .to(SOCKET_ROOMS.COORDINATION)
       .to(SOCKET_ROOMS.COORDINATION_ROOM)
       .emit(SOCKET_EVENTS.MOVEMENT_EXIT, movement);
+    this.io
+      .to(SOCKET_ROOMS.sessionRoom(movement.sessionId))
+      .to(SOCKET_ROOMS.COORDINATION)
+      .to(SOCKET_ROOMS.COORDINATION_ROOM)
+      .emit(SOCKET_EVENTS.MOVEMENT_STARTED, movement);
+  }
+
+  public async notifyMovementStarted(movement: MovementDTO): Promise<void> {
+    await this.notifyMovementExit(movement);
   }
 
   public async notifyMovementReturn(movement: MovementDTO): Promise<void> {

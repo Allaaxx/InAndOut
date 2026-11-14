@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UserDTO } from '@shared/dtos';
+import React, { useState, useCallback } from 'react';
+import { MovementDTO, UserDTO } from '@shared/dtos';
 import { Button } from '@client/components/ui/Button';
 import { Badge } from '@client/components/ui/Badge';
 import {
@@ -11,7 +11,11 @@ import {
 } from '@client/components/ui/Card';
 import { PinLockModal } from '@client/components/terminal/PinLockModal';
 import { SessionHeader } from '@client/components/terminal/SessionHeader';
+import { KeypadForm } from '@client/components/terminal/KeypadForm';
+import { ActiveExitCard } from '@client/components/terminal/ActiveExitCard';
 import { useClassSession } from '@client/hooks/useClassSession';
+import { useSocket } from '@client/hooks/useSocket';
+import { api } from '@client/services/api';
 
 const CLASS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B'];
 const SUBJECT_OPTIONS = [
@@ -43,9 +47,13 @@ export function TerminalPage({
   const [isLocked, setIsLocked] = useState(false);
   const [selectedClassCode, setSelectedClassCode] = useState<string>('1A');
   const [selectedSubject, setSelectedSubject] = useState<string>('Matemática');
+  const [movementLoading, setMovementLoading] = useState(false);
+  const [movementError, setMovementError] = useState<string | null>(null);
 
   const {
     activeSession,
+    activeMovements,
+    setActiveMovements,
     loading,
     error,
     elapsedFormatted,
@@ -53,6 +61,30 @@ export function TerminalPage({
     startSession,
     endSession,
   } = useClassSession({ token, roomId });
+
+  const handleMovementStarted = useCallback(
+    (movement: MovementDTO) => {
+      setActiveMovements((prev) => {
+        const exists = prev.some((m) => m.id === movement.id);
+        return exists ? prev : [...prev, movement];
+      });
+    },
+    [setActiveMovements]
+  );
+
+  const handleMovementReturn = useCallback(
+    (movement: MovementDTO) => {
+      setActiveMovements((prev) => prev.filter((m) => m.id !== movement.id));
+    },
+    [setActiveMovements]
+  );
+
+  useSocket({
+    sessionId: activeSession?.id ?? null,
+    enabled: Boolean(activeSession),
+    onMovementExit: handleMovementStarted,
+    onMovementReturn: handleMovementReturn,
+  });
 
   const handleUnlock = async (pin: string) => {
     await onVerifyPin(pin);
@@ -70,6 +102,31 @@ export function TerminalPage({
       });
     } catch {
       // Error is captured in hook state
+    }
+  };
+
+  const handleRequestExit = async (ra: string) => {
+    if (!activeSession || typeof api.requestExit !== 'function') return;
+    setMovementError(null);
+    setMovementLoading(true);
+    try {
+      const response = await api.requestExit(
+        {
+          ra,
+          sessionId: activeSession.id,
+        },
+        token
+      );
+      handleMovementStarted(response.movement);
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Erro ao registrar saída do aluno.';
+      setMovementError(msg);
+      throw err;
+    } finally {
+      setMovementLoading(false);
     }
   };
 
@@ -131,22 +188,15 @@ export function TerminalPage({
               onEndSession={endSession}
             />
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Controle de Fluxo de Saída de Alunos</CardTitle>
-                <CardDescription>
-                  Terminal pronto para registro de saídas e retornos dos
-                  estudantes.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-slate-600">
-                  Utilize o botão &ldquo;Bloquear Terminal&rdquo; durante
-                  transições de aula e desbloqueie rapidamente com seu PIN de 4
-                  dígitos.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid gap-6 md:grid-cols-2">
+              <KeypadForm
+                loading={movementLoading}
+                error={movementError}
+                onSubmitRa={handleRequestExit}
+              />
+
+              <ActiveExitCard activeMovements={activeMovements} />
+            </div>
           </>
         ) : (
           <Card>

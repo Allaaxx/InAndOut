@@ -25,10 +25,15 @@ export async function registerSessionRoutes(
     { clock: container.clock }
   );
   const getActiveSessionUseCase = new GetActiveSessionUseCase(
-    container.sessionRepo
+    container.sessionRepo,
+    {
+      movementRepo: container.movementRepo,
+      clock: container.clock,
+    }
   );
   const endSessionUseCase = new EndClassSessionUseCase(container.sessionRepo, {
     clock: container.clock,
+    movementRepo: container.movementRepo,
   });
 
   app.post<{ Body: StartSessionRequestDTO }>(
