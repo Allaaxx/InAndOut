@@ -11,6 +11,8 @@ const SOCKET_URL =
 
 export interface UseSocketOptions {
   sessionId?: string | null;
+  room?: string;
+  isCoordination?: boolean;
   enabled?: boolean;
   onMovementExit?: (movement: MovementDTO) => void;
   onMovementStarted?: (movement: MovementDTO) => void;
@@ -27,11 +29,14 @@ export interface UseSocketOptions {
   }) => void;
   onMovementOverdue?: (movement: MovementDTO) => void;
   onMovementEscalated?: (movement: MovementDTO) => void;
+  onMovementInTransitUnresolved?: (movement: MovementDTO) => void;
   onMovementResolved?: (movement: MovementDTO) => void;
 }
 
 export function useSocket({
   sessionId,
+  room,
+  isCoordination = false,
   enabled = true,
   onMovementExit,
   onMovementStarted,
@@ -41,6 +46,7 @@ export function useSocket({
   onQueueSlotCalled,
   onMovementOverdue,
   onMovementEscalated,
+  onMovementInTransitUnresolved,
   onMovementResolved,
 }: UseSocketOptions) {
   const callbacksRef = useRef({
@@ -52,6 +58,7 @@ export function useSocket({
     onQueueSlotCalled,
     onMovementOverdue,
     onMovementEscalated,
+    onMovementInTransitUnresolved,
     onMovementResolved,
   });
 
@@ -65,6 +72,7 @@ export function useSocket({
       onQueueSlotCalled,
       onMovementOverdue,
       onMovementEscalated,
+      onMovementInTransitUnresolved,
       onMovementResolved,
     };
   }, [
@@ -76,11 +84,20 @@ export function useSocket({
     onQueueSlotCalled,
     onMovementOverdue,
     onMovementEscalated,
+    onMovementInTransitUnresolved,
     onMovementResolved,
   ]);
 
   useEffect(() => {
-    if (!enabled || !sessionId) {
+    const targetRoom =
+      room ??
+      (isCoordination
+        ? SOCKET_ROOMS.COORDINATION
+        : sessionId
+          ? SOCKET_ROOMS.sessionRoom(sessionId)
+          : null);
+
+    if (!enabled || !targetRoom) {
       return;
     }
 
@@ -99,14 +116,22 @@ export function useSocket({
 
     if (!socket) return;
 
+    const matchesSession = (movSessionId?: string) => {
+      if (isCoordination || room === SOCKET_ROOMS.COORDINATION) {
+        return true;
+      }
+      if (!sessionId) return true;
+      return movSessionId === sessionId;
+    };
+
     const handleStarted = (movement: MovementDTO) => {
-      if (movement.sessionId && movement.sessionId !== sessionId) return;
+      if (!matchesSession(movement.sessionId)) return;
       callbacksRef.current.onMovementExit?.(movement);
       callbacksRef.current.onMovementStarted?.(movement);
     };
 
     const handleReturn = (movement: MovementDTO) => {
-      if (movement.sessionId && movement.sessionId !== sessionId) return;
+      if (!matchesSession(movement.sessionId)) return;
       callbacksRef.current.onMovementReturn?.(movement);
       callbacksRef.current.onMovementReturned?.(movement);
     };
@@ -115,7 +140,7 @@ export function useSocket({
       sessionId: string;
       queue: WaitingQueueDTO[];
     }) => {
-      if (payload.sessionId && payload.sessionId !== sessionId) return;
+      if (!matchesSession(payload.sessionId)) return;
       callbacksRef.current.onQueueUpdated?.(payload);
     };
 
@@ -124,26 +149,31 @@ export function useSocket({
       entry: WaitingQueueDTO;
       expiresAt: string;
     }) => {
-      if (payload.sessionId && payload.sessionId !== sessionId) return;
+      if (!matchesSession(payload.sessionId)) return;
       callbacksRef.current.onQueueSlotCalled?.(payload);
     };
 
     const handleOverdue = (movement: MovementDTO) => {
-      if (movement.sessionId && movement.sessionId !== sessionId) return;
+      if (!matchesSession(movement.sessionId)) return;
       callbacksRef.current.onMovementOverdue?.(movement);
     };
 
     const handleEscalated = (movement: MovementDTO) => {
-      if (movement.sessionId && movement.sessionId !== sessionId) return;
+      if (!matchesSession(movement.sessionId)) return;
       callbacksRef.current.onMovementEscalated?.(movement);
     };
 
+    const handleInTransitUnresolved = (movement: MovementDTO) => {
+      if (!matchesSession(movement.sessionId)) return;
+      callbacksRef.current.onMovementInTransitUnresolved?.(movement);
+    };
+
     const handleResolved = (movement: MovementDTO) => {
-      if (movement.sessionId && movement.sessionId !== sessionId) return;
+      if (!matchesSession(movement.sessionId)) return;
       callbacksRef.current.onMovementResolved?.(movement);
     };
 
-    socket.emit('join:room', SOCKET_ROOMS.sessionRoom(sessionId));
+    socket.emit('join:room', targetRoom);
     socket.on(SOCKET_EVENTS.MOVEMENT_EXIT, handleStarted);
     socket.on(SOCKET_EVENTS.MOVEMENT_STARTED, handleStarted);
     socket.on(SOCKET_EVENTS.MOVEMENT_RETURN, handleReturn);
@@ -152,6 +182,10 @@ export function useSocket({
     socket.on(SOCKET_EVENTS.QUEUE_SLOT_CALLED, handleQueueSlotCalled);
     socket.on(SOCKET_EVENTS.MOVEMENT_OVERDUE, handleOverdue);
     socket.on(SOCKET_EVENTS.MOVEMENT_ESCALATED, handleEscalated);
+    socket.on(
+      SOCKET_EVENTS.MOVEMENT_IN_TRANSIT_UNRESOLVED,
+      handleInTransitUnresolved
+    );
     socket.on(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
 
     return () => {
@@ -163,8 +197,12 @@ export function useSocket({
       socket?.off(SOCKET_EVENTS.QUEUE_SLOT_CALLED, handleQueueSlotCalled);
       socket?.off(SOCKET_EVENTS.MOVEMENT_OVERDUE, handleOverdue);
       socket?.off(SOCKET_EVENTS.MOVEMENT_ESCALATED, handleEscalated);
+      socket?.off(
+        SOCKET_EVENTS.MOVEMENT_IN_TRANSIT_UNRESOLVED,
+        handleInTransitUnresolved
+      );
       socket?.off(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
       socket?.disconnect();
     };
-  }, [enabled, sessionId]);
+  }, [enabled, sessionId, room, isCoordination]);
 }

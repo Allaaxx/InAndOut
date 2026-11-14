@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { LoginRequestDTO, UserDTO } from '@shared/dtos';
+import { UserRole } from '@shared/enums';
 import { api } from './services/api';
 import { LoginPage } from './pages/LoginPage';
 import { TerminalPage } from './pages/TerminalPage';
+import { CoordinationPage } from './pages/CoordinationPage';
 
 export function App() {
   const [user, setUser] = useState<UserDTO | null>(null);
@@ -41,6 +43,16 @@ export function App() {
 
   if (!user || !token) {
     return <LoginPage onLogin={handleLogin} />;
+  }
+
+  if (user.role === UserRole.COORDINATOR || user.role === UserRole.ADMIN) {
+    return (
+      <CoordinationPage
+        user={user}
+        token={token}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return (

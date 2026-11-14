@@ -224,4 +224,23 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
+
+  async getCoordinationActiveMovements(
+    params: { classCode?: string; status?: string } = {},
+    token: string
+  ): Promise<{ movements: MovementDTO[] }> {
+    const searchParams = new URLSearchParams();
+    if (params.classCode) searchParams.append('classCode', params.classCode);
+    if (params.status) searchParams.append('status', params.status);
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return request<{ movements: MovementDTO[] }>(
+      `/coordination/active-movements${qs}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  },
 };

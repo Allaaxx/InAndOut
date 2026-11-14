@@ -236,3 +236,8 @@ export interface CheckOverdueResponseDTO {
   overdueMovements: MovementDTO[];
   autoEscalatedMovements: MovementDTO[];
 }
+
+export interface CoordinationActiveMovementsResponseDTO {
+  movements: MovementDTO[];
+}
+
