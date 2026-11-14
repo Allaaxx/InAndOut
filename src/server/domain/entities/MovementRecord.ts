@@ -208,8 +208,20 @@ export class MovementRecord {
     return this._attendancePercentage;
   }
 
+  public static readonly TEACHER_GRACE_WINDOW_MINUTES = 2;
+
   public get overdueAt(): Date | undefined {
     return this._overdueAt;
+  }
+
+  public get graceEndsAt(): Date | undefined {
+    if (!this._overdueAt) {
+      return undefined;
+    }
+    return new Date(
+      this._overdueAt.getTime() +
+        MovementRecord.TEACHER_GRACE_WINDOW_MINUTES * 60_000
+    );
   }
 
   public get escalatedAt(): Date | undefined {
@@ -251,6 +263,32 @@ export class MovementRecord {
       referenceEnd.getTime() - this.startedAt.getTime()
     );
     return Math.round((diffMs / 60000) * 100) / 100;
+  }
+
+  public isWarningThresholdReached(now: Date = new Date()): boolean {
+    const ratio = this.getElapsedMinutes(now) / this.allowedLimitMinutes;
+    return ratio >= 0.8 && ratio <= 1.0;
+  }
+
+  public isOverdueThresholdReached(now: Date = new Date()): boolean {
+    if (
+      this._status === MovementStatus.OVERDUE ||
+      this._status === MovementStatus.ESCALATED_TO_COORDINATION
+    ) {
+      return true;
+    }
+    return this.getElapsedMinutes(now) > this.allowedLimitMinutes;
+  }
+
+  public isGraceWindowExpired(now: Date = new Date()): boolean {
+    if (!this._overdueAt) {
+      return false;
+    }
+    const elapsedSinceOverdueMs = now.getTime() - this._overdueAt.getTime();
+    return (
+      elapsedSinceOverdueMs >=
+      MovementRecord.TEACHER_GRACE_WINDOW_MINUTES * 60_000
+    );
   }
 
   public getAlertLevel(now: Date = new Date()): AlertLevel {
@@ -308,6 +346,11 @@ export class MovementRecord {
     type: 'MANUAL' | 'AUTOMATIC' = 'MANUAL',
     notes?: string
   ): void {
+    if (!this.isActive()) {
+      throw new Error(
+        'Não é possível escalar uma saída que já foi encerrada e não está mais ativa.'
+      );
+    }
     this._status = MovementStatus.ESCALATED_TO_COORDINATION;
     this._escalatedAt = escalatedAt;
     this._escalationType = type;

@@ -94,6 +94,17 @@ export class Student {
     return formatPublicStudentName(this.fullName);
   }
 
+  public hasSpecialTimeLimit(): boolean {
+    return (
+      this.specialTimeLimitMinutes !== undefined &&
+      this.specialTimeLimitMinutes > 0
+    );
+  }
+
+  public getEffectiveTimeLimitMinutes(classDefaultLimitMinutes = 10): number {
+    return this.specialTimeLimitMinutes ?? classDefaultLimitMinutes;
+  }
+
   public toDTO(): StudentDTO {
     const pubName = this.publicName;
     return {
