@@ -22,6 +22,8 @@ import {
   RequestExitResponseDTO,
   ResolveMovementRequestDTO,
   ResolveMovementResponseDTO,
+  SchoolOverviewAnalyticsDTO,
+  SchoolOverviewQueryDTO,
   StartSessionRequestDTO,
   StartSessionResponseDTO,
   VerifyPinResponseDTO,
@@ -261,5 +263,25 @@ export const api = {
         body: JSON.stringify(payload),
       }
     );
+  },
+
+  async getOverviewAnalytics(
+    params: SchoolOverviewQueryDTO = {},
+    token?: string
+  ): Promise<SchoolOverviewAnalyticsDTO> {
+    const searchParams = new URLSearchParams();
+    if (params.date) searchParams.append('date', params.date);
+    if (params.startDate) searchParams.append('startDate', params.startDate);
+    if (params.endDate) searchParams.append('endDate', params.endDate);
+    if (params.classCode && params.classCode !== 'TODOS')
+      searchParams.append('classCode', params.classCode);
+    if (params.grade && params.grade !== 'TODOS')
+      searchParams.append('grade', params.grade);
+
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return request<SchoolOverviewAnalyticsDTO>(`/analytics/overview${qs}`, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
   },
 };

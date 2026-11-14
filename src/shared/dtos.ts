@@ -252,3 +252,41 @@ export interface ResolveMovementResponseDTO {
   movement: MovementDTO;
 }
 
+export interface SchoolOverviewStatsDTO {
+  averageOutsideMinutes: number;
+  averageAbsentMinutes: number;
+  totalExitsToday: number;
+  complianceRate: number;
+  activeIncidentsCount: number;
+  activeIncidents: number;
+}
+
+export interface HourlyDistributionItemDTO {
+  hour: number;
+  label: string;
+  count: number;
+}
+
+export interface OutcomeDistributionItemDTO {
+  outcome: string;
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+export interface SchoolOverviewAnalyticsDTO {
+  stats: SchoolOverviewStatsDTO;
+  hourlyDistribution: HourlyDistributionItemDTO[];
+  peakHours: HourlyDistributionItemDTO[];
+  outcomeDistribution: OutcomeDistributionItemDTO[];
+  outcomesDistribution: OutcomeDistributionItemDTO[];
+}
+
+export interface SchoolOverviewQueryDTO {
+  date?: string;
+  startDate?: string;
+  endDate?: string;
+  classCode?: string;
+  grade?: string;
+}
+

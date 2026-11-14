@@ -1,9 +1,31 @@
 import '@testing-library/jest-dom/vitest';
 
-if (typeof globalThis.ResizeObserver === 'undefined') {
-  globalThis.ResizeObserver = class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-}
+globalThis.ResizeObserver = class ResizeObserver {
+  private callback: ResizeObserverCallback;
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+  observe(target: Element) {
+    this.callback(
+      [
+        {
+          target,
+          contentRect: {
+            x: 0,
+            y: 0,
+            width: 600,
+            height: 400,
+            top: 0,
+            bottom: 400,
+            left: 0,
+            right: 600,
+            toJSON: () => {},
+          },
+        } as unknown as ResizeObserverEntry,
+      ],
+      this
+    );
+  }
+  unobserve() {}
+  disconnect() {}
+};

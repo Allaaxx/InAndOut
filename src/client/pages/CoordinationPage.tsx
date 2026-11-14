@@ -29,6 +29,7 @@ import {
   LogOut,
   RefreshCw,
   X,
+  BarChart3,
 } from 'lucide-react';
 
 export interface CoordinationPageProps {
@@ -36,6 +37,7 @@ export interface CoordinationPageProps {
   token: string;
   onLogout?: () => void;
   onResolveMovement?: (movement: MovementDTO) => void;
+  onNavigateToAnalytics?: () => void;
 }
 
 export function CoordinationPage({
@@ -43,6 +45,7 @@ export function CoordinationPage({
   token,
   onLogout,
   onResolveMovement,
+  onNavigateToAnalytics,
 }: CoordinationPageProps) {
   const [movements, setMovements] = useState<MovementDTO[]>([]);
   const [filterClassCode, setFilterClassCode] = useState('');
@@ -423,6 +426,20 @@ export function CoordinationPage({
                 className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
               />
             </Button>
+
+            {/* Analytics Navigation */}
+            {onNavigateToAnalytics && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onNavigateToAnalytics}
+                className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                title="Dashboard Geral e Indicadores"
+              >
+                <BarChart3 className="h-4 w-4" />
+                <span>Dashboard Geral</span>
+              </Button>
+            )}
 
             {/* User Info & Logout */}
             <div className="ml-2 flex items-center gap-2 border-l border-slate-200 pl-4">
