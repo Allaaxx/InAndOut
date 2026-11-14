@@ -152,15 +152,87 @@ export interface RequestExitResponseDTO {
   movement: MovementDTO;
 }
 
+export interface RegisterReturnRequestDTO {
+  ra: string;
+  sessionId?: string;
+  roomId?: string;
+}
+
+export interface RegisterReturnResponseDTO {
+  movement: MovementDTO;
+  message?: string;
+  nextCalledQueueEntry?: WaitingQueueDTO | null;
+}
+
 export interface WaitingQueueDTO {
   id: string;
   sessionId: string;
   studentRa: string;
   studentFullName: string;
   studentPublicName: string;
+  abbreviatedName?: string;
   position: number;
   status: QueueEntryStatus;
   requestedAt: string;
   calledAt?: string;
   expiresAt?: string;
+}
+
+export interface EnqueueWaitingRequestDTO {
+  ra: string;
+  sessionId?: string;
+  roomId?: string;
+}
+
+export interface EnqueueWaitingResponseDTO {
+  entry: WaitingQueueDTO;
+  queue: WaitingQueueDTO[];
+}
+
+export interface CancelQueueResponseDTO {
+  cancelled: boolean;
+  queue: WaitingQueueDTO[];
+}
+
+export interface ClaimQueueRequestDTO {
+  ra: string;
+  sessionId?: string;
+  roomId?: string;
+}
+
+export interface ClaimQueueResponseDTO {
+  movement: MovementDTO;
+  queue: WaitingQueueDTO[];
+}
+
+export interface EmergencyExitRequestDTO {
+  ra: string;
+  sessionId?: string;
+  roomId?: string;
+  reason?: string;
+}
+
+export interface GuestExitRequestDTO {
+  ra: string;
+  fullName?: string;
+  originClassCode?: string;
+  sessionId?: string;
+  roomId?: string;
+  forceConcurrent?: boolean;
+}
+
+export interface EscalateMovementRequestDTO {
+  notes?: string;
+}
+
+export interface CheckOverdueRequestDTO {
+  now?: string;
+  sessionId?: string;
+  roomId?: string;
+}
+
+export interface CheckOverdueResponseDTO {
+  alerts: MovementDTO[];
+  overdueMovements: MovementDTO[];
+  autoEscalatedMovements: MovementDTO[];
 }

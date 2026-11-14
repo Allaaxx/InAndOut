@@ -16,12 +16,14 @@ export interface KeypadFormProps {
   loading?: boolean;
   error?: string | null;
   onSubmitRa: (ra: string) => Promise<void>;
+  onReturnRa?: (ra: string) => Promise<void>;
 }
 
 export function KeypadForm({
   loading = false,
   error = null,
   onSubmitRa,
+  onReturnRa,
 }: KeypadFormProps) {
   const { value, setValue, appendDigit, backspace, clear, canSubmit } =
     useKeypadInput({ maxLength: 12 });
@@ -37,13 +39,23 @@ export function KeypadForm({
     }
   };
 
+  const handleReturnClick = async () => {
+    if (!canSubmit || loading || !onReturnRa) return;
+    try {
+      await onReturnRa(value);
+      clear();
+    } catch {
+      // Keep error displayed in parent state
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Registro de Saída por RA</CardTitle>
+        <CardTitle>Registro de Saída e Retorno por RA</CardTitle>
         <CardDescription>
           Digite seu RA no teclado numérico virtual para solicitar saída ao
-          banheiro.
+          banheiro ou registrar seu retorno à sala.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -118,14 +130,29 @@ export function KeypadForm({
             </Button>
           </div>
 
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            disabled={!canSubmit || loading}
-          >
-            Registrar Saída
-          </Button>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full"
+              disabled={!canSubmit || loading}
+            >
+              Registrar Saída
+            </Button>
+
+            {onReturnRa && (
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                onClick={handleReturnClick}
+                disabled={!canSubmit || loading}
+              >
+                Registrar Retorno
+              </Button>
+            )}
+          </div>
 
           {error && (
             <div

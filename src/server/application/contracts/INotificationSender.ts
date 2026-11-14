@@ -4,6 +4,7 @@ export interface INotificationSender {
   notifyMovementExit(movement: MovementDTO): Promise<void>;
   notifyMovementStarted?(movement: MovementDTO): Promise<void>;
   notifyMovementReturn(movement: MovementDTO): Promise<void>;
+  notifyMovementReturned?(movement: MovementDTO): Promise<void>;
   notifyQueueUpdated(sessionId: string, queue: WaitingQueueDTO[]): Promise<void>;
   notifyQueueSlotCalled(sessionId: string, entry: WaitingQueueDTO): Promise<void>;
   notifyMovementOverdue(movement: MovementDTO): Promise<void>;

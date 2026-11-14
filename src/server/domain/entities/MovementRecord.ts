@@ -6,6 +6,7 @@ import {
   MovementStatus,
 } from '@shared/enums';
 import { MovementDTO } from '@shared/dtos';
+import { DurationMinutes } from '../value-objects/DurationMinutes';
 
 export interface MovementRecordProps {
   id?: string;
@@ -276,19 +277,23 @@ export class MovementRecord {
     endedAt: Date = new Date(),
     plannedSessionDurationMinutes = 50
   ): void {
+    if (!this.isActive()) {
+      throw new Error(
+        'Este registro de saída já foi encerrado e não está mais ativo.'
+      );
+    }
+
+    const durationCalc = DurationMinutes.fromDates(
+      this.startedAt,
+      endedAt,
+      plannedSessionDurationMinutes
+    );
+
     this._endedAt = endedAt;
     this._status = MovementStatus.RETURNED_NORMAL;
-    const duration = this.getElapsedMinutes(endedAt);
-    this._durationMinutes = duration;
-    const attended = Math.max(
-      0,
-      Math.round((plannedSessionDurationMinutes - duration) * 100) / 100
-    );
-    this._attendedMinutes = attended;
-    this._attendancePercentage =
-      plannedSessionDurationMinutes > 0
-        ? Math.round((attended / plannedSessionDurationMinutes) * 10000) / 100
-        : 100;
+    this._durationMinutes = durationCalc.durationMinutes;
+    this._attendedMinutes = durationCalc.attendedMinutes;
+    this._attendancePercentage = durationCalc.attendancePercentage;
   }
 
   public markOverdue(overdueAt: Date = new Date()): void {

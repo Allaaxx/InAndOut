@@ -28,6 +28,7 @@ export async function registerSessionRoutes(
     container.sessionRepo,
     {
       movementRepo: container.movementRepo,
+      queueRepo: container.queueRepo,
       clock: container.clock,
     }
   );

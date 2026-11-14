@@ -4,6 +4,9 @@ import { AppContainer, createContainer } from './container';
 import { registerAuthRoutes } from '@server/presentation/routes/authRoutes';
 import { registerSessionRoutes } from '@server/presentation/routes/sessionRoutes';
 import { registerMovementRoutes } from '@server/presentation/routes/movementRoutes';
+import { registerMovementQueueRoutes } from '@server/presentation/routes/movementQueueRoutes';
+import { registerMovementOverrideRoutes } from '@server/presentation/routes/movementOverrideRoutes';
+import { registerMovementEscalationRoutes } from '@server/presentation/routes/movementEscalationRoutes';
 
 export interface CreateAppResult {
   app: FastifyInstance;
@@ -21,6 +24,9 @@ export async function createApp(
   await registerAuthRoutes(app, container);
   await registerSessionRoutes(app, container);
   await registerMovementRoutes(app, container);
+  await registerMovementQueueRoutes(app, container);
+  await registerMovementOverrideRoutes(app, container);
+  await registerMovementEscalationRoutes(app, container);
 
   return { app, container };
 }

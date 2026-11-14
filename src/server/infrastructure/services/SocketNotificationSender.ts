@@ -39,6 +39,15 @@ export class SocketNotificationSender implements INotificationSender {
       .to(SOCKET_ROOMS.COORDINATION)
       .to(SOCKET_ROOMS.COORDINATION_ROOM)
       .emit(SOCKET_EVENTS.MOVEMENT_RETURN, movement);
+    this.io
+      .to(SOCKET_ROOMS.sessionRoom(movement.sessionId))
+      .to(SOCKET_ROOMS.COORDINATION)
+      .to(SOCKET_ROOMS.COORDINATION_ROOM)
+      .emit(SOCKET_EVENTS.MOVEMENT_RETURNED, movement);
+  }
+
+  public async notifyMovementReturned(movement: MovementDTO): Promise<void> {
+    await this.notifyMovementReturn(movement);
   }
 
   public async notifyQueueUpdated(

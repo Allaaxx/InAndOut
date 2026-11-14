@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { MovementDTO, UserDTO } from '@shared/dtos';
+import { MovementDTO, UserDTO, WaitingQueueDTO } from '@shared/dtos';
 import { Button } from '@client/components/ui/Button';
 import { Badge } from '@client/components/ui/Badge';
 import {
@@ -13,6 +13,8 @@ import { PinLockModal } from '@client/components/terminal/PinLockModal';
 import { SessionHeader } from '@client/components/terminal/SessionHeader';
 import { KeypadForm } from '@client/components/terminal/KeypadForm';
 import { ActiveExitCard } from '@client/components/terminal/ActiveExitCard';
+import { WaitingQueuePanel } from '@client/components/terminal/WaitingQueuePanel';
+import { TeacherOverrideControls } from '@client/components/terminal/TeacherOverrideControls';
 import { useClassSession } from '@client/hooks/useClassSession';
 import { useSocket } from '@client/hooks/useSocket';
 import { api } from '@client/services/api';
@@ -49,11 +51,18 @@ export function TerminalPage({
   const [selectedSubject, setSelectedSubject] = useState<string>('Matemática');
   const [movementLoading, setMovementLoading] = useState(false);
   const [movementError, setMovementError] = useState<string | null>(null);
+  const [returnConfirmationMessage, setReturnConfirmationMessage] = useState<
+    string | null
+  >(null);
+  const [lastReturnedMovement, setLastReturnedMovement] =
+    useState<MovementDTO | null>(null);
 
   const {
     activeSession,
     activeMovements,
     setActiveMovements,
+    queue,
+    setQueue,
     loading,
     error,
     elapsedFormatted,
@@ -64,6 +73,7 @@ export function TerminalPage({
 
   const handleMovementStarted = useCallback(
     (movement: MovementDTO) => {
+      setReturnConfirmationMessage(null);
       setActiveMovements((prev) => {
         const exists = prev.some((m) => m.id === movement.id);
         return exists ? prev : [...prev, movement];
@@ -72,11 +82,33 @@ export function TerminalPage({
     [setActiveMovements]
   );
 
-  const handleMovementReturn = useCallback(
+  const handleMovementUpdated = useCallback(
     (movement: MovementDTO) => {
-      setActiveMovements((prev) => prev.filter((m) => m.id !== movement.id));
+      setActiveMovements((prev) =>
+        prev.map((m) => (m.id === movement.id ? movement : m))
+      );
     },
     [setActiveMovements]
+  );
+
+  const handleMovementReturn = useCallback(
+    (movement: MovementDTO) => {
+      setActiveMovements((prev) =>
+        prev.filter(
+          (m) => m.id !== movement.id && m.studentRa !== movement.studentRa
+        )
+      );
+      setLastReturnedMovement(movement);
+      setReturnConfirmationMessage('Retorno registrado com sucesso');
+    },
+    [setActiveMovements]
+  );
+
+  const handleQueueUpdated = useCallback(
+    (payload: { sessionId: string; queue: WaitingQueueDTO[] }) => {
+      setQueue(payload.queue);
+    },
+    [setQueue]
   );
 
   useSocket({
@@ -84,6 +116,9 @@ export function TerminalPage({
     enabled: Boolean(activeSession),
     onMovementExit: handleMovementStarted,
     onMovementReturn: handleMovementReturn,
+    onQueueUpdated: handleQueueUpdated,
+    onMovementOverdue: handleMovementUpdated,
+    onMovementEscalated: handleMovementUpdated,
   });
 
   const handleUnlock = async (pin: string) => {
@@ -94,6 +129,8 @@ export function TerminalPage({
   const handleStartSessionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setReturnConfirmationMessage(null);
+      setLastReturnedMovement(null);
       await startSession({
         classCode: selectedClassCode,
         subject: selectedSubject,
@@ -105,14 +142,52 @@ export function TerminalPage({
     }
   };
 
+  const handleRegisterReturn = async (ra: string) => {
+    if (!activeSession || typeof api.registerReturn !== 'function') return;
+    setMovementError(null);
+    setMovementLoading(true);
+    try {
+      const response = await api.registerReturn(
+        {
+          ra: ra.trim(),
+          sessionId: activeSession.id,
+        },
+        token
+      );
+      handleMovementReturn(response.movement);
+      if (response.message) {
+        setReturnConfirmationMessage(response.message);
+      }
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Erro ao registrar retorno do aluno.';
+      setMovementError(msg);
+      throw err;
+    } finally {
+      setMovementLoading(false);
+    }
+  };
+
   const handleRequestExit = async (ra: string) => {
-    if (!activeSession || typeof api.requestExit !== 'function') return;
+    if (!activeSession) return;
+    const normalizedRa = ra.trim();
+    const isCurrentlyOut = activeMovements.some(
+      (m) => m.studentRa === normalizedRa
+    );
+    if (isCurrentlyOut && typeof api.registerReturn === 'function') {
+      await handleRegisterReturn(normalizedRa);
+      return;
+    }
+
+    if (typeof api.requestExit !== 'function') return;
     setMovementError(null);
     setMovementLoading(true);
     try {
       const response = await api.requestExit(
         {
-          ra,
+          ra: normalizedRa,
           sessionId: activeSession.id,
         },
         token
@@ -193,10 +268,35 @@ export function TerminalPage({
                 loading={movementLoading}
                 error={movementError}
                 onSubmitRa={handleRequestExit}
+                onReturnRa={handleRegisterReturn}
               />
 
-              <ActiveExitCard activeMovements={activeMovements} />
+              <div className="space-y-6">
+                <ActiveExitCard
+                  activeMovements={activeMovements}
+                  sessionId={activeSession.id}
+                  token={token}
+                  returnConfirmationMessage={returnConfirmationMessage}
+                  lastReturnedMovement={lastReturnedMovement}
+                  onMovementUpdated={handleMovementUpdated}
+                />
+
+                <WaitingQueuePanel
+                  sessionId={activeSession.id}
+                  queue={queue}
+                  token={token}
+                  onQueueUpdated={setQueue}
+                  onMovementStarted={handleMovementStarted}
+                />
+              </div>
             </div>
+
+            <TeacherOverrideControls
+              sessionId={activeSession.id}
+              classCode={activeSession.classCode}
+              token={token}
+              onMovementStarted={handleMovementStarted}
+            />
           </>
         ) : (
           <Card>
