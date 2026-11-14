@@ -122,13 +122,40 @@ export class WaitingQueueEntry {
     return now.getTime() > this._expiresAt.getTime();
   }
 
+  public getRemainingConfirmationSeconds(now: Date = new Date()): number {
+    if (this._status !== QueueEntryStatus.CALLED || !this._expiresAt) {
+      return 0;
+    }
+    const diffMs = this._expiresAt.getTime() - now.getTime();
+    if (diffMs <= 0) {
+      return 0;
+    }
+    return Math.ceil(diffMs / 1000);
+  }
+
   public callSlot(now: Date = new Date(), windowMinutes = 2): void {
+    if (!this.isActive()) {
+      throw new Error(
+        'Apenas solicitações aguardando na fila podem ser chamadas.'
+      );
+    }
     this._status = QueueEntryStatus.CALLED;
     this._calledAt = now;
     this._expiresAt = new Date(now.getTime() + windowMinutes * 60_000);
   }
 
-  public claim(): void {
+  public claim(now?: Date): void {
+    if (!this.isActive()) {
+      throw new Error(
+        'Esta posição na fila não está mais ativa ou já foi encerrada.'
+      );
+    }
+    if (now && this.isExpired(now)) {
+      this._status = QueueEntryStatus.EXPIRED;
+      throw new Error(
+        'A janela de confirmação de 2 minutos expirou e a vaga foi transferida para o próximo da fila.'
+      );
+    }
     this._status = QueueEntryStatus.CLAIMED;
   }
 
@@ -137,6 +164,11 @@ export class WaitingQueueEntry {
   }
 
   public cancel(): void {
+    if (!this.isActive()) {
+      throw new Error(
+        'Não é possível cancelar uma posição da fila que já foi encerrada.'
+      );
+    }
     this._status = QueueEntryStatus.CANCELLED;
   }
 

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { MovementDTO, UserDTO, WaitingQueueDTO } from '@shared/dtos';
+import { QueueEntryStatus } from '@shared/enums';
 import { Button } from '@client/components/ui/Button';
 import { Badge } from '@client/components/ui/Badge';
 import {
@@ -111,12 +112,34 @@ export function TerminalPage({
     [setQueue]
   );
 
+  const handleQueueSlotCalled = useCallback(
+    (payload: {
+      sessionId: string;
+      entry: WaitingQueueDTO;
+      expiresAt: string;
+    }) => {
+      setQueue((prev) => {
+        const exists = prev.some((q) => q.studentRa === payload.entry.studentRa);
+        if (exists) {
+          return prev.map((q) =>
+            q.studentRa === payload.entry.studentRa
+              ? { ...q, ...payload.entry, expiresAt: payload.expiresAt }
+              : q
+          );
+        }
+        return [...prev, { ...payload.entry, expiresAt: payload.expiresAt }];
+      });
+    },
+    [setQueue]
+  );
+
   useSocket({
     sessionId: activeSession?.id ?? null,
     enabled: Boolean(activeSession),
     onMovementExit: handleMovementStarted,
     onMovementReturn: handleMovementReturn,
     onQueueUpdated: handleQueueUpdated,
+    onQueueSlotCalled: handleQueueSlotCalled,
     onMovementOverdue: handleMovementUpdated,
     onMovementEscalated: handleMovementUpdated,
   });
@@ -155,6 +178,15 @@ export function TerminalPage({
         token
       );
       handleMovementReturn(response.movement);
+      if (response.nextCalledQueueEntry) {
+        setQueue((prev) =>
+          prev.map((q) =>
+            q.studentRa === response.nextCalledQueueEntry!.studentRa
+              ? response.nextCalledQueueEntry!
+              : q
+          )
+        );
+      }
       if (response.message) {
         setReturnConfirmationMessage(response.message);
       }
@@ -179,6 +211,35 @@ export function TerminalPage({
     if (isCurrentlyOut && typeof api.registerReturn === 'function') {
       await handleRegisterReturn(normalizedRa);
       return;
+    }
+
+    const isCalled = queue.some(
+      (q) => q.studentRa === normalizedRa && q.status === QueueEntryStatus.CALLED
+    );
+    if (isCalled && typeof api.claimQueueSlot === 'function') {
+      setMovementError(null);
+      setMovementLoading(true);
+      try {
+        const response = await api.claimQueueSlot(
+          {
+            ra: normalizedRa,
+            sessionId: activeSession.id,
+          },
+          token
+        );
+        handleMovementStarted(response.movement);
+        setQueue(response.queue);
+        return;
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Erro ao confirmar saída da fila.';
+        setMovementError(msg);
+        throw err;
+      } finally {
+        setMovementLoading(false);
+      }
     }
 
     if (typeof api.requestExit !== 'function') return;
