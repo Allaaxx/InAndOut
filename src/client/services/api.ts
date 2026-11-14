@@ -26,6 +26,9 @@ import {
   SchoolOverviewQueryDTO,
   StartSessionRequestDTO,
   StartSessionResponseDTO,
+  StudentHistoryQueryDTO,
+  StudentHistoryReportDTO,
+  ExportAnalyticsQueryDTO,
   VerifyPinResponseDTO,
 } from '@shared/dtos';
 
@@ -283,5 +286,52 @@ export const api = {
       method: 'GET',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
+  },
+
+  async getStudentHistory(
+    ra: string,
+    params: StudentHistoryQueryDTO = {},
+    token?: string
+  ): Promise<StudentHistoryReportDTO> {
+    const searchParams = new URLSearchParams();
+    if (params.startDate) searchParams.append('startDate', params.startDate);
+    if (params.endDate) searchParams.append('endDate', params.endDate);
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+
+    return request<StudentHistoryReportDTO>(
+      `/analytics/students/${encodeURIComponent(ra)}${qs}`,
+      {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+  },
+
+  async exportAnalytics(
+    params: ExportAnalyticsQueryDTO = {},
+    token?: string
+  ): Promise<Blob> {
+    const searchParams = new URLSearchParams();
+    if (params.format) searchParams.append('format', params.format);
+    if (params.ra) searchParams.append('ra', params.ra);
+    if (params.classCode && params.classCode !== 'TODOS')
+      searchParams.append('classCode', params.classCode);
+    if (params.startDate) searchParams.append('startDate', params.startDate);
+    if (params.endDate) searchParams.append('endDate', params.endDate);
+
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/analytics/export${qs}`, {
+      method: 'GET',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || `Erro HTTP ${response.status}`);
+    }
+
+    return response.blob();
   },
 };
