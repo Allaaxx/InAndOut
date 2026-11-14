@@ -1,9 +1,11 @@
 import { ClassSession } from '@server/domain/entities/ClassSession';
 import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import { INotificationSender } from '@server/application/contracts/INotificationSender';
 import {
   EndSessionRequestDTO,
   EndSessionResponseDTO,
+  MovementDTO,
 } from '@shared/dtos';
 
 export class SessionNotFoundError extends Error {
@@ -16,6 +18,7 @@ export class SessionNotFoundError extends Error {
 export class EndClassSessionUseCase {
   private readonly sessionRepo: IClassSessionRepository;
   private readonly movementRepo?: IMovementRecordRepository;
+  private readonly notificationSender?: INotificationSender;
   private readonly clock: () => Date;
 
   constructor(
@@ -23,10 +26,12 @@ export class EndClassSessionUseCase {
     options: {
       clock?: () => Date;
       movementRepo?: IMovementRecordRepository;
+      notificationSender?: INotificationSender;
     } = {}
   ) {
     this.sessionRepo = sessionRepo;
     this.movementRepo = options.movementRepo;
+    this.notificationSender = options.notificationSender;
     this.clock = options.clock ?? (() => new Date());
   }
 
@@ -62,14 +67,31 @@ export class EndClassSessionUseCase {
       ? await this.movementRepo.findBySessionId(session.id)
       : [];
 
+    const inTransitMovements: MovementDTO[] = [];
+    if (this.movementRepo) {
+      for (const mov of allMovements) {
+        if (mov.isActive()) {
+          mov.markInTransitUnresolved();
+          await this.movementRepo.update(mov);
+          const movDto = mov.toDTO(now);
+          inTransitMovements.push(movDto);
+          if (this.notificationSender) {
+            await this.notificationSender.notifyMovementInTransitUnresolved(
+              movDto
+            );
+          }
+        }
+      }
+    }
+
     return {
       session: session.toDTO(),
       metrics: {
         totalExits: allMovements.length,
-        inTransitUnresolvedCount: 0,
+        inTransitUnresolvedCount: inTransitMovements.length,
         elapsedMinutes,
       },
-      inTransitMovements: [],
+      inTransitMovements,
     };
   }
 }

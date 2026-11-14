@@ -20,6 +20,8 @@ import {
   RegisterReturnResponseDTO,
   RequestExitRequestDTO,
   RequestExitResponseDTO,
+  ResolveMovementRequestDTO,
+  ResolveMovementResponseDTO,
   StartSessionRequestDTO,
   StartSessionResponseDTO,
   VerifyPinResponseDTO,
@@ -240,6 +242,23 @@ export const api = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+      }
+    );
+  },
+
+  async resolveMovement(
+    movementId: string,
+    payload: ResolveMovementRequestDTO,
+    token: string
+  ): Promise<ResolveMovementResponseDTO> {
+    return request<ResolveMovementResponseDTO>(
+      `/coordination/movements/${encodeURIComponent(movementId)}/resolve`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       }
     );
   },

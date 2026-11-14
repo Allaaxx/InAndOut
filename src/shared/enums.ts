@@ -36,6 +36,7 @@ export enum AlertLevel {
 
 export enum IncidentOutcome {
   RETURNED_TO_CLASS = 'RETURNED_TO_CLASS',
+  ATTENDED_AT_COORDINATION = 'ATTENDED_AT_COORDINATION',
   HANDLED_AT_COORDINATION = 'HANDLED_AT_COORDINATION',
   SENT_TO_INFIRMARY = 'SENT_TO_INFIRMARY',
   EVASION = 'EVASION',
@@ -43,6 +44,7 @@ export enum IncidentOutcome {
 
 export const INCIDENT_OUTCOME_LABELS: Record<IncidentOutcome, string> = {
   [IncidentOutcome.RETURNED_TO_CLASS]: 'Retornou à sala',
+  [IncidentOutcome.ATTENDED_AT_COORDINATION]: 'Atendido na Coordenação',
   [IncidentOutcome.HANDLED_AT_COORDINATION]: 'Atendido na Coordenação',
   [IncidentOutcome.SENT_TO_INFIRMARY]: 'Encaminhado à Enfermaria',
   [IncidentOutcome.EVASION]: 'Evasão',
