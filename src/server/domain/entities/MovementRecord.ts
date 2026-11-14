@@ -35,6 +35,7 @@ export interface MovementRecordProps {
   outcome?: IncidentOutcome;
   resolutionNotes?: string;
   resolvedByUserId?: string;
+  resolvedByCoordinatorId?: string;
   resolvedAt?: Date;
 }
 
@@ -175,7 +176,7 @@ export class MovementRecord {
       escalationType: props.escalationType,
       outcome: props.outcome,
       resolutionNotes: props.resolutionNotes,
-      resolvedByUserId: props.resolvedByUserId,
+      resolvedByUserId: props.resolvedByUserId ?? props.resolvedByCoordinatorId,
       resolvedAt: props.resolvedAt,
     });
   }
@@ -241,6 +242,10 @@ export class MovementRecord {
   }
 
   public get resolvedByUserId(): string | undefined {
+    return this._resolvedByUserId;
+  }
+
+  public get resolvedByCoordinatorId(): string | undefined {
     return this._resolvedByUserId;
   }
 
@@ -432,6 +437,7 @@ export class MovementRecord {
       outcome: this._outcome,
       resolutionNotes: this._resolutionNotes,
       resolvedByUserId: this._resolvedByUserId,
+      resolvedByCoordinatorId: this._resolvedByUserId,
       resolvedAt: this._resolvedAt ? this._resolvedAt.toISOString() : undefined,
     };
   }

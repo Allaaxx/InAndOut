@@ -139,6 +139,7 @@ export interface MovementDTO {
   outcome?: IncidentOutcome;
   resolutionNotes?: string;
   resolvedByUserId?: string;
+  resolvedByCoordinatorId?: string;
   resolvedAt?: string;
 }
 
@@ -239,5 +240,15 @@ export interface CheckOverdueResponseDTO {
 
 export interface CoordinationActiveMovementsResponseDTO {
   movements: MovementDTO[];
+}
+
+export interface ResolveMovementRequestDTO {
+  outcome: IncidentOutcome;
+  notes?: string;
+  resolutionNotes?: string;
+}
+
+export interface ResolveMovementResponseDTO {
+  movement: MovementDTO;
 }
 

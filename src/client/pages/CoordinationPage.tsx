@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { MovementDTO, UserDTO } from '@shared/dtos';
-import { AlertLevel, MovementStatus } from '@shared/enums';
+import {
+  AlertLevel,
+  IncidentOutcome,
+  INCIDENT_OUTCOME_LABELS,
+  MovementStatus,
+} from '@shared/enums';
 import { api } from '@client/services/api';
 import { useSocket } from '@client/hooks/useSocket';
 import { DataTable, ColumnDef } from '@client/components/ui/DataTable';
@@ -8,6 +13,12 @@ import { Badge } from '@client/components/ui/Badge';
 import { Button } from '@client/components/ui/Button';
 import { Card } from '@client/components/ui/Card';
 import { Input } from '@client/components/ui/Input';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@client/components/ui/Sheet';
 import { Toaster, toast } from '@client/components/ui/Sonner';
 import {
   Bell,
@@ -17,6 +28,7 @@ import {
   School,
   LogOut,
   RefreshCw,
+  X,
 } from 'lucide-react';
 
 export interface CoordinationPageProps {
@@ -38,6 +50,16 @@ export function CoordinationPage({
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Resolution Sheet State
+  const [selectedMovement, setSelectedMovement] =
+    useState<MovementDTO | null>(null);
+  const [outcome, setOutcome] = useState<IncidentOutcome>(
+    IncidentOutcome.RETURNED_TO_CLASS
+  );
+  const [notes, setNotes] = useState('');
+  const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
 
   const playAlertSound = useCallback(() => {
     if (!soundEnabled) return;
@@ -88,16 +110,44 @@ export function CoordinationPage({
 
   const handleAction = useCallback(
     (movement: MovementDTO) => {
+      setSelectedMovement(movement);
+      setOutcome(IncidentOutcome.RETURNED_TO_CLASS);
+      setNotes('');
+      setResolveError(null);
       if (onResolveMovement) {
         onResolveMovement(movement);
-      } else {
-        toast.info(
-          `Ação registrada para ${movement.studentPublicName} (${movement.classCode}).`
-        );
       }
     },
     [onResolveMovement]
   );
+
+  const handleConfirmResolution = useCallback(async () => {
+    if (!selectedMovement) return;
+    try {
+      setResolving(true);
+      setResolveError(null);
+      await api.resolveMovement(
+        selectedMovement.id,
+        {
+          outcome,
+          notes: notes.trim() ? notes.trim() : undefined,
+        },
+        token
+      );
+      setMovements((prev) => prev.filter((m) => m.id !== selectedMovement.id));
+      const outcomeLabel = INCIDENT_OUTCOME_LABELS[outcome] || outcome;
+      toast.success(
+        `Ocorrência de ${selectedMovement.studentPublicName} resolvida com sucesso: ${outcomeLabel}`
+      );
+      setSelectedMovement(null);
+    } catch (err) {
+      setResolveError(
+        err instanceof Error ? err.message : 'Erro ao resolver ocorrência.'
+      );
+    } finally {
+      setResolving(false);
+    }
+  }, [selectedMovement, outcome, notes, token]);
 
   // Real-time socket events for coordination room
   useSocket({
@@ -115,6 +165,9 @@ export function CoordinationPage({
     onMovementReturn: (movement) => {
       // Returned students are no longer active exits
       setMovements((prev) => prev.filter((m) => m.id !== movement.id));
+      setSelectedMovement((current) =>
+        current?.id === movement.id ? null : current
+      );
     },
     onMovementOverdue: (movement) => {
       setMovements((prev) =>
@@ -155,6 +208,9 @@ export function CoordinationPage({
     },
     onMovementResolved: (movement) => {
       setMovements((prev) => prev.filter((m) => m.id !== movement.id));
+      setSelectedMovement((current) =>
+        current?.id === movement.id ? null : current
+      );
     },
   });
 
@@ -183,6 +239,14 @@ export function CoordinationPage({
 
   const overdueCount = useMemo(
     () => movements.filter((m) => m.status === MovementStatus.OVERDUE).length,
+    [movements]
+  );
+
+  const inTransitCount = useMemo(
+    () =>
+      movements.filter(
+        (m) => m.status === MovementStatus.IN_TRANSIT_UNRESOLVED
+      ).length,
     [movements]
   );
 
@@ -281,6 +345,8 @@ export function CoordinationPage({
         render: (item) => {
           const isEscalated =
             item.status === MovementStatus.ESCALATED_TO_COORDINATION;
+          const isInTransitUnresolved =
+            item.status === MovementStatus.IN_TRANSIT_UNRESOLVED;
           return (
             <div className="flex items-center gap-2">
               <Button
@@ -288,7 +354,11 @@ export function CoordinationPage({
                 variant={isEscalated ? 'destructive' : 'outline'}
                 onClick={() => handleAction(item)}
               >
-                {isEscalated ? 'Ação Imediata' : 'Detalhes'}
+                {isEscalated
+                  ? 'Ação Imediata'
+                  : isInTransitUnresolved
+                  ? 'Resolver'
+                  : 'Detalhes'}
               </Button>
             </div>
           );
@@ -381,7 +451,7 @@ export function CoordinationPage({
       {/* Main Content Area */}
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Metric Badges & Status summary */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="flex items-center justify-between p-4 bg-white border-slate-200 shadow-xs">
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -437,6 +507,36 @@ export function CoordinationPage({
               }`}
             >
               <AlertTriangle className="h-6 w-6" />
+            </div>
+          </Card>
+
+          <Card
+            className={`flex items-center justify-between p-4 border-slate-200 shadow-xs ${
+              inTransitCount > 0
+                ? 'bg-amber-50 border-amber-300'
+                : 'bg-white'
+            }`}
+          >
+            <div>
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+                Saídas em Trânsito
+              </p>
+              <p
+                className={`mt-1 text-2xl font-bold ${
+                  inTransitCount > 0 ? 'text-amber-600' : 'text-slate-900'
+                }`}
+              >
+                {inTransitCount}
+              </p>
+            </div>
+            <div
+              className={`rounded-lg p-2.5 ${
+                inTransitCount > 0
+                  ? 'bg-amber-100 text-amber-600'
+                  : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              <RefreshCw className="h-6 w-6" />
             </div>
           </Card>
         </div>
@@ -497,6 +597,169 @@ export function CoordinationPage({
                 : ''
           }
         />
+
+        {/* Resolution Drawer */}
+        <Sheet
+          open={!!selectedMovement}
+          onOpenChange={(open) => !open && setSelectedMovement(null)}
+        >
+          {selectedMovement && (
+            <SheetContent>
+              <SheetHeader>
+                <div className="flex items-center justify-between">
+                  <SheetTitle>Resolver Ocorrência</SheetTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedMovement(null)}
+                    className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Registre o desfecho formal para a saída do estudante sob
+                  tutela da Coordenação.
+                </p>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-4">
+                {/* Student info summary */}
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-semibold text-slate-900">
+                        {selectedMovement.studentPublicName ||
+                          selectedMovement.abbreviatedName ||
+                          selectedMovement.studentFullName}
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        RA: {selectedMovement.studentRa} • Turma:{' '}
+                        {selectedMovement.classCode}
+                        {selectedMovement.roomId &&
+                          ` (${selectedMovement.roomId})`}
+                      </p>
+                    </div>
+                    <div>
+                      {selectedMovement.status ===
+                        MovementStatus.ESCALATED_TO_COORDINATION && (
+                        <Badge variant="destructive">Escalado</Badge>
+                      )}
+                      {selectedMovement.status ===
+                        MovementStatus.IN_TRANSIT_UNRESOLVED && (
+                        <Badge variant="warning">Em Trânsito</Badge>
+                      )}
+                      {selectedMovement.status === MovementStatus.OVERDUE && (
+                        <Badge variant="warning">Tempo Excedido</Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs text-slate-600">
+                    <span>
+                      Tempo decorrido:{' '}
+                      <strong>
+                        {Math.round(selectedMovement.elapsedMinutes ?? 0)} min
+                      </strong>
+                    </span>
+                    <span className="mx-2">•</span>
+                    <span>
+                      Limite: {selectedMovement.allowedLimitMinutes} min
+                    </span>
+                  </div>
+                </div>
+
+                {/* Resolution Form */}
+                <div className="space-y-3">
+                  <div>
+                    <label
+                      htmlFor="incident-outcome-select"
+                      className="block text-sm font-medium text-slate-700 mb-1"
+                    >
+                      Desfecho
+                    </label>
+                    <select
+                      id="incident-outcome-select"
+                      aria-label="Desfecho"
+                      value={outcome}
+                      onChange={(e) =>
+                        setOutcome(e.target.value as IncidentOutcome)
+                      }
+                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value={IncidentOutcome.RETURNED_TO_CLASS}>
+                        {
+                          INCIDENT_OUTCOME_LABELS[
+                            IncidentOutcome.RETURNED_TO_CLASS
+                          ]
+                        }
+                      </option>
+                      <option value={IncidentOutcome.ATTENDED_AT_COORDINATION}>
+                        {
+                          INCIDENT_OUTCOME_LABELS[
+                            IncidentOutcome.ATTENDED_AT_COORDINATION
+                          ]
+                        }
+                      </option>
+                      <option value={IncidentOutcome.SENT_TO_INFIRMARY}>
+                        {
+                          INCIDENT_OUTCOME_LABELS[
+                            IncidentOutcome.SENT_TO_INFIRMARY
+                          ]
+                        }
+                      </option>
+                      <option value={IncidentOutcome.EVASION}>
+                        {INCIDENT_OUTCOME_LABELS[IncidentOutcome.EVASION]}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="incident-notes-input"
+                      className="block text-sm font-medium text-slate-700 mb-1"
+                    >
+                      Observações
+                    </label>
+                    <textarea
+                      id="incident-notes-input"
+                      aria-label="Observações"
+                      rows={4}
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Descreva detalhes do atendimento, motivo do encaminhamento ou ocorrência..."
+                      className="w-full rounded-md border border-slate-300 bg-white p-3 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {resolveError && (
+                    <div className="rounded-md bg-red-50 p-3 text-xs text-red-700">
+                      {resolveError}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-200">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setSelectedMovement(null)}
+                      disabled={resolving}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleConfirmResolution}
+                      disabled={resolving}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                    >
+                      {resolving ? 'Salvando...' : 'Confirmar Resolução'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          )}
+        </Sheet>
       </main>
     </div>
   );

@@ -35,6 +35,7 @@ export async function registerSessionRoutes(
   const endSessionUseCase = new EndClassSessionUseCase(container.sessionRepo, {
     clock: container.clock,
     movementRepo: container.movementRepo,
+    notificationSender: container.notificationSender,
   });
 
   app.post<{ Body: StartSessionRequestDTO }>(
