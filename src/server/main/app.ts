@@ -2,6 +2,7 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import { AppContainer, createContainer } from './container';
 import { registerAuthRoutes } from '@server/presentation/routes/authRoutes';
+import { registerSessionRoutes } from '@server/presentation/routes/sessionRoutes';
 
 export interface CreateAppResult {
   app: FastifyInstance;
@@ -17,6 +18,7 @@ export async function createApp(
   const container = createContainer(overrides);
 
   await registerAuthRoutes(app, container);
+  await registerSessionRoutes(app, container);
 
   return { app, container };
 }
