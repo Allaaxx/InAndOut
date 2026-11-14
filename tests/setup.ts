@@ -6,25 +6,27 @@ globalThis.ResizeObserver = class ResizeObserver {
     this.callback = callback;
   }
   observe(target: Element) {
-    this.callback(
-      [
-        {
-          target,
-          contentRect: {
-            x: 0,
-            y: 0,
-            width: 600,
-            height: 400,
-            top: 0,
-            bottom: 400,
-            left: 0,
-            right: 600,
-            toJSON: () => {},
-          },
-        } as unknown as ResizeObserverEntry,
-      ],
-      this
-    );
+    queueMicrotask(() => {
+      this.callback(
+        [
+          {
+            target,
+            contentRect: {
+              x: 0,
+              y: 0,
+              width: 600,
+              height: 400,
+              top: 0,
+              bottom: 400,
+              left: 0,
+              right: 600,
+              toJSON: () => {},
+            },
+          } as unknown as ResizeObserverEntry,
+        ],
+        this
+      );
+    });
   }
   unobserve() {}
   disconnect() {}
