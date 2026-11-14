@@ -4,6 +4,7 @@ import {
   EndSessionResponseDTO,
   MovementDTO,
   StartSessionRequestDTO,
+  WaitingQueueDTO,
 } from '@shared/dtos';
 import { api } from '@client/services/api';
 
@@ -27,6 +28,7 @@ export function useClassSession({
     null
   );
   const [activeMovements, setActiveMovements] = useState<MovementDTO[]>([]);
+  const [queue, setQueue] = useState<WaitingQueueDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -48,10 +50,12 @@ export function useClassSession({
       if (response && response.session) {
         setActiveSession(response.session);
         setActiveMovements(response.activeMovements ?? []);
+        setQueue(response.queue ?? []);
         setElapsedSeconds(computeElapsedSeconds(response.session.startedAt));
       } else {
         setActiveSession(null);
         setActiveMovements([]);
+        setQueue([]);
         setElapsedSeconds(0);
       }
     } catch {
@@ -93,6 +97,7 @@ export function useClassSession({
       setLastEndedSummary(null);
       setActiveSession(response.session);
       setActiveMovements([]);
+      setQueue([]);
       setElapsedSeconds(computeElapsedSeconds(response.session.startedAt));
       return response.session;
     } catch (err) {
@@ -116,6 +121,7 @@ export function useClassSession({
       );
       setActiveSession(null);
       setActiveMovements([]);
+      setQueue([]);
       setElapsedSeconds(0);
       setLastEndedSummary(response);
       return response;
@@ -135,6 +141,8 @@ export function useClassSession({
     activeSession,
     activeMovements,
     setActiveMovements,
+    queue,
+    setQueue,
     loading,
     error,
     elapsedSeconds,

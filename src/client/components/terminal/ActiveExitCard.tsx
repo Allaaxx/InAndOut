@@ -11,9 +11,18 @@ import {
 
 export interface ActiveExitCardProps {
   activeMovements: MovementDTO[];
+  sessionId?: string;
+  token?: string;
+  returnConfirmationMessage?: string | null;
+  lastReturnedMovement?: MovementDTO | null;
+  onMovementUpdated?: (movement: MovementDTO) => void;
 }
 
-export function ActiveExitCard({ activeMovements }: ActiveExitCardProps) {
+export function ActiveExitCard({
+  activeMovements,
+  returnConfirmationMessage = null,
+  lastReturnedMovement = null,
+}: ActiveExitCardProps) {
   const currentMovement = activeMovements[0] ?? null;
 
   return (
@@ -31,7 +40,7 @@ export function ActiveExitCard({ activeMovements }: ActiveExitCardProps) {
           <Badge variant="success">Sala Livre</Badge>
         )}
       </CardHeader>
-      <CardContent className="pt-4">
+      <CardContent className="space-y-4 pt-4">
         {currentMovement ? (
           <div
             data-testid="active-student-outside"
@@ -62,6 +71,28 @@ export function ActiveExitCard({ activeMovements }: ActiveExitCardProps) {
             <p className="text-sm font-medium text-slate-600">
               Nenhum aluno fora da sala no momento.
             </p>
+          </div>
+        )}
+
+        {returnConfirmationMessage && (
+          <div
+            role="status"
+            data-testid="return-confirmation-banner"
+            className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900"
+          >
+            <p className="font-semibold">{returnConfirmationMessage}</p>
+            {lastReturnedMovement && (
+              <p className="mt-1 text-emerald-800">
+                {lastReturnedMovement.abbreviatedName ??
+                  lastReturnedMovement.studentPublicName}
+                {lastReturnedMovement.durationMinutes !== undefined
+                  ? ` • Ausência: ${lastReturnedMovement.durationMinutes} min`
+                  : ''}
+                {lastReturnedMovement.attendancePercentage !== undefined
+                  ? ` • Presença efetiva: ${lastReturnedMovement.attendancePercentage}%`
+                  : ''}
+              </p>
+            )}
           </div>
         )}
       </CardContent>

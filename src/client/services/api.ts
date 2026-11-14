@@ -1,10 +1,23 @@
 import {
   ActiveSessionResponseDTO,
+  CancelQueueResponseDTO,
+  CheckOverdueRequestDTO,
+  CheckOverdueResponseDTO,
+  ClaimQueueRequestDTO,
+  ClaimQueueResponseDTO,
+  EmergencyExitRequestDTO,
   EndSessionRequestDTO,
   EndSessionResponseDTO,
+  EnqueueWaitingRequestDTO,
+  EnqueueWaitingResponseDTO,
+  EscalateMovementRequestDTO,
+  GuestExitRequestDTO,
   LoginRequestDTO,
   LoginResponseDTO,
+  MovementDTO,
   RefreshTokenResponseDTO,
+  RegisterReturnRequestDTO,
+  RegisterReturnResponseDTO,
   RequestExitRequestDTO,
   RequestExitResponseDTO,
   StartSessionRequestDTO,
@@ -104,6 +117,108 @@ export const api = {
     token?: string
   ): Promise<RequestExitResponseDTO> {
     return request<RequestExitResponseDTO>('/movements/exit', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async registerReturn(
+    payload: RegisterReturnRequestDTO,
+    token?: string
+  ): Promise<RegisterReturnResponseDTO> {
+    return request<RegisterReturnResponseDTO>('/movements/return', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async enqueueWaiting(
+    payload: EnqueueWaitingRequestDTO,
+    token?: string
+  ): Promise<EnqueueWaitingResponseDTO> {
+    return request<EnqueueWaitingResponseDTO>('/movements/queue', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async cancelQueue(
+    ra: string,
+    sessionId?: string,
+    token?: string
+  ): Promise<CancelQueueResponseDTO> {
+    const query = sessionId
+      ? `?sessionId=${encodeURIComponent(sessionId)}`
+      : '';
+    return request<CancelQueueResponseDTO>(
+      `/movements/queue/${encodeURIComponent(ra)}${query}`,
+      {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }
+    );
+  },
+
+  async claimQueueSlot(
+    payload: ClaimQueueRequestDTO,
+    token?: string
+  ): Promise<ClaimQueueResponseDTO> {
+    return request<ClaimQueueResponseDTO>('/movements/queue/claim', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async requestEmergencyExit(
+    payload: EmergencyExitRequestDTO,
+    token: string
+  ): Promise<RequestExitResponseDTO> {
+    return request<RequestExitResponseDTO>('/movements/emergency', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async requestGuestExit(
+    payload: GuestExitRequestDTO,
+    token: string
+  ): Promise<RequestExitResponseDTO> {
+    return request<RequestExitResponseDTO>('/movements/guest-exit', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async escalateMovement(
+    movementId: string,
+    payload: EscalateMovementRequestDTO = {},
+    token?: string
+  ): Promise<{ movement: MovementDTO }> {
+    return request<{ movement: MovementDTO }>(
+      `/movements/${encodeURIComponent(movementId)}/escalate`,
+      {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
+  async checkOverdueMovements(
+    payload: CheckOverdueRequestDTO = {},
+    token?: string
+  ): Promise<CheckOverdueResponseDTO> {
+    return request<CheckOverdueResponseDTO>('/movements/check-overdue', {
       method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: JSON.stringify(payload),

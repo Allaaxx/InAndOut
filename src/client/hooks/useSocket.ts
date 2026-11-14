@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { MovementDTO } from '@shared/dtos';
+import { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
 import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
 
 const SOCKET_URL =
@@ -15,6 +15,19 @@ export interface UseSocketOptions {
   onMovementExit?: (movement: MovementDTO) => void;
   onMovementStarted?: (movement: MovementDTO) => void;
   onMovementReturn?: (movement: MovementDTO) => void;
+  onMovementReturned?: (movement: MovementDTO) => void;
+  onQueueUpdated?: (payload: {
+    sessionId: string;
+    queue: WaitingQueueDTO[];
+  }) => void;
+  onQueueSlotCalled?: (payload: {
+    sessionId: string;
+    entry: WaitingQueueDTO;
+    expiresAt: string;
+  }) => void;
+  onMovementOverdue?: (movement: MovementDTO) => void;
+  onMovementEscalated?: (movement: MovementDTO) => void;
+  onMovementResolved?: (movement: MovementDTO) => void;
 }
 
 export function useSocket({
@@ -23,11 +36,23 @@ export function useSocket({
   onMovementExit,
   onMovementStarted,
   onMovementReturn,
+  onMovementReturned,
+  onQueueUpdated,
+  onQueueSlotCalled,
+  onMovementOverdue,
+  onMovementEscalated,
+  onMovementResolved,
 }: UseSocketOptions) {
   const callbacksRef = useRef({
     onMovementExit,
     onMovementStarted,
     onMovementReturn,
+    onMovementReturned,
+    onQueueUpdated,
+    onQueueSlotCalled,
+    onMovementOverdue,
+    onMovementEscalated,
+    onMovementResolved,
   });
 
   useEffect(() => {
@@ -35,8 +60,24 @@ export function useSocket({
       onMovementExit,
       onMovementStarted,
       onMovementReturn,
+      onMovementReturned,
+      onQueueUpdated,
+      onQueueSlotCalled,
+      onMovementOverdue,
+      onMovementEscalated,
+      onMovementResolved,
     };
-  }, [onMovementExit, onMovementStarted, onMovementReturn]);
+  }, [
+    onMovementExit,
+    onMovementStarted,
+    onMovementReturn,
+    onMovementReturned,
+    onQueueUpdated,
+    onQueueSlotCalled,
+    onMovementOverdue,
+    onMovementEscalated,
+    onMovementResolved,
+  ]);
 
   useEffect(() => {
     if (!enabled || !sessionId) {
@@ -67,17 +108,62 @@ export function useSocket({
     const handleReturn = (movement: MovementDTO) => {
       if (movement.sessionId && movement.sessionId !== sessionId) return;
       callbacksRef.current.onMovementReturn?.(movement);
+      callbacksRef.current.onMovementReturned?.(movement);
+    };
+
+    const handleQueueUpdated = (payload: {
+      sessionId: string;
+      queue: WaitingQueueDTO[];
+    }) => {
+      if (payload.sessionId && payload.sessionId !== sessionId) return;
+      callbacksRef.current.onQueueUpdated?.(payload);
+    };
+
+    const handleQueueSlotCalled = (payload: {
+      sessionId: string;
+      entry: WaitingQueueDTO;
+      expiresAt: string;
+    }) => {
+      if (payload.sessionId && payload.sessionId !== sessionId) return;
+      callbacksRef.current.onQueueSlotCalled?.(payload);
+    };
+
+    const handleOverdue = (movement: MovementDTO) => {
+      if (movement.sessionId && movement.sessionId !== sessionId) return;
+      callbacksRef.current.onMovementOverdue?.(movement);
+    };
+
+    const handleEscalated = (movement: MovementDTO) => {
+      if (movement.sessionId && movement.sessionId !== sessionId) return;
+      callbacksRef.current.onMovementEscalated?.(movement);
+    };
+
+    const handleResolved = (movement: MovementDTO) => {
+      if (movement.sessionId && movement.sessionId !== sessionId) return;
+      callbacksRef.current.onMovementResolved?.(movement);
     };
 
     socket.emit('join:room', SOCKET_ROOMS.sessionRoom(sessionId));
     socket.on(SOCKET_EVENTS.MOVEMENT_EXIT, handleStarted);
     socket.on(SOCKET_EVENTS.MOVEMENT_STARTED, handleStarted);
     socket.on(SOCKET_EVENTS.MOVEMENT_RETURN, handleReturn);
+    socket.on(SOCKET_EVENTS.MOVEMENT_RETURNED, handleReturn);
+    socket.on(SOCKET_EVENTS.QUEUE_UPDATED, handleQueueUpdated);
+    socket.on(SOCKET_EVENTS.QUEUE_SLOT_CALLED, handleQueueSlotCalled);
+    socket.on(SOCKET_EVENTS.MOVEMENT_OVERDUE, handleOverdue);
+    socket.on(SOCKET_EVENTS.MOVEMENT_ESCALATED, handleEscalated);
+    socket.on(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
 
     return () => {
       socket?.off(SOCKET_EVENTS.MOVEMENT_EXIT, handleStarted);
       socket?.off(SOCKET_EVENTS.MOVEMENT_STARTED, handleStarted);
       socket?.off(SOCKET_EVENTS.MOVEMENT_RETURN, handleReturn);
+      socket?.off(SOCKET_EVENTS.MOVEMENT_RETURNED, handleReturn);
+      socket?.off(SOCKET_EVENTS.QUEUE_UPDATED, handleQueueUpdated);
+      socket?.off(SOCKET_EVENTS.QUEUE_SLOT_CALLED, handleQueueSlotCalled);
+      socket?.off(SOCKET_EVENTS.MOVEMENT_OVERDUE, handleOverdue);
+      socket?.off(SOCKET_EVENTS.MOVEMENT_ESCALATED, handleEscalated);
+      socket?.off(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
       socket?.disconnect();
     };
   }, [enabled, sessionId]);

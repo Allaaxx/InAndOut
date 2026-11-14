@@ -7,7 +7,11 @@ import {
   RequestStudentExitUseCase,
   StudentNotInClassError,
 } from '@server/application/use-cases/movements/RequestStudentExitUseCase';
-import { RequestExitRequestDTO } from '@shared/dtos';
+import { RegisterStudentReturnUseCase } from '@server/application/use-cases/movements/RegisterStudentReturnUseCase';
+import {
+  RegisterReturnRequestDTO,
+  RequestExitRequestDTO,
+} from '@shared/dtos';
 
 export async function registerMovementRoutes(
   app: FastifyInstance,
@@ -19,6 +23,16 @@ export async function registerMovementRoutes(
     container.movementRepo,
     container.notificationSender,
     { clock: container.clock }
+  );
+
+  const registerReturnUseCase = new RegisterStudentReturnUseCase(
+    container.sessionRepo,
+    container.movementRepo,
+    container.notificationSender,
+    {
+      queueRepo: container.queueRepo,
+      clock: container.clock,
+    }
   );
 
   app.post<{ Body: RequestExitRequestDTO }>(
@@ -47,6 +61,31 @@ export async function registerMovementRoutes(
             err instanceof Error
               ? err.message
               : 'Erro interno ao registrar saída do aluno.',
+        });
+      }
+    }
+  );
+
+  app.post<{ Body: RegisterReturnRequestDTO }>(
+    '/movements/return',
+    async (request, reply) => {
+      try {
+        const result = await registerReturnUseCase.execute(
+          request.body ?? ({} as RegisterReturnRequestDTO)
+        );
+        return reply.status(200).send(result);
+      } catch (err) {
+        if (err instanceof MovementValidationError) {
+          return reply.status(400).send({ error: err.message });
+        }
+        if (err instanceof MovementNotFoundError) {
+          return reply.status(404).send({ error: err.message });
+        }
+        return reply.status(500).send({
+          error:
+            err instanceof Error
+              ? err.message
+              : 'Erro interno ao registrar retorno do aluno.',
         });
       }
     }
