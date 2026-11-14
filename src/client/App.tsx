@@ -5,10 +5,12 @@ import { api } from './services/api';
 import { LoginPage } from './pages/LoginPage';
 import { TerminalPage } from './pages/TerminalPage';
 import { CoordinationPage } from './pages/CoordinationPage';
+import { AnalyticsDashboardPage } from './pages/AnalyticsDashboardPage';
 
 export function App() {
   const [user, setUser] = useState<UserDTO | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState<'default' | 'analytics'>('default');
 
   const handleLogin = async (credentials: LoginRequestDTO) => {
     const response = await api.login(credentials);
@@ -35,6 +37,7 @@ export function App() {
   const handleLogout = () => {
     setUser(null);
     setToken(null);
+    setCurrentPage('default');
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('inandout_token');
       localStorage.removeItem('inandout_refresh_token');
@@ -45,12 +48,24 @@ export function App() {
     return <LoginPage onLogin={handleLogin} />;
   }
 
+  if (currentPage === 'analytics') {
+    return (
+      <AnalyticsDashboardPage
+        user={user}
+        token={token}
+        onLogout={handleLogout}
+        onNavigateBack={() => setCurrentPage('default')}
+      />
+    );
+  }
+
   if (user.role === UserRole.COORDINATOR || user.role === UserRole.ADMIN) {
     return (
       <CoordinationPage
         user={user}
         token={token}
         onLogout={handleLogout}
+        onNavigateToAnalytics={() => setCurrentPage('analytics')}
       />
     );
   }
