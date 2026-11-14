@@ -59,6 +59,45 @@ export interface ClassSessionDTO {
   defaultTimeLimitMinutes: number;
 }
 
+export interface StartSessionRequestDTO {
+  classCode?: string;
+  className?: string;
+  subject: string;
+  roomId?: string;
+  plannedDurationMinutes?: number;
+  defaultTimeLimitMinutes?: number;
+  timeLimitMinutes?: number;
+  teacherId?: string;
+  teacherName?: string;
+}
+
+export interface StartSessionResponseDTO {
+  session: ClassSessionDTO;
+}
+
+export interface ActiveSessionResponseDTO {
+  session: ClassSessionDTO | null;
+  activeMovements: MovementDTO[];
+  queue: WaitingQueueDTO[];
+}
+
+export interface EndSessionRequestDTO {
+  sessionId?: string;
+  roomId?: string;
+}
+
+export interface SessionMetricsDTO {
+  totalExits: number;
+  inTransitUnresolvedCount: number;
+  elapsedMinutes: number;
+}
+
+export interface EndSessionResponseDTO {
+  session: ClassSessionDTO;
+  metrics: SessionMetricsDTO;
+  inTransitMovements: MovementDTO[];
+}
+
 export interface StudentDTO {
   id: string;
   ra: string;

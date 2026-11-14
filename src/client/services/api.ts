@@ -1,7 +1,12 @@
 import {
+  ActiveSessionResponseDTO,
+  EndSessionRequestDTO,
+  EndSessionResponseDTO,
   LoginRequestDTO,
   LoginResponseDTO,
   RefreshTokenResponseDTO,
+  StartSessionRequestDTO,
+  StartSessionResponseDTO,
   VerifyPinResponseDTO,
 } from '@shared/dtos';
 
@@ -52,6 +57,43 @@ export const api = {
     return request<RefreshTokenResponseDTO>('/auth/refresh', {
       method: 'POST',
       body: JSON.stringify({ refreshToken }),
+    });
+  },
+
+  async getActiveSession(
+    roomId = 'SALA-01',
+    token?: string
+  ): Promise<ActiveSessionResponseDTO> {
+    const query = roomId ? `?roomId=${encodeURIComponent(roomId)}` : '';
+    return request<ActiveSessionResponseDTO>(`/sessions/active${query}`, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  },
+
+  async startSession(
+    payload: StartSessionRequestDTO,
+    token: string
+  ): Promise<StartSessionResponseDTO> {
+    return request<StartSessionResponseDTO>('/sessions/start', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async endSession(
+    payload: EndSessionRequestDTO,
+    token: string
+  ): Promise<EndSessionResponseDTO> {
+    return request<EndSessionResponseDTO>('/sessions/end', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
     });
   },
 };
