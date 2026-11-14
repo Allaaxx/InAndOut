@@ -7,6 +7,7 @@ import { registerMovementRoutes } from '@server/presentation/routes/movementRout
 import { registerMovementQueueRoutes } from '@server/presentation/routes/movementQueueRoutes';
 import { registerMovementOverrideRoutes } from '@server/presentation/routes/movementOverrideRoutes';
 import { registerMovementEscalationRoutes } from '@server/presentation/routes/movementEscalationRoutes';
+import { registerCoordinationRoutes } from '@server/presentation/routes/coordinationRoutes';
 
 export interface CreateAppResult {
   app: FastifyInstance;
@@ -27,6 +28,7 @@ export async function createApp(
   await registerMovementQueueRoutes(app, container);
   await registerMovementOverrideRoutes(app, container);
   await registerMovementEscalationRoutes(app, container);
+  await registerCoordinationRoutes(app, container);
 
   return { app, container };
 }
