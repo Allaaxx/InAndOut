@@ -290,3 +290,42 @@ export interface SchoolOverviewQueryDTO {
   grade?: string;
 }
 
+export interface StudentHistorySummaryDTO {
+  totalExits: number;
+  totalDepartures: number;
+  totalAbsentMinutes: number;
+  totalMinutesOutside: number;
+  averageDurationMinutes: number;
+  averageDurationPerExit: number;
+  attendedMinutes: number;
+  attendancePercentage: number;
+  effectiveAttendancePercentage: number;
+}
+
+export interface StudentHistoryReportDTO {
+  student: {
+    id?: string;
+    ra: string;
+    fullName: string;
+    name: string;
+    classCode: string;
+    specialTimeLimitMinutes?: number;
+  };
+  summary: StudentHistorySummaryDTO;
+  history: MovementDTO[];
+}
+
+export interface StudentHistoryQueryDTO {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface ExportAnalyticsQueryDTO {
+  format?: 'csv' | 'pdf';
+  ra?: string;
+  classCode?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+
