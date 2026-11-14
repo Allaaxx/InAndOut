@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { formatPublicStudentName, QueueEntryStatus } from '@shared/enums';
+import { QueueEntryStatus } from '@shared/enums';
+import { formatPublicStudentName } from '@shared/formatters';
 import { WaitingQueueDTO } from '@shared/dtos';
 
 export interface WaitingQueueEntryProps {

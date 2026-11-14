@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { formatPublicStudentName } from '@shared/enums';
+import { formatPublicStudentName } from '@shared/formatters';
 import { StudentDTO } from '@shared/dtos';
 import { StudentRA } from '../value-objects/StudentRA';
 

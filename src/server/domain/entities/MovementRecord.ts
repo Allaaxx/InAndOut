@@ -1,17 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import {
   AlertLevel,
-  formatPublicStudentName,
   IncidentOutcome,
   MovementStatus,
 } from '@shared/enums';
+import { formatPublicStudentName } from '@shared/formatters';
 import { MovementDTO } from '@shared/dtos';
 import { DurationMinutes } from '../value-objects/DurationMinutes';
 
 export interface MovementRecordProps {
   id?: string;
   sessionId: string;
-  studentId: string;
+  studentId?: string;
   studentRa: string;
   studentFullName: string;
   studentPublicName?: string;
@@ -389,17 +389,14 @@ export class MovementRecord {
     }
     if (!this._endedAt) {
       this._endedAt = resolvedAt;
-      const duration = this.getElapsedMinutes(resolvedAt);
-      this._durationMinutes = duration;
-      const attended = Math.max(
-        0,
-        Math.round((plannedSessionDurationMinutes - duration) * 100) / 100
+      const durationCalc = DurationMinutes.fromDates(
+        this.startedAt,
+        resolvedAt,
+        plannedSessionDurationMinutes
       );
-      this._attendedMinutes = attended;
-      this._attendancePercentage =
-        plannedSessionDurationMinutes > 0
-          ? Math.round((attended / plannedSessionDurationMinutes) * 10000) / 100
-          : 100;
+      this._durationMinutes = durationCalc.durationMinutes;
+      this._attendedMinutes = durationCalc.attendedMinutes;
+      this._attendancePercentage = durationCalc.attendancePercentage;
     }
   }
 
