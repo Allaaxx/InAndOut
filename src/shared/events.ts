@@ -1,5 +1,6 @@
 export const SOCKET_EVENTS = {
   MOVEMENT_EXIT: 'movement:exit',
+  MOVEMENT_STARTED: 'movement:started',
   MOVEMENT_RETURN: 'movement:return',
   QUEUE_UPDATED: 'queue:updated',
   QUEUE_SLOT_CALLED: 'queue:slot-called',

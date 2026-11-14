@@ -5,6 +5,8 @@ import {
   LoginRequestDTO,
   LoginResponseDTO,
   RefreshTokenResponseDTO,
+  RequestExitRequestDTO,
+  RequestExitResponseDTO,
   StartSessionRequestDTO,
   StartSessionResponseDTO,
   VerifyPinResponseDTO,
@@ -93,6 +95,17 @@ export const api = {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async requestExit(
+    payload: RequestExitRequestDTO,
+    token?: string
+  ): Promise<RequestExitResponseDTO> {
+    return request<RequestExitResponseDTO>('/movements/exit', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: JSON.stringify(payload),
     });
   },
