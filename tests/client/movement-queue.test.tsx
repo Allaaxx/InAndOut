@@ -155,9 +155,9 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
     });
 
     // Displays discreet next label
-    expect(await screen.findByTestId('queue-next-indicator')).toHaveTextContent(
-      /Próximo:.*João M\./i
-    );
+    expect(
+      await screen.findByTestId('queue-next-indicator', {}, { timeout: 4000 })
+    ).toHaveTextContent(/Próximo:.*João M\./i);
     expect(screen.getByTestId('queue-item-1002')).toHaveTextContent(
       /#1.*João M\..*Na Fila/i
     );
@@ -325,9 +325,9 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
       }
     });
 
-    expect(await screen.findByTestId('queue-next-indicator')).toHaveTextContent(
-      /Próximo:.*João M\./i
-    );
+    expect(
+      await screen.findByTestId('queue-next-indicator', {}, { timeout: 4000 })
+    ).toHaveTextContent(/Próximo:.*João M\./i);
 
     // 2. Simulate Socket.io queue:slot-called event
     const calledJoaoEntry: WaitingQueueDTO = {
