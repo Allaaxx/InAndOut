@@ -474,6 +474,49 @@ export function AnalyticsDashboardPage({
                   <PeakHoursBarChart data={data.hourlyDistribution} />
                   <OutcomesPieChart data={data.outcomeDistribution} />
                 </div>
+
+                {/* Class Comparison Section (User Story 25) */}
+                {data.classComparison && data.classComparison.length > 0 && (
+                  <Card className="shadow-xs border-slate-200">
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold text-slate-900">
+                        Comparativo por Turma
+                      </CardTitle>
+                      <CardDescription>
+                        Frequência de saídas e tempo total fora de sala por turma
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div
+                        data-testid="class-comparison-table"
+                        className="overflow-x-auto rounded-lg border border-slate-200"
+                      >
+                        <table className="w-full text-left text-sm text-slate-700">
+                          <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                            <tr>
+                              <th className="px-4 py-3 font-semibold">Turma</th>
+                              <th className="px-4 py-3 font-semibold">Total de Saídas</th>
+                              <th className="px-4 py-3 font-semibold">Tempo Total Fora</th>
+                              <th className="px-4 py-3 font-semibold">Média por Saída</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {data.classComparison.map((item) => (
+                              <tr key={item.classCode} className="hover:bg-slate-50/50">
+                                <td className="px-4 py-3 font-semibold text-slate-900">
+                                  {item.classCode}
+                                </td>
+                                <td className="px-4 py-3">{item.totalExits}</td>
+                                <td className="px-4 py-3">{item.totalOutsideMinutes} min</td>
+                                <td className="px-4 py-3">{item.averageOutsideMinutes} min</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </TabsContent>

@@ -1,6 +1,7 @@
 import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 import { IncidentOutcome, MovementStatus } from '@shared/enums';
 import {
+  ClassComparisonItemDTO,
   HourlyDistributionItemDTO,
   OutcomeDistributionItemDTO,
   SchoolOverviewAnalyticsDTO,
@@ -150,8 +151,7 @@ export class GetSchoolOverviewAnalyticsUseCase {
     for (const m of filteredMovements) {
       if (
         m.status === MovementStatus.RETURNED_NORMAL ||
-        m.outcome === IncidentOutcome.RETURNED_TO_CLASS ||
-        (m.outcome as string) === 'RETURNED_NORMAL'
+        m.outcome === IncidentOutcome.RETURNED_TO_CLASS
       ) {
         returnedCount++;
       } else if (m.outcome === IncidentOutcome.SENT_TO_INFIRMARY) {
@@ -201,12 +201,48 @@ export class GetSchoolOverviewAnalyticsUseCase {
       },
     ];
 
+    // 5. Class Comparison
+    const classGroups = new Map<
+      string,
+      { totalExits: number; outsideMinutes: number; completedCount: number }
+    >();
+
+    for (const m of filteredMovements) {
+      const code = m.classCode || 'Outros';
+      const existing = classGroups.get(code) ?? {
+        totalExits: 0,
+        outsideMinutes: 0,
+        completedCount: 0,
+      };
+      existing.totalExits += 1;
+      if (typeof m.durationMinutes === 'number') {
+        existing.outsideMinutes += m.durationMinutes;
+        existing.completedCount += 1;
+      }
+      classGroups.set(code, existing);
+    }
+
+    const classComparison: ClassComparisonItemDTO[] = Array.from(
+      classGroups.entries()
+    )
+      .map(([classCode, data]) => ({
+        classCode,
+        totalExits: data.totalExits,
+        totalOutsideMinutes: Math.round(data.outsideMinutes * 10) / 10,
+        averageOutsideMinutes:
+          data.completedCount > 0
+            ? Math.round((data.outsideMinutes / data.completedCount) * 10) / 10
+            : 0,
+      }))
+      .sort((a, b) => a.classCode.localeCompare(b.classCode));
+
     return {
       stats,
       hourlyDistribution,
       peakHours: hourlyDistribution,
       outcomeDistribution,
       outcomesDistribution: outcomeDistribution,
+      classComparison,
     };
   }
 }

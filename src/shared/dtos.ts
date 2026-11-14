@@ -274,12 +274,22 @@ export interface OutcomeDistributionItemDTO {
   percentage: number;
 }
 
+export interface ClassComparisonItemDTO {
+  classCode: string;
+  totalExits: number;
+  totalOutsideMinutes: number;
+  averageOutsideMinutes: number;
+}
+
 export interface SchoolOverviewAnalyticsDTO {
   stats: SchoolOverviewStatsDTO;
   hourlyDistribution: HourlyDistributionItemDTO[];
-  peakHours: HourlyDistributionItemDTO[];
+  /** @deprecated Use canonical field hourlyDistribution */
+  peakHours?: HourlyDistributionItemDTO[];
   outcomeDistribution: OutcomeDistributionItemDTO[];
-  outcomesDistribution: OutcomeDistributionItemDTO[];
+  /** @deprecated Use canonical field outcomeDistribution */
+  outcomesDistribution?: OutcomeDistributionItemDTO[];
+  classComparison?: ClassComparisonItemDTO[];
 }
 
 export interface SchoolOverviewQueryDTO {

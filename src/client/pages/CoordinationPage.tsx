@@ -264,6 +264,9 @@ export function CoordinationPage({
             {item.roomId && (
               <span className="block text-xs text-slate-500">{item.roomId}</span>
             )}
+            {item.teacherName && (
+              <span className="block text-xs text-slate-500">Prof: {item.teacherName}</span>
+            )}
           </div>
         ),
       },
@@ -271,15 +274,23 @@ export function CoordinationPage({
         key: 'student',
         header: 'Estudante',
         render: (item) => (
-          <div>
-            <span className="font-medium text-slate-900">
-              {item.studentPublicName ||
-                item.abbreviatedName ||
-                item.studentFullName}
-            </span>
-            <span className="block text-xs text-slate-500">
-              RA: {item.studentRa}
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div
+              data-testid="student-avatar"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700"
+            >
+              {(item.studentPublicName || item.studentFullName || 'A').charAt(0)}
+            </div>
+            <div>
+              <span className="font-medium text-slate-900">
+                {item.studentPublicName ||
+                  item.abbreviatedName ||
+                  item.studentFullName}
+              </span>
+              <span className="block text-xs text-slate-500">
+                RA: {item.studentRa}
+              </span>
+            </div>
           </div>
         ),
       },
@@ -642,43 +653,74 @@ export function CoordinationPage({
 
               <div className="mt-4 space-y-4">
                 {/* Student info summary */}
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-slate-900">
-                        {selectedMovement.studentPublicName ||
-                          selectedMovement.abbreviatedName ||
-                          selectedMovement.studentFullName}
-                      </h4>
-                      <p className="text-xs text-slate-500">
-                        RA: {selectedMovement.studentRa} • Turma:{' '}
-                        {selectedMovement.classCode}
-                        {selectedMovement.roomId &&
-                          ` (${selectedMovement.roomId})`}
-                      </p>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div
+                      data-testid="coordination-student-avatar"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-base font-bold text-indigo-700 border border-indigo-200"
+                    >
+                      {(
+                        selectedMovement.studentPublicName ||
+                        selectedMovement.studentFullName ||
+                        'A'
+                      ).charAt(0)}
                     </div>
-                    <div>
-                      {selectedMovement.status ===
-                        MovementStatus.ESCALATED_TO_COORDINATION && (
-                        <Badge variant="destructive">Escalado</Badge>
-                      )}
-                      {selectedMovement.status ===
-                        MovementStatus.IN_TRANSIT_UNRESOLVED && (
-                        <Badge variant="warning">Em Trânsito</Badge>
-                      )}
-                      {selectedMovement.status === MovementStatus.OVERDUE && (
-                        <Badge variant="warning">Tempo Excedido</Badge>
-                      )}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold text-slate-900 text-base">
+                          {selectedMovement.studentPublicName ||
+                            selectedMovement.abbreviatedName ||
+                            selectedMovement.studentFullName}
+                        </h4>
+                        <div>
+                          {selectedMovement.status ===
+                            MovementStatus.ESCALATED_TO_COORDINATION && (
+                            <Badge variant="destructive">Escalado</Badge>
+                          )}
+                          {selectedMovement.status ===
+                            MovementStatus.IN_TRANSIT_UNRESOLVED && (
+                            <Badge variant="warning">Em Trânsito</Badge>
+                          )}
+                          {selectedMovement.status ===
+                            MovementStatus.OVERDUE && (
+                            <Badge variant="warning">Tempo Excedido</Badge>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        RA:{' '}
+                        <span className="font-mono font-medium">
+                          {selectedMovement.studentRa}
+                        </span>
+                      </p>
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600 border-t border-slate-200 pt-2">
+                        <div>
+                          <span className="text-slate-400">Turma / Sala de Origem:</span>
+                          <p className="font-medium text-slate-800">
+                            {selectedMovement.classCode}{' '}
+                            {selectedMovement.roomId
+                              ? `(${selectedMovement.roomId})`
+                              : ''}
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-slate-400">Professor(a):</span>
+                          <p className="font-medium text-slate-800">
+                            {selectedMovement.teacherName ||
+                              selectedMovement.authorizedByTeacherId ||
+                              'Não informado'}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="mt-2 text-xs text-slate-600">
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-600 border-t border-slate-200 pt-2">
                     <span>
                       Tempo decorrido:{' '}
-                      <strong>
+                      <strong className="text-slate-900">
                         {Math.round(selectedMovement.elapsedMinutes ?? 0)} min
                       </strong>
                     </span>
-                    <span className="mx-2">•</span>
                     <span>
                       Limite: {selectedMovement.allowedLimitMinutes} min
                     </span>
