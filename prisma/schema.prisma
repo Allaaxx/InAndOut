@@ -1,0 +1,131 @@
+// Prisma schema for InAndOut Relational Persistence Layer
+// Spec #20 - Ticket #26
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String
+  pinCodeHash  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions     ClassSession[]
+
+  @@map("users")
+}
+
+model ClassSession {
+  id                      String              @id @default(uuid())
+  teacherId               String
+  teacherName             String?             @default("Professor")
+  roomId                  String?             @default("SALA-01")
+  classCode               String
+  subject                 String
+  status                  String              @default("ACTIVE")
+  startedAt               DateTime            @default(now())
+  endedAt                 DateTime?
+  durationMinutes         Int?                @default(50)
+  defaultTimeLimitMinutes Int?                @default(10)
+  notes                   String?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+
+  teacher                 User?               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  movements               MovementRecord[]
+  queueEntries            WaitingQueueEntry[]
+
+  @@index([teacherId])
+  @@index([classCode])
+  @@index([status])
+  @@map("class_sessions")
+}
+
+model Student {
+  id                  String   @id @default(uuid())
+  ra                  String   @unique
+  fullName            String
+  classCode           String
+  hasSpecialCondition Boolean  @default(false)
+  specialLimitMinutes Int?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([classCode])
+  @@index([ra])
+  @@map("students")
+}
+
+model MovementRecord {
+  id                    String        @id @default(uuid())
+  sessionId             String
+  studentId             String?
+  studentRa             String
+  studentFullName       String
+  studentPublicName     String?
+  classCode             String
+  subject               String
+  roomId                String?
+  teacherName           String?
+  startedAt             DateTime      @default(now())
+  returnedAt            DateTime?
+  durationMinutes       Float?
+  allowedLimitMinutes   Int           @default(10)
+  status                String        @default("IN_TRANSIT")
+  outcome               String?
+  escalatedAt           DateTime?
+  escalatedReason       String?
+  resolutionNotes       String?
+  resolvedBy            String?
+  resolvedAt            DateTime?
+  attendancePercentage  Float?
+  attendedMinutes       Float?
+  isEmergency           Boolean       @default(false)
+  isGuest               Boolean       @default(false)
+  authorizedByTeacherId String?
+  overdueAt             DateTime?
+  escalationType        String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  session               ClassSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([studentRa])
+  @@index([classCode])
+  @@index([status])
+  @@map("movement_records")
+}
+
+model WaitingQueueEntry {
+  id                String        @id @default(uuid())
+  sessionId         String
+  studentRa         String
+  studentFullName   String
+  studentPublicName String?
+  classCode         String?
+  position          Int           @default(1)
+  enqueuedAt        DateTime      @default(now())
+  calledAt          DateTime?
+  expiresAt         DateTime?
+  status            String        @default("WAITING")
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  session           ClassSession? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([studentRa])
+  @@index([status])
+  @@map("waiting_queue_entries")
+}
