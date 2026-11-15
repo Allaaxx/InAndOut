@@ -37,10 +37,13 @@ describe('Prisma Lifecycle Scripts and Relational Schema (Ticket #31)', () => {
         e.includes('init_relational_schema'),
       );
       expect(initMigrationDir).toBeDefined();
+      if (!initMigrationDir) {
+        throw new Error('Initial migration directory not found');
+      }
 
       const migrationSqlPath = path.join(
         migrationsDir,
-        initMigrationDir!,
+        initMigrationDir,
         'migration.sql',
       );
       expect(fs.existsSync(migrationSqlPath)).toBe(true);

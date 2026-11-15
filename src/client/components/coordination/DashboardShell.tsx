@@ -1,10 +1,10 @@
-import { Button } from '@client/components/ui/Button';
 import type { UserDTO } from '@shared/dtos';
 import {
   Activity,
   BarChart3,
   Bell,
   BellOff,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   GraduationCap,
@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import type React from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export interface DashboardShellProps {
@@ -47,6 +47,36 @@ export function DashboardShell({
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Close profile dropdown on outside click or Escape
+  useEffect(() => {
+    if (!isProfileOpen) return;
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (
+        profileRef.current &&
+        !profileRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isProfileOpen]);
 
   const navItems: NavItem[] = useMemo(
     () => [
@@ -166,12 +196,19 @@ export function DashboardShell({
         data-testid="coordination-sidebar"
       >
         {/* Sidebar Brand Header */}
-        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs">
-              <School className="h-6 w-6" />
-            </div>
-            {!isCollapsed && (
+        <div
+          className={`flex h-16 items-center border-b border-slate-200 transition-all ${
+            isCollapsed ? 'justify-center px-2' : 'justify-between px-4'
+          }`}
+        >
+          {!isCollapsed && (
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div
+                data-testid="sidebar-school-icon"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs"
+              >
+                <School className="h-6 w-6" />
+              </div>
               <div className="truncate">
                 <span className="text-sm font-bold tracking-tight text-slate-900 block truncate">
                   InAndOut
@@ -180,8 +217,8 @@ export function DashboardShell({
                   Painel da Coordenação
                 </span>
               </div>
-            )}
-          </div>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -342,39 +379,17 @@ export function DashboardShell({
             </div>
           </div>
 
-          {/* Right section: sound toggle, coordinator profile, logout */}
-          <div className="flex items-center gap-3">
-            {onToggleSound && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onToggleSound}
-                className="flex items-center gap-2"
-                title="Configurar Alerta Sonoro"
-                aria-label="Alerta Sonoro"
-              >
-                {soundEnabled ? (
-                  <>
-                    <Bell className="h-4 w-4 text-emerald-600" />
-                    <span className="hidden sm:inline">
-                      Alerta Sonoro: Ativado
-                    </span>
-                    <span className="sm:hidden">Ativado</span>
-                  </>
-                ) : (
-                  <>
-                    <BellOff className="h-4 w-4 text-slate-400" />
-                    <span className="hidden sm:inline">
-                      Alerta Sonoro: Silenciado
-                    </span>
-                    <span className="sm:hidden">Mudo</span>
-                  </>
-                )}
-              </Button>
-            )}
-
-            {/* Coordinator Info */}
-            <div className="flex items-center gap-2.5 border-l border-slate-200 pl-3">
+          {/* Right section: profile dropdown menu grouping user info, sound toggle and logout */}
+          <div className="relative" ref={profileRef}>
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen((prev) => !prev)}
+              data-testid="coordinator-profile-dropdown-trigger"
+              aria-expanded={isProfileOpen}
+              aria-haspopup="menu"
+              aria-label="Menu do Usuário"
+              className="flex items-center gap-2.5 rounded-lg p-1.5 hover:bg-slate-100 transition-colors focus:outline-hidden"
+            >
               <div
                 data-testid="coordinator-avatar"
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 ring-2 ring-indigo-50"
@@ -382,7 +397,7 @@ export function DashboardShell({
               >
                 {userInitials}
               </div>
-              <div className="hidden lg:block text-left">
+              <div className="hidden sm:block text-left">
                 <p className="text-xs font-semibold text-slate-900 leading-none truncate max-w-[140px]">
                   {user.name}
                 </p>
@@ -390,20 +405,88 @@ export function DashboardShell({
                   Coordenação
                 </p>
               </div>
-            </div>
+              <ChevronDown className="h-4 w-4 text-slate-400" />
+            </button>
 
-            {/* Logout Button */}
-            {onLogout && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onLogout}
-                className="flex items-center gap-1.5 text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                aria-label="Sair"
+            {isProfileOpen && (
+              <div
+                data-testid="coordinator-profile-dropdown"
+                role="menu"
+                className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-lg z-50 text-slate-900 animate-in fade-in-0 zoom-in-95"
               >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
+                <div className="px-3 py-2 border-b border-slate-100">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {user.email}
+                  </p>
+                </div>
+
+                <div className="py-1">
+                  {onToggleSound && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        onToggleSound();
+                      }}
+                      className="flex w-full items-center justify-between gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                      title="Configurar Alerta Sonoro"
+                      aria-label="Alerta Sonoro"
+                    >
+                      <div className="flex items-center gap-2">
+                        {soundEnabled ? (
+                          <Bell className="h-4 w-4 text-emerald-600" />
+                        ) : (
+                          <BellOff className="h-4 w-4 text-slate-400" />
+                        )}
+                        <span>Alerta Sonoro</span>
+                      </div>
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                          soundEnabled
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {soundEnabled ? 'Ativado' : 'Silenciado'}
+                      </span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      handleNavigate('/coordination/settings');
+                      setIsProfileOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    <Settings className="h-4 w-4 text-slate-400" />
+                    <span>Configurações</span>
+                  </button>
+                </div>
+
+                {onLogout && (
+                  <div className="pt-1 border-t border-slate-100">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        onLogout();
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                      aria-label="Sair"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sair</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </header>

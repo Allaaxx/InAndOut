@@ -106,14 +106,23 @@ describe('Frontend Seam: Dashboard Shell & Specialized Coordination Routes (Tick
     expect(screen.getByTestId('coordination-sidebar')).toBeInTheDocument();
     expect(screen.getByText('InAndOut')).toBeInTheDocument();
     expect(screen.getByText('Painel da Coordenação')).toBeInTheDocument();
+    expect(screen.getByTestId('sidebar-school-icon')).toBeInTheDocument();
 
-    // 2. Header Context & Coordinator Info
+    // 2. Header Context & Coordinator Info in Profile Dropdown Trigger
     expect(screen.getByTestId('coordination-header')).toBeInTheDocument();
     expect(screen.getByTestId('coordinator-avatar')).toHaveTextContent('MA');
     expect(screen.getByText('Coord. Mariana Alves')).toBeInTheDocument();
 
-    // 3. Logout action
-    const logoutBtn = screen.getByRole('button', { name: /Sair/i });
+    // 3. Open profile dropdown and trigger Logout action
+    const profileTrigger = screen.getByTestId(
+      'coordinator-profile-dropdown-trigger',
+    );
+    await user.click(profileTrigger);
+    expect(
+      screen.getByTestId('coordinator-profile-dropdown'),
+    ).toBeInTheDocument();
+
+    const logoutBtn = screen.getByRole('menuitem', { name: /Sair/i });
     await user.click(logoutBtn);
     expect(onLogoutMock).toHaveBeenCalledTimes(1);
   });
@@ -129,15 +138,18 @@ describe('Frontend Seam: Dashboard Shell & Specialized Coordination Routes (Tick
     );
 
     // Collapse sidebar
+    expect(screen.getByTestId('sidebar-school-icon')).toBeInTheDocument();
     await user.click(collapseToggle);
     expect(collapseToggle).toHaveAttribute(
       'aria-label',
       'Expandir barra lateral',
     );
     expect(screen.getByTestId('coordination-sidebar')).toHaveClass('w-20');
+    expect(screen.queryByTestId('sidebar-school-icon')).not.toBeInTheDocument();
 
     // Expand sidebar back
     await user.click(collapseToggle);
+    expect(screen.getByTestId('sidebar-school-icon')).toBeInTheDocument();
     expect(collapseToggle).toHaveAttribute(
       'aria-label',
       'Recolher barra lateral',

@@ -272,8 +272,12 @@ describe('Frontend Seam: Central Routing & Role Guards (Ticket #39)', () => {
         await screen.findByText(/Painel da Coordenação/i),
       ).toBeInTheDocument();
 
-      // Click logout button in coordination header
-      const logoutBtn = screen.getByRole('button', { name: /Sair/i });
+      // Click logout button in coordination header dropdown
+      const profileTrigger = screen.getByTestId(
+        'coordinator-profile-dropdown-trigger',
+      );
+      await user.click(profileTrigger);
+      const logoutBtn = screen.getByRole('menuitem', { name: /Sair/i });
       await user.click(logoutBtn);
 
       // Verify localStorage is cleared

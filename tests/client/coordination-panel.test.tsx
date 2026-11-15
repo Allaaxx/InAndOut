@@ -259,7 +259,14 @@ describe('Frontend Seam: CoordinationPage Real-Time Panel & Alerts (DataTable + 
     const user = userEvent.setup();
     render(<CoordinationPage user={coordUser} token="mock-coord-token" />);
 
-    const soundToggle = screen.getByRole('button', { name: /Alerta Sonoro/i });
+    const profileTrigger = screen.getByTestId(
+      'coordinator-profile-dropdown-trigger',
+    );
+    await user.click(profileTrigger);
+
+    const soundToggle = screen.getByRole('menuitem', {
+      name: /Alerta Sonoro/i,
+    });
     expect(soundToggle).toHaveTextContent(/Ativado/i);
 
     await user.click(soundToggle);

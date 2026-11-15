@@ -21,7 +21,6 @@ import {
   AlertTriangle,
   Clock,
   Filter,
-  RefreshCw,
   ShieldAlert,
   UserCheck,
 } from 'lucide-react';
@@ -48,7 +47,7 @@ export function CoordinationLivePage({
   movements,
   loading,
   error,
-  onRefresh,
+  onRefresh: _onRefresh,
   onAction,
   selectedMovement,
   outcome,
@@ -346,21 +345,6 @@ export function CoordinationLivePage({
               </option>
             </select>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRefresh}
-              disabled={loading}
-              title="Atualizar dados"
-            >
-              <RefreshCw
-                className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`}
-              />
-              <span className="hidden sm:inline ml-1.5">Atualizar</span>
-            </Button>
-          </div>
         </div>
       </Card>
 
@@ -368,8 +352,11 @@ export function CoordinationLivePage({
       <Card className="bg-white shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-slate-900">
-              Saídas Ativas em Tempo Real
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <span>Saídas Ativas em Tempo Real</span>
+              {loading && (
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600" />
+              )}
             </h2>
             <p className="text-xs text-slate-500">
               Listagem consolidada de todas as salas de aula em atividade

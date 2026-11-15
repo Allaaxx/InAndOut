@@ -303,8 +303,13 @@ export function TerminalPage({
       return;
     }
 
-    // 4. If room is already occupied (activeMovements.length > 0) -> Auto-Enfileiramento por RA
-    if (activeMovements.length > 0) {
+    // 4. If room is already occupied or a student is CALLED -> Auto-Enfileiramento por RA
+    const hasCalledStudent = queue.some(
+      (q) => q.status === QueueEntryStatus.CALLED,
+    );
+    const isRoomOccupied = activeMovements.length > 0 || hasCalledStudent;
+
+    if (isRoomOccupied) {
       if (typeof api.enqueueWaiting !== 'function') return;
       setMovementError(null);
       setMovementLoading(true);

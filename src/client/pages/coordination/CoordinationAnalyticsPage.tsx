@@ -8,7 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@client/components/ui/Card';
+import { toast } from '@client/components/ui/Sonner';
 import { api } from '@client/services/api';
+import { downloadBlob } from '@client/services/download';
 import type { SchoolOverviewAnalyticsDTO } from '@shared/dtos';
 import {
   AlertTriangle,
@@ -79,16 +81,15 @@ export function CoordinationAnalyticsPage({
       };
 
       const blob = await api.exportAnalytics(params, token);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `relatorio-${format === 'csv' ? 'movimentacoes.csv' : 'movimentacoes.pdf'}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      downloadBlob(
+        blob,
+        `relatorio-${format === 'csv' ? 'movimentacoes.csv' : 'movimentacoes.pdf'}`,
+      );
+      toast.success(
+        `Relatório (${format.toUpperCase()}) exportado com sucesso.`,
+      );
     } catch (err) {
-      alert(
+      toast.error(
         err instanceof Error
           ? err.message
           : 'Erro ao exportar relatório analítico.',

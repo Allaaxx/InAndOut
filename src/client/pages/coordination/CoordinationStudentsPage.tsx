@@ -8,7 +8,9 @@ import {
 } from '@client/components/ui/Card';
 import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
 import { Input } from '@client/components/ui/Input';
+import { toast } from '@client/components/ui/Sonner';
 import { api } from '@client/services/api';
+import { downloadBlob } from '@client/services/download';
 import type { MovementDTO, StudentHistoryReportDTO } from '@shared/dtos';
 import { MovementStatus } from '@shared/enums';
 import {
@@ -82,16 +84,15 @@ export function CoordinationStudentsPage({
       };
 
       const blob = await api.exportAnalytics(params, token);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `relatorio-${format === 'csv' ? 'movimentacoes.csv' : 'movimentacoes.pdf'}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      downloadBlob(
+        blob,
+        `relatorio-${format === 'csv' ? 'movimentacoes.csv' : 'movimentacoes.pdf'}`,
+      );
+      toast.success(
+        `Relatório (${format.toUpperCase()}) exportado com sucesso.`,
+      );
     } catch (err) {
-      alert(
+      toast.error(
         err instanceof Error
           ? err.message
           : 'Erro ao exportar relatório analítico.',
