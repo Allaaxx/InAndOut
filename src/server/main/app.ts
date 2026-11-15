@@ -1,5 +1,6 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import { Server as SocketIOServer } from 'socket.io';
 import { AppContainer, createContainer } from './container';
 import { setupFastifyErrorHandler } from '@server/presentation/errors/errorHandler';
 import { EvaluateOverdueMovementsUseCase } from '@server/application/use-cases/movements/EvaluateOverdueMovementsUseCase';
@@ -11,16 +12,19 @@ import { registerMovementOverrideRoutes } from '@server/presentation/routes/move
 import { registerMovementEscalationRoutes } from '@server/presentation/routes/movementEscalationRoutes';
 import { registerCoordinationRoutes } from '@server/presentation/routes/coordinationRoutes';
 import { registerAnalyticsRoutes } from '@server/presentation/routes/analyticsRoutes';
+import { registerSocketHandlers } from '@server/presentation/socket/socketHandlers';
 
 export interface CreateAppOptions {
   enableBackgroundTimer?: boolean;
   autoEvaluateIntervalMs?: number;
+  io?: SocketIOServer;
 }
 
 export interface CreateAppResult {
   app: FastifyInstance;
   container: AppContainer;
   stopBackgroundTimer: () => void;
+  io: SocketIOServer;
 }
 
 export async function createApp(
@@ -32,6 +36,32 @@ export async function createApp(
 
   const container = createContainer(overrides);
   setupFastifyErrorHandler(app);
+
+  const io =
+    options.io ??
+    new SocketIOServer(app.server, {
+      cors: {
+        origin: '*',
+        methods: ['GET', 'POST'],
+      },
+    });
+
+  if (
+    'setServer' in container.notificationSender &&
+    typeof (
+      container.notificationSender as {
+        setServer?: (server: SocketIOServer) => void;
+      }
+    ).setServer === 'function'
+  ) {
+    (
+      container.notificationSender as {
+        setServer: (server: SocketIOServer) => void;
+      }
+    ).setServer(io);
+  }
+
+  registerSocketHandlers(io);
 
   await registerAuthRoutes(app, container);
   await registerSessionRoutes(app, container);
@@ -71,9 +101,27 @@ export async function createApp(
     timer.unref();
   }
 
-  app.addHook('onClose', async () => {
-    stopBackgroundTimer();
+  let isIoClosed = false;
+  const closeIo = async () => {
+    if (!isIoClosed) {
+      isIoClosed = true;
+      io.disconnectSockets(true);
+      await new Promise<void>((resolve) => {
+        io.close(() => {
+          resolve();
+        });
+      });
+    }
+  };
+
+  app.addHook('preClose', async () => {
+    await closeIo();
   });
 
-  return { app, container, stopBackgroundTimer };
+  app.addHook('onClose', async () => {
+    stopBackgroundTimer();
+    await closeIo();
+  });
+
+  return { app, container, stopBackgroundTimer, io };
 }
