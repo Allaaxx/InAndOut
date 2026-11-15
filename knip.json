@@ -1,0 +1,62 @@
+{
+  "$schema": "https://unpkg.com/knip@5/overview.json",
+  "entry": [
+    "index.html",
+    "src/client/main.tsx",
+    "src/server/main/server.ts",
+    "prisma/seed.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "tailwind.config.js",
+    "postcss.config.js",
+    "apps/*/src/index.ts"
+  ],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    "apps/**/*.{ts,tsx}"
+  ],
+  "ignore": [
+    "dist/**",
+    "build/**"
+  ],
+  "workspaces": {
+    ".": {
+      "entry": [
+        "index.html",
+        "src/client/main.tsx",
+        "src/server/main/server.ts",
+        "prisma/seed.ts",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "tailwind.config.js",
+        "postcss.config.js"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignore": [
+        "dist/**",
+        "build/**"
+      ]
+    },
+    "apps/*": {
+      "entry": [
+        "src/index.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignore": [
+        "dist/**"
+      ]
+    }
+  },
+  "ignoreDependencies": [
+    "@radix-ui/react-slot",
+    "react-router-dom"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "types": "off"
+  }
+}

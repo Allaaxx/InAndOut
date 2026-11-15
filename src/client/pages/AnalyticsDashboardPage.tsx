@@ -788,5 +788,3 @@ export function AnalyticsDashboardPage({
     </div>
   );
 }
-
-export default AnalyticsDashboardPage;

@@ -91,5 +91,3 @@ export async function registerMovementRoutes(
     }
   );
 }
-
-export { registerMovementRoutes as registerMovementExitRoutes };

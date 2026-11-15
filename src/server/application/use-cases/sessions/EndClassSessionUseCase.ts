@@ -95,5 +95,3 @@ export class EndClassSessionUseCase {
     };
   }
 }
-
-export { EndClassSessionUseCase as EndSessionUseCase };

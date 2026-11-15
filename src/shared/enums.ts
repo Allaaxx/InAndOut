@@ -50,8 +50,3 @@ export const INCIDENT_OUTCOME_LABELS: Record<IncidentOutcome, string> = {
   [IncidentOutcome.EVASION]: 'Evasão',
 };
 
-/**
- * @deprecated Import directly from `@shared/formatters`.
- */
-export { formatPublicStudentName } from './formatters';
-

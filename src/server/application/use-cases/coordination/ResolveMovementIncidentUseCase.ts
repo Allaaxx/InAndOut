@@ -82,5 +82,3 @@ export class ResolveMovementIncidentUseCase {
     return { movement: dto };
   }
 }
-
-export { ResolveMovementIncidentUseCase as ResolveMovementUseCase };
