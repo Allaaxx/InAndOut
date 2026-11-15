@@ -38,7 +38,6 @@ describe('Quality Seam: Knip Dead-Code & Unused Dependency Auditor', () => {
       'vitest.config.ts',
       'tailwind.config.js',
       'postcss.config.js',
-      'apps/*/src/index.ts',
     ];
 
     for (const entry of expectedEntrypoints) {
@@ -46,7 +45,6 @@ describe('Quality Seam: Knip Dead-Code & Unused Dependency Auditor', () => {
     }
 
     expect(config.project).toContain('src/**/*.{ts,tsx}');
-    expect(config.project).toContain('apps/**/*.{ts,tsx}');
 
     expect(config.ignoreDependencies).toBeDefined();
     expect(config.ignoreDependencies).toContain('@radix-ui/react-slot');

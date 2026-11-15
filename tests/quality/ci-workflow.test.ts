@@ -56,34 +56,30 @@ describe('Quality Seam: Continuous Integration & Smoke Test Pipeline', () => {
     const content = fs.readFileSync(ciWorkflowPath, 'utf-8');
 
     expect(content).toContain('pnpm run build');
-    expect(content).toContain('apps/server/dist/index.js');
-    expect(content).toContain('apps/client/dist/index.js');
+    expect(content).toContain('dist/index.html');
     expect(content).toMatch(
-      /test -f apps\/server\/dist\/index\.js\s*&&\s*test -f apps\/client\/dist\/index\.js/,
+      /test -f dist\/index\.html\s*&&\s*test -d dist\/assets/,
     );
   });
 
-  it('executes build smoke test assertion cleanly against existing workspace dist artifacts', () => {
+  it('executes build smoke test assertion cleanly against existing dist artifacts', () => {
     // Ensure build is executed first so artifacts exist
     execSync('pnpm run build', {
       cwd: rootDir,
       stdio: 'pipe',
     });
 
-    const serverDist = path.join(rootDir, 'apps/server/dist/index.js');
-    const clientDist = path.join(rootDir, 'apps/client/dist/index.js');
+    const indexHtml = path.join(rootDir, 'dist/index.html');
+    const assetsDir = path.join(rootDir, 'dist/assets');
 
-    expect(fs.existsSync(serverDist)).toBe(true);
-    expect(fs.existsSync(clientDist)).toBe(true);
+    expect(fs.existsSync(indexHtml)).toBe(true);
+    expect(fs.existsSync(assetsDir)).toBe(true);
 
     expect(() => {
-      execSync(
-        'test -f apps/server/dist/index.js && test -f apps/client/dist/index.js',
-        {
-          cwd: rootDir,
-          stdio: 'pipe',
-        },
-      );
+      execSync('test -f dist/index.html && test -d dist/assets', {
+        cwd: rootDir,
+        stdio: 'pipe',
+      });
     }).not.toThrow();
   });
 });

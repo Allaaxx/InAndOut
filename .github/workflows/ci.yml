@@ -44,8 +44,8 @@ jobs:
       - name: Automated tests (Vitest)
         run: pnpm test
 
-      - name: Build workspace packages
+      - name: Build production bundle
         run: pnpm run build
 
       - name: Build smoke test artifacts assertion
-        run: test -f apps/server/dist/index.js && test -f apps/client/dist/index.js
+        run: test -f dist/index.html && test -d dist/assets

@@ -6,8 +6,8 @@
   "scripts": {
     "dev:server": "node --import tsx src/server/main/server.ts",
     "dev:client": "vite",
-    "build": "pnpm -r run build",
-    "typecheck": "pnpm -r run typecheck",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
