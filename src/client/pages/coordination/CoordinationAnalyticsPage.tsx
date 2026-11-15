@@ -10,7 +10,7 @@ import {
 } from '@client/components/ui/Card';
 import { toast } from '@client/components/ui/Sonner';
 import { api } from '@client/services/api';
-import { downloadBlob } from '@client/services/download';
+import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type { SchoolOverviewAnalyticsDTO } from '@shared/dtos';
 import {
   AlertTriangle,
@@ -81,9 +81,8 @@ export function CoordinationAnalyticsPage({
       };
 
       const blob = await api.exportAnalytics(params, token);
-      const extension =
-        format === 'pdf' ? 'pdf' : format === 'csv' ? 'csv' : 'xlsx';
-      downloadBlob(blob, `relatorio-movimentacoes.${extension}`);
+      const filename = buildReportFilename(format);
+      downloadBlob(blob, filename);
       toast.success(
         `Relatório (${format.toUpperCase()}) exportado com sucesso.`,
       );

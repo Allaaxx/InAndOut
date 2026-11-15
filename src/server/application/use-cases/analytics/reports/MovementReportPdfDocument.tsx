@@ -140,13 +140,14 @@ const styles = StyleSheet.create({
   colExit: { width: '6%', textAlign: 'center' },
   colReturn: { width: '6%', textAlign: 'center' },
   colRa: { width: '7%' },
-  colStudent: { width: '21%' },
-  colClass: { width: '6%', textAlign: 'center' },
-  colSubject: { width: '13%' },
+  colStudent: { width: '18%' },
+  colClass: { width: '5%', textAlign: 'center' },
+  colSubject: { width: '12%' },
   colDuration: { width: '7%', textAlign: 'center' },
   colLimit: { width: '6%', textAlign: 'center' },
-  colStatus: { width: '10%' },
-  colOutcome: { width: '10%' },
+  colStatus: { width: '9%' },
+  colOutcome: { width: '9%' },
+  colAttendance: { width: '7%', textAlign: 'center' },
   emptyMessage: {
     textAlign: 'center',
     paddingVertical: 14,
@@ -217,7 +218,7 @@ export function MovementReportPdfDocument({
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{stats.escalatedCount}</Text>
-            <Text style={styles.statLabel}>Escalonadas / Críticas</Text>
+            <Text style={styles.statLabel}>Ocorrências Escaladas</Text>
           </View>
         </View>
 
@@ -248,6 +249,9 @@ export function MovementReportPdfDocument({
             </Text>
             <Text style={[styles.tableHeaderCell, styles.colOutcome]}>
               Desfecho
+            </Text>
+            <Text style={[styles.tableHeaderCell, styles.colAttendance]}>
+              % Presença
             </Text>
           </View>
 
@@ -295,6 +299,9 @@ export function MovementReportPdfDocument({
                   </Text>
                   <Text style={[styles.tableCell, styles.colOutcome]}>
                     {m.outcome}
+                  </Text>
+                  <Text style={[styles.tableCell, styles.colAttendance]}>
+                    {m.attendance}
                   </Text>
                 </View>
               );

@@ -18,6 +18,7 @@ import {
   TabsTrigger,
 } from '@client/components/ui/Tabs';
 import { api } from '@client/services/api';
+import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type {
   MovementDTO,
   SchoolOverviewAnalyticsDTO,
@@ -143,9 +144,11 @@ export function AnalyticsDashboardPage({
   ) => {
     try {
       setExporting(true);
+      const studentRa =
+        targetRa || (studentReport ? studentReport.student.ra : undefined);
       const params = {
         format,
-        ra: targetRa || (studentReport ? studentReport.student.ra : undefined),
+        ra: studentRa,
         classCode:
           !targetRa && selectedClassCode !== 'TODOS'
             ? selectedClassCode
@@ -155,16 +158,8 @@ export function AnalyticsDashboardPage({
       };
 
       const blob = await api.exportAnalytics(params, token);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const extension =
-        format === 'pdf' ? 'pdf' : format === 'csv' ? 'csv' : 'xlsx';
-      a.download = `relatorio-movimentacoes.${extension}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      const filename = buildReportFilename(format, studentRa);
+      downloadBlob(blob, filename);
     } catch (err) {
       alert(
         err instanceof Error

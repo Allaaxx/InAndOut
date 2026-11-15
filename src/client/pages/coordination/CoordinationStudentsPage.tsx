@@ -10,7 +10,7 @@ import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
 import { Input } from '@client/components/ui/Input';
 import { toast } from '@client/components/ui/Sonner';
 import { api } from '@client/services/api';
-import { downloadBlob } from '@client/services/download';
+import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type { MovementDTO, StudentHistoryReportDTO } from '@shared/dtos';
 import { MovementStatus } from '@shared/enums';
 import {
@@ -79,17 +79,18 @@ export function CoordinationStudentsPage({
   ) => {
     try {
       setExporting(true);
+      const studentRa =
+        targetRa || (studentReport ? studentReport.student.ra : undefined);
       const params = {
         format,
-        ra: targetRa || (studentReport ? studentReport.student.ra : undefined),
+        ra: studentRa,
         startDate: studentStartDate || undefined,
         endDate: studentEndDate || undefined,
       };
 
       const blob = await api.exportAnalytics(params, token);
-      const extension =
-        format === 'pdf' ? 'pdf' : format === 'csv' ? 'csv' : 'xlsx';
-      downloadBlob(blob, `relatorio-movimentacoes.${extension}`);
+      const filename = buildReportFilename(format, studentRa);
+      downloadBlob(blob, filename);
       toast.success(
         `Relatório (${format.toUpperCase()}) exportado com sucesso.`,
       );
