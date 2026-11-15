@@ -200,11 +200,13 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
     ).toBeInTheDocument();
   });
 
-  it('triggers PDF and CSV export when clicking export buttons', async () => {
+  it('triggers PDF and Excel export when clicking export buttons', async () => {
     const user = userEvent.setup();
     vi.mocked(api.getStudentHistory).mockResolvedValue(mockStudentHistory);
     vi.mocked(api.exportAnalytics).mockResolvedValue(
-      new Blob(['dummy'], { type: 'text/csv' }),
+      new Blob(['dummy'], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      }),
     );
 
     // Mock URL.createObjectURL and URL.revokeObjectURL
@@ -229,12 +231,14 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
 
     await screen.findByText('Lucas Silva');
 
-    // Click Exportar CSV
-    const exportCsvBtn = screen.getByRole('button', { name: /Exportar CSV/i });
-    await user.click(exportCsvBtn);
+    // Click Exportar Excel
+    const exportExcelBtn = screen.getByRole('button', {
+      name: /Exportar Excel/i,
+    });
+    await user.click(exportExcelBtn);
 
     expect(api.exportAnalytics).toHaveBeenCalledWith(
-      expect.objectContaining({ format: 'csv' }),
+      expect.objectContaining({ format: 'xlsx' }),
       'test-token',
     );
 

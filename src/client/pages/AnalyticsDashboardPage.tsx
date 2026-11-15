@@ -18,6 +18,7 @@ import {
   TabsTrigger,
 } from '@client/components/ui/Tabs';
 import { api } from '@client/services/api';
+import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type {
   MovementDTO,
   SchoolOverviewAnalyticsDTO,
@@ -137,12 +138,17 @@ export function AnalyticsDashboardPage({
     }
   };
 
-  const handleExport = async (format: 'csv' | 'pdf', targetRa?: string) => {
+  const handleExport = async (
+    format: 'xlsx' | 'pdf' | 'csv',
+    targetRa?: string,
+  ) => {
     try {
       setExporting(true);
+      const studentRa =
+        targetRa || (studentReport ? studentReport.student.ra : undefined);
       const params = {
         format,
-        ra: targetRa || (studentReport ? studentReport.student.ra : undefined),
+        ra: studentRa,
         classCode:
           !targetRa && selectedClassCode !== 'TODOS'
             ? selectedClassCode
@@ -152,14 +158,8 @@ export function AnalyticsDashboardPage({
       };
 
       const blob = await api.exportAnalytics(params, token);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `relatorio-${format === 'csv' ? 'movimentacoes.csv' : 'movimentacoes.pdf'}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+      const filename = buildReportFilename(format, studentRa);
+      downloadBlob(blob, filename);
     } catch (err) {
       alert(
         err instanceof Error
@@ -345,12 +345,12 @@ export function AnalyticsDashboardPage({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleExport('csv')}
+                  onClick={() => handleExport('xlsx')}
                   disabled={exporting}
                   className="flex items-center gap-1.5 text-xs text-slate-700"
                 >
                   <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Exportar CSV</span>
+                  <span>Exportar Excel</span>
                 </Button>
 
                 <Button
@@ -617,13 +617,13 @@ export function AnalyticsDashboardPage({
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      handleExport('csv', studentReport?.student.ra)
+                      handleExport('xlsx', studentReport?.student.ra)
                     }
                     disabled={exporting || !studentReport}
                     className="flex items-center gap-1.5 text-xs text-slate-700"
                   >
                     <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Exportar CSV</span>
+                    <span>Exportar Excel</span>
                   </Button>
 
                   <Button

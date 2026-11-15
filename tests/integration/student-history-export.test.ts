@@ -143,10 +143,26 @@ describe('Controller Seam: Student History & Analytics Export (GET /analytics/st
     // Invalid format -> 400
     const invalidRes = await app.inject({
       method: 'GET',
-      url: '/analytics/export?format=xlsx',
+      url: '/analytics/export?format=docx',
       headers: { authorization: `Bearer ${teacherToken}` },
     });
     expect(invalidRes.statusCode).toBe(400);
+
+    // Valid XLSX export
+    const xlsxRes = await app.inject({
+      method: 'GET',
+      url: '/analytics/export?format=xlsx&ra=1001',
+      headers: { authorization: `Bearer ${teacherToken}` },
+    });
+
+    expect(xlsxRes.statusCode).toBe(200);
+    expect(xlsxRes.headers['content-type']).toBe(
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    expect(xlsxRes.headers['content-disposition']).toMatch(
+      /attachment;\s*filename=.*\.xlsx/,
+    );
+    expect(xlsxRes.rawPayload.byteLength).toBeGreaterThan(1000);
 
     // Valid CSV export
     const csvRes = await app.inject({
@@ -160,7 +176,9 @@ describe('Controller Seam: Student History & Analytics Export (GET /analytics/st
     expect(csvRes.headers['content-disposition']).toMatch(
       /attachment;\s*filename=.*\.csv/,
     );
-    expect(csvRes.body).toContain('Data/Hora,RA,Aluno,Turma');
+    expect(csvRes.body).toContain(
+      'Data Saída;Hora Saída;Hora Retorno;RA;Aluno;Turma',
+    );
     expect(csvRes.body).toContain('1001');
     expect(csvRes.body).toContain('Lucas Silva');
     expect(csvRes.body).toContain('História');

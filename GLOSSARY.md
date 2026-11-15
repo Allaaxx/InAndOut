@@ -95,3 +95,17 @@ _Avoid_: Saída pendente, aluno desaparecido, saída órfã, pendência aberta
 **Desfecho de Ocorrência**:
 Classificação administrativa formal atribuída pela Coordenação para encerrar uma saída escalada ou em trânsito (Retorno Confirmado / Retornou à sala, Atendimento Pedagógico / Atendido na Coordenação, Encaminhado à Enfermaria ou Evasão escolar).
 _Avoid_: Motivo, justificativa, solução, fechamento, encerramento de ticket
+
+### Exportações e Métricas
+
+**Relatório de Movimentações**:
+Documento analítico consolidado que lista os registros de saída e métricas associadas para uma turma, período ou estudante específico.
+_Avoid_: Extrato, listagem simples, print de tela
+
+**Exportação Analítica**:
+Processamento estruturado de extração de dados históricos de fluxo escolar em arquivos padronizados (PDF executivo diagramado ou planilha XLSX nativa).
+_Avoid_: Download de tabela, dump, export de banco
+
+**Formato de Exportação**:
+Padrão de codificação do arquivo gerado pelo caso de uso analítico (`xlsx` para planilha eletrônica nativa do Excel ou `pdf` para documento portátil diagramado).
+_Avoid_: Tipo de arquivo, extensão livre

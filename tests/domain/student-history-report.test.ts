@@ -219,13 +219,56 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       expect(typeof result.content).toBe('string');
 
       const csvText = result.content as string;
-      expect(csvText).toContain('Data/Hora');
+      expect(csvText).toContain('Data Saída');
       expect(csvText).toContain('RA');
       expect(csvText).toContain('Aluno');
       expect(csvText).toContain('Lucas Silva Pereira');
       expect(csvText).toContain('1001');
       expect(csvText).toContain('Matemática');
       expect(csvText).toContain('RETURNED_NORMAL');
+    });
+
+    it('generates a valid structured Excel (.xlsx) file with worksheets and metadata', async () => {
+      const useCase = new ExportAnalyticsReportUseCase(
+        movementRepo,
+        studentRepo,
+        { clock: () => fixedClock },
+      );
+
+      const mov1 = MovementRecord.create({
+        sessionId: 'sess-1',
+        studentId: 'std-1001',
+        studentRa: '1001',
+        studentFullName: 'Lucas Silva Pereira',
+        classCode: '1A',
+        subject: 'Matemática',
+        allowedLimitMinutes: 10,
+        startedAt: new Date('2026-03-10T08:00:00.000Z'),
+      });
+      mov1.registerReturn(new Date('2026-03-10T08:05:00.000Z'), 50);
+      await movementRepo.save(mov1);
+
+      const result = await useCase.execute({ format: 'xlsx', classCode: '1A' });
+
+      expect(result.contentType).toBe(
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      expect(result.filename).toMatch(/\.xlsx$/);
+      expect(Buffer.isBuffer(result.content)).toBe(true);
+
+      const ExcelJS = (await import('exceljs')).default;
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(
+        result.content as unknown as import('exceljs').Buffer,
+      );
+
+      const worksheet = workbook.getWorksheet('Movimentações');
+      expect(worksheet).toBeDefined();
+      expect(worksheet?.getCell('A1').value).toContain('InAndOut');
+      expect(worksheet?.getRow(6).getCell(1).value).toBe('Data Saída');
+      expect(worksheet?.getRow(6).getCell(5).value).toBe('Aluno');
+      expect(worksheet?.getRow(7).getCell(4).value).toBe('1001');
+      expect(worksheet?.getRow(7).getCell(5).value).toBe('Lucas Silva Pereira');
     });
 
     it('generates a valid PDF document payload beginning with %PDF- header', async () => {

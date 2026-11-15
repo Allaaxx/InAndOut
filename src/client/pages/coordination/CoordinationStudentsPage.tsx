@@ -10,7 +10,7 @@ import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
 import { Input } from '@client/components/ui/Input';
 import { toast } from '@client/components/ui/Sonner';
 import { api } from '@client/services/api';
-import { downloadBlob } from '@client/services/download';
+import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type { MovementDTO, StudentHistoryReportDTO } from '@shared/dtos';
 import { MovementStatus } from '@shared/enums';
 import {
@@ -73,21 +73,24 @@ export function CoordinationStudentsPage({
     }
   };
 
-  const handleExport = async (format: 'csv' | 'pdf', targetRa?: string) => {
+  const handleExport = async (
+    format: 'xlsx' | 'pdf' | 'csv',
+    targetRa?: string,
+  ) => {
     try {
       setExporting(true);
+      const studentRa =
+        targetRa || (studentReport ? studentReport.student.ra : undefined);
       const params = {
         format,
-        ra: targetRa || (studentReport ? studentReport.student.ra : undefined),
+        ra: studentRa,
         startDate: studentStartDate || undefined,
         endDate: studentEndDate || undefined,
       };
 
       const blob = await api.exportAnalytics(params, token);
-      downloadBlob(
-        blob,
-        `relatorio-${format === 'csv' ? 'movimentacoes.csv' : 'movimentacoes.pdf'}`,
-      );
+      const filename = buildReportFilename(format, studentRa);
+      downloadBlob(blob, filename);
       toast.success(
         `Relatório (${format.toUpperCase()}) exportado com sucesso.`,
       );
@@ -280,12 +283,12 @@ export function CoordinationStudentsPage({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleExport('csv', studentReport.student.ra)}
+                onClick={() => handleExport('xlsx', studentReport.student.ra)}
                 disabled={exporting}
                 className="flex items-center gap-1.5 text-xs text-slate-700"
               >
                 <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                <span>Exportar CSV</span>
+                <span>Exportar Excel</span>
               </Button>
               <Button
                 variant="outline"

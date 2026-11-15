@@ -331,7 +331,7 @@ export interface StudentHistoryQueryDTO {
 }
 
 export interface ExportAnalyticsQueryDTO {
-  format?: 'csv' | 'pdf';
+  format?: 'xlsx' | 'pdf' | 'csv';
   ra?: string;
   classCode?: string;
   startDate?: string;
