@@ -10,6 +10,13 @@ import { InMemoryClassSessionRepository } from '@server/infrastructure/repositor
 import { InMemoryStudentRepository } from '@server/infrastructure/repositories/InMemoryStudentRepository';
 import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
 import { InMemoryWaitingQueueRepository } from '@server/infrastructure/repositories/InMemoryWaitingQueueRepository';
+import {
+  PrismaUserRepository,
+  PrismaClassSessionRepository,
+  PrismaStudentRepository,
+  PrismaMovementRecordRepository,
+  PrismaWaitingQueueRepository,
+} from '@server/infrastructure/repositories/prisma';
 import { JwtTokenService } from '@server/infrastructure/services/JwtTokenService';
 import { SocketNotificationSender } from '@server/infrastructure/services/SocketNotificationSender';
 
@@ -28,14 +35,40 @@ export function createContainer(
   overrides: Partial<AppContainer> = {}
 ): AppContainer {
   const clock = overrides.clock ?? (() => new Date());
-  const userRepo = overrides.userRepo ?? new InMemoryUserRepository();
+  const useDatabase = Boolean(
+    process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== ''
+  );
+
+  const userRepo =
+    overrides.userRepo ??
+    (useDatabase
+      ? new PrismaUserRepository()
+      : new InMemoryUserRepository());
+
   const sessionRepo =
-    overrides.sessionRepo ?? new InMemoryClassSessionRepository();
-  const studentRepo = overrides.studentRepo ?? new InMemoryStudentRepository();
+    overrides.sessionRepo ??
+    (useDatabase
+      ? new PrismaClassSessionRepository()
+      : new InMemoryClassSessionRepository());
+
+  const studentRepo =
+    overrides.studentRepo ??
+    (useDatabase
+      ? new PrismaStudentRepository()
+      : new InMemoryStudentRepository());
+
   const movementRepo =
-    overrides.movementRepo ?? new InMemoryMovementRecordRepository();
+    overrides.movementRepo ??
+    (useDatabase
+      ? new PrismaMovementRecordRepository()
+      : new InMemoryMovementRecordRepository());
+
   const queueRepo =
-    overrides.queueRepo ?? new InMemoryWaitingQueueRepository();
+    overrides.queueRepo ??
+    (useDatabase
+      ? new PrismaWaitingQueueRepository()
+      : new InMemoryWaitingQueueRepository());
+
   const tokenService =
     overrides.tokenService ?? new JwtTokenService({ clock });
   const notificationSender =
