@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@9.15.4",
   "scripts": {
-    "dev:server": "node --import tsx src/server/main/server.ts",
+    "dev:server": "node --env-file=.env --import tsx src/server/main/server.ts",
     "dev:client": "vite",
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
@@ -17,7 +17,13 @@
     "test:watch": "vitest",
     "prepare": "husky",
     "pre-commit": "lint-staged && pnpm run typecheck",
-    "audit:deps": "knip"
+    "audit:deps": "knip",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",

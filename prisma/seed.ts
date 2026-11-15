@@ -172,6 +172,89 @@ export async function main(): Promise<void> {
   console.log(
     `✅ Seeded ${students.length} students across turmas 1A, 2B, and 3C.`,
   );
+
+  // 3. Seed Class Sessions (Salas e Sessões Pedagógicas)
+  const sessions = [
+    {
+      id: 'session-1',
+      teacherId: 'teacher-1',
+      teacherName: 'Prof. Carlos Eduardo',
+      roomId: 'SALA-01',
+      classCode: '1A',
+      subject: 'História',
+      status: 'ACTIVE',
+      startedAt: new Date(),
+      durationMinutes: 50,
+      defaultTimeLimitMinutes: 10,
+    },
+    {
+      id: 'session-2',
+      teacherId: 'teacher-2',
+      teacherName: 'Profª. Fernanda Souza',
+      roomId: 'SALA-02',
+      classCode: '2B',
+      subject: 'Matemática',
+      status: 'ACTIVE',
+      startedAt: new Date(),
+      durationMinutes: 50,
+      defaultTimeLimitMinutes: 10,
+    },
+  ];
+
+  for (const session of sessions) {
+    await prisma.classSession.upsert({
+      where: { id: session.id },
+      create: session,
+      update: session,
+    });
+  }
+
+  console.log(
+    `✅ Seeded ${sessions.length} class sessions (SALA-01, SALA-02).`,
+  );
+
+  // 4. Seed Initial Movement Record and Waiting Queue Entry (Relações ativas)
+  const initialMovement = {
+    id: 'mov-seed-1',
+    sessionId: 'session-1',
+    studentId: 'student-1001',
+    studentRa: '1001',
+    studentFullName: 'Lucas Silva',
+    studentPublicName: 'Lucas S.',
+    classCode: '1A',
+    subject: 'História',
+    roomId: 'SALA-01',
+    teacherName: 'Prof. Carlos Eduardo',
+    startedAt: new Date(),
+    status: 'IN_TRANSIT',
+    allowedLimitMinutes: 10,
+  };
+
+  await prisma.movementRecord.upsert({
+    where: { id: initialMovement.id },
+    create: initialMovement,
+    update: initialMovement,
+  });
+
+  const initialQueue = {
+    id: 'queue-seed-1',
+    sessionId: 'session-1',
+    studentRa: '1002',
+    studentFullName: 'João Mendes',
+    studentPublicName: 'João M.',
+    classCode: '1A',
+    position: 1,
+    enqueuedAt: new Date(),
+    status: 'WAITING',
+  };
+
+  await prisma.waitingQueueEntry.upsert({
+    where: { id: initialQueue.id },
+    create: initialQueue,
+    update: initialQueue,
+  });
+
+  console.log('✅ Seeded initial movement record and waiting queue entry.');
   console.log('✨ Seed completed successfully!');
 }
 

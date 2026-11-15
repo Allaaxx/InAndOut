@@ -35,7 +35,11 @@ export class GetStudentHistoryReportUseCase {
   public async execute(
     input: GetStudentHistoryReportInput,
   ): Promise<StudentHistoryReportDTO> {
-    const ra = (input.ra ?? '').trim();
+    const ra = (
+      input.ra ??
+      (input as unknown as { studentRa?: string }).studentRa ??
+      ''
+    ).trim();
     if (!ra) {
       throw new Error('O RA do estudante é obrigatório.');
     }
