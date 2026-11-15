@@ -17,5 +17,19 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    profiles: ["app"]
+    build: .
+    container_name: inandout-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inandout_user}:${POSTGRES_PASSWORD:-inandout_pass}@postgres:5432/${POSTGRES_DB:-inandout}?schema=public
+      PORT: 3000
+      HOST: 0.0.0.0
+    ports:
+      - "3000:3000"
+
 volumes:
   postgres_data:
