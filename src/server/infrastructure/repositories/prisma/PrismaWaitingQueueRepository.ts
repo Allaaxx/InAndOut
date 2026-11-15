@@ -1,8 +1,11 @@
-import { PrismaClient, WaitingQueueEntry as PrismaQueueModel } from '@prisma/client';
+import type {
+  PrismaClient,
+  WaitingQueueEntry as PrismaQueueModel,
+} from '@prisma/client';
 import { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
-import { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
-import { QueueEntryStatus } from '@shared/enums';
+import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
 import { getPrismaClient } from '@server/infrastructure/database/prismaClient';
+import { QueueEntryStatus } from '@shared/enums';
 
 const ACTIVE_QUEUE_STATUSES: string[] = [
   QueueEntryStatus.WAITING,
@@ -51,7 +54,7 @@ export class PrismaWaitingQueueRepository implements IWaitingQueueRepository {
   }
 
   public async findActiveBySessionId(
-    sessionId: string
+    sessionId: string,
   ): Promise<WaitingQueueEntry[]> {
     const rows = await this.prisma.waitingQueueEntry.findMany({
       where: {
@@ -70,7 +73,7 @@ export class PrismaWaitingQueueRepository implements IWaitingQueueRepository {
 
   public async findActiveByStudentRa(
     ra: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<WaitingQueueEntry | null> {
     const normalized = ra.trim();
     const row = await this.prisma.waitingQueueEntry.findFirst({
@@ -84,7 +87,9 @@ export class PrismaWaitingQueueRepository implements IWaitingQueueRepository {
     return row ? this.toDomain(row) : null;
   }
 
-  public async findBySessionId(sessionId: string): Promise<WaitingQueueEntry[]> {
+  public async findBySessionId(
+    sessionId: string,
+  ): Promise<WaitingQueueEntry[]> {
     const rows = await this.prisma.waitingQueueEntry.findMany({
       where: { sessionId },
       orderBy: [{ enqueuedAt: 'asc' }, { position: 'asc' }],

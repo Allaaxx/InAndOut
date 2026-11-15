@@ -1,3 +1,4 @@
+import { disconnectPrisma } from '@server/infrastructure/database/prismaClient';
 import { createApp } from './app';
 
 async function bootstrap() {
@@ -11,6 +12,7 @@ async function bootstrap() {
     process.on(signal, async () => {
       console.log(`Received ${signal}, shutting down gracefully...`);
       await app.close();
+      await disconnectPrisma();
       process.exit(0);
     });
   }

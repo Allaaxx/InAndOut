@@ -10,7 +10,7 @@ export const Input = React.forwardRef<
     type={type}
     className={cn(
       'flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 disabled:cursor-not-allowed disabled:opacity-50',
-      className
+      className,
     )}
     {...props}
   />
@@ -21,6 +21,7 @@ export const Label = React.forwardRef<
   HTMLLabelElement,
   React.LabelHTMLAttributes<HTMLLabelElement>
 >(({ className, ...props }, ref) => (
+  // biome-ignore lint/a11y/noLabelWithoutControl: Reusable component receives htmlFor or children via props
   <label
     ref={ref}
     className={cn('text-sm font-medium leading-none text-slate-700', className)}

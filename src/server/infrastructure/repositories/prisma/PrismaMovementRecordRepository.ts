@@ -1,8 +1,11 @@
-import { PrismaClient, MovementRecord as PrismaMovementModel } from '@prisma/client';
+import type {
+  PrismaClient,
+  MovementRecord as PrismaMovementModel,
+} from '@prisma/client';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IncidentOutcome, MovementStatus } from '@shared/enums';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 import { getPrismaClient } from '@server/infrastructure/database/prismaClient';
+import { type IncidentOutcome, MovementStatus } from '@shared/enums';
 
 const ACTIVE_STATUSES: string[] = [
   MovementStatus.IN_TRANSIT,
@@ -10,7 +13,9 @@ const ACTIVE_STATUSES: string[] = [
   MovementStatus.ESCALATED_TO_COORDINATION,
 ];
 
-export class PrismaMovementRecordRepository implements IMovementRecordRepository {
+export class PrismaMovementRecordRepository
+  implements IMovementRecordRepository
+{
   private prisma: PrismaClient;
 
   constructor(prisma?: PrismaClient) {
@@ -69,7 +74,9 @@ export class PrismaMovementRecordRepository implements IMovementRecordRepository
     return row ? this.toDomain(row) : null;
   }
 
-  public async findActiveBySessionId(sessionId: string): Promise<MovementRecord[]> {
+  public async findActiveBySessionId(
+    sessionId: string,
+  ): Promise<MovementRecord[]> {
     const rows = await this.prisma.movementRecord.findMany({
       where: {
         sessionId,
@@ -82,7 +89,7 @@ export class PrismaMovementRecordRepository implements IMovementRecordRepository
 
   public async findActiveByStudentRa(
     ra: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<MovementRecord | null> {
     const normalized = ra.trim();
     const row = await this.prisma.movementRecord.findFirst({

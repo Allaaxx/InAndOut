@@ -1,8 +1,11 @@
-import React, { useState, useCallback } from 'react';
-import { MovementDTO, UserDTO, WaitingQueueDTO } from '@shared/dtos';
-import { QueueEntryStatus } from '@shared/enums';
-import { Button } from '@client/components/ui/Button';
+import { ActiveExitCard } from '@client/components/terminal/ActiveExitCard';
+import { KeypadForm } from '@client/components/terminal/KeypadForm';
+import { PinLockModal } from '@client/components/terminal/PinLockModal';
+import { SessionHeader } from '@client/components/terminal/SessionHeader';
+import { TeacherOverrideControls } from '@client/components/terminal/TeacherOverrideControls';
+import { WaitingQueuePanel } from '@client/components/terminal/WaitingQueuePanel';
 import { Badge } from '@client/components/ui/Badge';
+import { Button } from '@client/components/ui/Button';
 import {
   Card,
   CardContent,
@@ -10,15 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@client/components/ui/Card';
-import { PinLockModal } from '@client/components/terminal/PinLockModal';
-import { SessionHeader } from '@client/components/terminal/SessionHeader';
-import { KeypadForm } from '@client/components/terminal/KeypadForm';
-import { ActiveExitCard } from '@client/components/terminal/ActiveExitCard';
-import { WaitingQueuePanel } from '@client/components/terminal/WaitingQueuePanel';
-import { TeacherOverrideControls } from '@client/components/terminal/TeacherOverrideControls';
 import { useClassSession } from '@client/hooks/useClassSession';
 import { useSocket } from '@client/hooks/useSocket';
 import { api } from '@client/services/api';
+import type { MovementDTO, UserDTO, WaitingQueueDTO } from '@shared/dtos';
+import { QueueEntryStatus } from '@shared/enums';
+import type React from 'react';
+import { useCallback, useState } from 'react';
 
 const CLASS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B'];
 const SUBJECT_OPTIONS = [
@@ -80,36 +81,36 @@ export function TerminalPage({
         return exists ? prev : [...prev, movement];
       });
     },
-    [setActiveMovements]
+    [setActiveMovements],
   );
 
   const handleMovementUpdated = useCallback(
     (movement: MovementDTO) => {
       setActiveMovements((prev) =>
-        prev.map((m) => (m.id === movement.id ? movement : m))
+        prev.map((m) => (m.id === movement.id ? movement : m)),
       );
     },
-    [setActiveMovements]
+    [setActiveMovements],
   );
 
   const handleMovementReturn = useCallback(
     (movement: MovementDTO) => {
       setActiveMovements((prev) =>
         prev.filter(
-          (m) => m.id !== movement.id && m.studentRa !== movement.studentRa
-        )
+          (m) => m.id !== movement.id && m.studentRa !== movement.studentRa,
+        ),
       );
       setLastReturnedMovement(movement);
       setReturnConfirmationMessage('Retorno registrado com sucesso');
     },
-    [setActiveMovements]
+    [setActiveMovements],
   );
 
   const handleQueueUpdated = useCallback(
     (payload: { sessionId: string; queue: WaitingQueueDTO[] }) => {
       setQueue(payload.queue);
     },
-    [setQueue]
+    [setQueue],
   );
 
   const handleQueueSlotCalled = useCallback(
@@ -119,18 +120,20 @@ export function TerminalPage({
       expiresAt: string;
     }) => {
       setQueue((prev) => {
-        const exists = prev.some((q) => q.studentRa === payload.entry.studentRa);
+        const exists = prev.some(
+          (q) => q.studentRa === payload.entry.studentRa,
+        );
         if (exists) {
           return prev.map((q) =>
             q.studentRa === payload.entry.studentRa
               ? { ...q, ...payload.entry, expiresAt: payload.expiresAt }
-              : q
+              : q,
           );
         }
         return [...prev, { ...payload.entry, expiresAt: payload.expiresAt }];
       });
     },
-    [setQueue]
+    [setQueue],
   );
 
   useSocket({
@@ -175,16 +178,15 @@ export function TerminalPage({
           ra: ra.trim(),
           sessionId: activeSession.id,
         },
-        token
+        token,
       );
       handleMovementReturn(response.movement);
       if (response.nextCalledQueueEntry) {
+        const nextEntry = response.nextCalledQueueEntry;
         setQueue((prev) =>
           prev.map((q) =>
-            q.studentRa === response.nextCalledQueueEntry!.studentRa
-              ? response.nextCalledQueueEntry!
-              : q
-          )
+            q.studentRa === nextEntry.studentRa ? nextEntry : q,
+          ),
         );
       }
       if (response.message) {
@@ -206,7 +208,7 @@ export function TerminalPage({
     if (!activeSession) return;
     const normalizedRa = ra.trim();
     const isCurrentlyOut = activeMovements.some(
-      (m) => m.studentRa === normalizedRa
+      (m) => m.studentRa === normalizedRa,
     );
     if (isCurrentlyOut && typeof api.registerReturn === 'function') {
       await handleRegisterReturn(normalizedRa);
@@ -214,7 +216,8 @@ export function TerminalPage({
     }
 
     const isCalled = queue.some(
-      (q) => q.studentRa === normalizedRa && q.status === QueueEntryStatus.CALLED
+      (q) =>
+        q.studentRa === normalizedRa && q.status === QueueEntryStatus.CALLED,
     );
     if (isCalled && typeof api.claimQueueSlot === 'function') {
       setMovementError(null);
@@ -225,7 +228,7 @@ export function TerminalPage({
             ra: normalizedRa,
             sessionId: activeSession.id,
           },
-          token
+          token,
         );
         handleMovementStarted(response.movement);
         setQueue(response.queue);
@@ -251,7 +254,7 @@ export function TerminalPage({
           ra: normalizedRa,
           sessionId: activeSession.id,
         },
-        token
+        token,
       );
       handleMovementStarted(response.movement);
     } catch (err) {

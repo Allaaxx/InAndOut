@@ -1,4 +1,4 @@
-import { MovementRecord } from '../entities/MovementRecord';
+import type { MovementRecord } from '../entities/MovementRecord';
 
 export interface IMovementRecordRepository {
   save(record: MovementRecord): Promise<void>;
@@ -7,7 +7,7 @@ export interface IMovementRecordRepository {
   findActiveBySessionId(sessionId: string): Promise<MovementRecord[]>;
   findActiveByStudentRa(
     ra: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<MovementRecord | null>;
   findBySessionId(sessionId: string): Promise<MovementRecord[]>;
   findByStudentRa(ra: string): Promise<MovementRecord[]>;

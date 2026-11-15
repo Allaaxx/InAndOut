@@ -1,9 +1,7 @@
-import { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
-import { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
+import type { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
+import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
 
-export class InMemoryWaitingQueueRepository
-  implements IWaitingQueueRepository
-{
+export class InMemoryWaitingQueueRepository implements IWaitingQueueRepository {
   private entries: Map<string, WaitingQueueEntry> = new Map();
 
   public async save(entry: WaitingQueueEntry): Promise<void> {
@@ -19,14 +17,14 @@ export class InMemoryWaitingQueueRepository
   }
 
   public async findActiveBySessionId(
-    sessionId: string
+    sessionId: string,
   ): Promise<WaitingQueueEntry[]> {
     const active = Array.from(this.entries.values())
       .filter((e) => e.sessionId === sessionId && e.isActive())
       .sort(
         (a, b) =>
           a.requestedAt.getTime() - b.requestedAt.getTime() ||
-          a.position - b.position
+          a.position - b.position,
       );
 
     active.forEach((entry, index) => {
@@ -38,7 +36,7 @@ export class InMemoryWaitingQueueRepository
 
   public async findActiveByStudentRa(
     ra: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<WaitingQueueEntry | null> {
     const normalizedRa = ra.trim();
     for (const entry of this.entries.values()) {
@@ -54,10 +52,10 @@ export class InMemoryWaitingQueueRepository
   }
 
   public async findBySessionId(
-    sessionId: string
+    sessionId: string,
   ): Promise<WaitingQueueEntry[]> {
     return Array.from(this.entries.values()).filter(
-      (e) => e.sessionId === sessionId
+      (e) => e.sessionId === sessionId,
     );
   }
 }

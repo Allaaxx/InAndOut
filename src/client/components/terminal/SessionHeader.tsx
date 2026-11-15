@@ -1,7 +1,3 @@
-import React, { useState } from 'react';
-import { ClassSessionDTO } from '@shared/dtos';
-import { Badge } from '@client/components/ui/Badge';
-import { Button } from '@client/components/ui/Button';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -10,6 +6,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@client/components/ui/AlertDialog';
+import { Badge } from '@client/components/ui/Badge';
+import { Button } from '@client/components/ui/Button';
+import type { ClassSessionDTO } from '@shared/dtos';
+import { useState } from 'react';
 
 export interface SessionHeaderProps {
   session: ClassSessionDTO;

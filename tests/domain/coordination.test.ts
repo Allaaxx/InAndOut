@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
-import { MovementRecord } from '@server/domain/entities/MovementRecord';
 import { GetActiveMovementsOverviewUseCase } from '@server/application/use-cases/coordination/GetActiveMovementsOverviewUseCase';
+import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
 import { AlertLevel, MovementStatus } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Domain Seam: GetActiveMovementsOverviewUseCase', () => {
   it('retrieves all active movements across multiple classes with accurate elapsed time and alert level', async () => {
@@ -86,16 +86,18 @@ describe('Domain Seam: GetActiveMovementsOverviewUseCase', () => {
     expect(ids).toContain('mov-3');
     expect(ids).not.toContain('mov-4');
 
-    const mov1DTO = result.movements.find((m) => m.id === 'mov-1')!;
-    expect(mov1DTO.studentPublicName).toBe('Lucas S.');
-    expect(mov1DTO.classCode).toBe('1A');
-    expect(mov1DTO.elapsedMinutes).toBe(9);
-    expect(mov1DTO.alertLevel).toBe(AlertLevel.YELLOW);
+    const mov1DTO = result.movements.find((m) => m.id === 'mov-1');
+    expect(mov1DTO).toBeDefined();
+    expect(mov1DTO?.studentPublicName).toBe('Lucas S.');
+    expect(mov1DTO?.classCode).toBe('1A');
+    expect(mov1DTO?.elapsedMinutes).toBe(9);
+    expect(mov1DTO?.alertLevel).toBe(AlertLevel.YELLOW);
 
-    const mov3DTO = result.movements.find((m) => m.id === 'mov-3')!;
-    expect(mov3DTO.status).toBe(MovementStatus.ESCALATED_TO_COORDINATION);
-    expect(mov3DTO.alertLevel).toBe(AlertLevel.RED);
-    expect(mov3DTO.escalationType).toBe('MANUAL');
+    const mov3DTO = result.movements.find((m) => m.id === 'mov-3');
+    expect(mov3DTO).toBeDefined();
+    expect(mov3DTO?.status).toBe(MovementStatus.ESCALATED_TO_COORDINATION);
+    expect(mov3DTO?.alertLevel).toBe(AlertLevel.RED);
+    expect(mov3DTO?.escalationType).toBe('MANUAL');
   });
 
   it('filters movements by classCode and by status', async () => {
@@ -169,6 +171,8 @@ describe('Domain Seam: GetActiveMovementsOverviewUseCase', () => {
 
     const result = await useCase.execute();
     expect(result.movements).toHaveLength(1);
-    expect(result.movements[0].status).toBe(MovementStatus.IN_TRANSIT_UNRESOLVED);
+    expect(result.movements[0].status).toBe(
+      MovementStatus.IN_TRANSIT_UNRESOLVED,
+    );
   });
 });

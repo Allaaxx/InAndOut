@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import {
+import type {
   ITokenService,
   TokenPayload,
 } from '@server/application/contracts/ITokenService';
@@ -26,13 +26,13 @@ export class JwtTokenService implements ITokenService {
   }
 
   public signAccessToken(
-    payload: Omit<TokenPayload, 'iat' | 'exp' | 'type'>
+    payload: Omit<TokenPayload, 'iat' | 'exp' | 'type'>,
   ): string {
     return this.sign(payload, 'access', this.accessTokenTtlSeconds);
   }
 
   public signRefreshToken(
-    payload: Omit<TokenPayload, 'iat' | 'exp' | 'type'>
+    payload: Omit<TokenPayload, 'iat' | 'exp' | 'type'>,
   ): string {
     return this.sign(payload, 'refresh', this.refreshTokenTtlSeconds);
   }
@@ -56,7 +56,7 @@ export class JwtTokenService implements ITokenService {
   private sign(
     payload: Omit<TokenPayload, 'iat' | 'exp' | 'type'>,
     type: 'access' | 'refresh',
-    ttlSeconds: number
+    ttlSeconds: number,
   ): string {
     const iat = Math.floor(this.clock().getTime() / 1000);
     const exp = iat + ttlSeconds;
@@ -68,10 +68,10 @@ export class JwtTokenService implements ITokenService {
     };
 
     const headerB64 = Buffer.from(
-      JSON.stringify({ alg: 'HS256', typ: 'JWT' })
+      JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
     ).toString('base64url');
     const payloadB64 = Buffer.from(JSON.stringify(fullPayload)).toString(
-      'base64url'
+      'base64url',
     );
     const signature = this.createSignature(`${headerB64}.${payloadB64}`);
     return `${headerB64}.${payloadB64}.${signature}`;
@@ -84,7 +84,7 @@ export class JwtTokenService implements ITokenService {
     }
     const [headerB64, payloadB64, signature] = parts;
     const expectedSignature = this.createSignature(
-      `${headerB64}.${payloadB64}`
+      `${headerB64}.${payloadB64}`,
     );
 
     const sigBuf = Buffer.from(signature);

@@ -1,6 +1,4 @@
-import React from 'react';
 import { Button } from '@client/components/ui/Button';
-import { Input } from '@client/components/ui/Input';
 import {
   Card,
   CardContent,
@@ -8,7 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@client/components/ui/Card';
+import { Input } from '@client/components/ui/Input';
 import { useKeypadInput } from '@client/hooks/useKeypadInput';
+import type React from 'react';
 
 const KEYPAD_DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
@@ -79,8 +79,7 @@ export function KeypadForm({
             />
           </div>
 
-          <div
-            role="group"
+          <fieldset
             aria-label="Teclado numérico virtual"
             className="grid grid-cols-3 gap-2"
           >
@@ -128,7 +127,7 @@ export function KeypadForm({
             >
               Apagar
             </Button>
-          </div>
+          </fieldset>
 
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Button

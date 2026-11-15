@@ -1,8 +1,8 @@
-import { PrismaClient, User as PrismaUserModel } from '@prisma/client';
+import type { PrismaClient, User as PrismaUserModel } from '@prisma/client';
 import { User } from '@server/domain/entities/User';
-import { IUserRepository } from '@server/domain/repositories/IUserRepository';
-import { UserRole } from '@shared/enums';
+import type { IUserRepository } from '@server/domain/repositories/IUserRepository';
 import { getPrismaClient } from '@server/infrastructure/database/prismaClient';
+import type { UserRole } from '@shared/enums';
 
 export class PrismaUserRepository implements IUserRepository {
   private prisma: PrismaClient;

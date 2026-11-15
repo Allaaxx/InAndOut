@@ -28,7 +28,7 @@ globalThis.ResizeObserver = class ResizeObserver {
             },
           } as unknown as ResizeObserverEntry,
         ],
-        this
+        this,
       );
     });
   }

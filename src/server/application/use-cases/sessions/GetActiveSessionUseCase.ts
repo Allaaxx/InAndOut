@@ -1,7 +1,7 @@
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
-import { ActiveSessionResponseDTO } from '@shared/dtos';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
+import type { ActiveSessionResponseDTO } from '@shared/dtos';
 
 export interface GetActiveSessionInput {
   roomId?: string;
@@ -19,7 +19,7 @@ export class GetActiveSessionUseCase {
       movementRepo?: IMovementRecordRepository;
       queueRepo?: IWaitingQueueRepository;
       clock?: () => Date;
-    } = {}
+    } = {},
   ) {
     this.sessionRepo = sessionRepo;
     this.movementRepo = options.movementRepo;
@@ -28,7 +28,7 @@ export class GetActiveSessionUseCase {
   }
 
   public async execute(
-    input: GetActiveSessionInput = {}
+    input: GetActiveSessionInput = {},
   ): Promise<ActiveSessionResponseDTO> {
     const roomId = (input.roomId ?? 'SALA-01').trim() || 'SALA-01';
     const activeSession = await this.sessionRepo.findActiveByRoomId(roomId);
@@ -44,13 +44,13 @@ export class GetActiveSessionUseCase {
     const now = this.clock();
     const activeMovements = this.movementRepo
       ? (await this.movementRepo.findActiveBySessionId(activeSession.id)).map(
-          (m) => m.toDTO(now)
+          (m) => m.toDTO(now),
         )
       : [];
 
     const queue = this.queueRepo
       ? (await this.queueRepo.findActiveBySessionId(activeSession.id)).map(
-          (q) => q.toDTO()
+          (q) => q.toDTO(),
         )
       : [];
 

@@ -1,5 +1,5 @@
-import { UserRole } from '@shared/enums';
-import { UserDTO } from '@shared/dtos';
+import type { UserDTO } from '@shared/dtos';
+import type { UserRole } from '@shared/enums';
 import { PinCode } from '../value-objects/PinCode';
 
 export interface UserProps {
@@ -25,7 +25,7 @@ export class User {
     email: string,
     passwordHash: string,
     role: UserRole,
-    pinCode: PinCode
+    pinCode: PinCode,
   ) {
     this.id = id;
     this.name = name;
@@ -46,7 +46,7 @@ export class User {
       props.email,
       props.passwordHash,
       props.role,
-      pin
+      pin,
     );
   }
 
@@ -59,8 +59,7 @@ export class User {
   }
 
   public updatePin(newPin: string | PinCode): void {
-    this._pinCode =
-      newPin instanceof PinCode ? newPin : PinCode.create(newPin);
+    this._pinCode = newPin instanceof PinCode ? newPin : PinCode.create(newPin);
   }
 
   public toDTO(): UserDTO {

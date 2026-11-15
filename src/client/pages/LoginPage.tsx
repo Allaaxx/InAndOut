@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { Button } from '@client/components/ui/Button';
 import {
   Card,
   CardContent,
@@ -7,8 +7,9 @@ import {
   CardTitle,
 } from '@client/components/ui/Card';
 import { Input, Label } from '@client/components/ui/Input';
-import { Button } from '@client/components/ui/Button';
-import { LoginRequestDTO } from '@shared/dtos';
+import type { LoginRequestDTO } from '@shared/dtos';
+import type React from 'react';
+import { useState } from 'react';
 
 export interface LoginPageProps {
   onLogin: (credentials: LoginRequestDTO) => Promise<void>;
@@ -34,7 +35,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Falha ao autenticar professor.'
+        err instanceof Error ? err.message : 'Falha ao autenticar professor.',
       );
     } finally {
       setLoading(false);
@@ -47,8 +48,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <CardHeader>
           <CardTitle>Acesso do Professor — InAndOut</CardTitle>
           <CardDescription>
-            Autentique-se com seu e-mail institucional e defina seu PIN rápido de
-            4 dígitos para liberar o terminal de sala.
+            Autentique-se com seu e-mail institucional e defina seu PIN rápido
+            de 4 dígitos para liberar o terminal de sala.
           </CardDescription>
         </CardHeader>
         <CardContent>

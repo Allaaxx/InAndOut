@@ -1,16 +1,15 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { TerminalPage } from '@client/pages/TerminalPage';
 import { api } from '@client/services/api';
+import type { MovementDTO } from '@shared/dtos';
 import {
   AlertLevel,
   MovementStatus,
   SessionStatus,
   UserRole,
 } from '@shared/enums';
-import { MovementDTO } from '@shared/dtos';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('socket.io-client', () => ({
   io: vi.fn(() => ({
@@ -117,7 +116,7 @@ describe('Frontend Seam: Teacher Override Controls (Liberação de Emergência &
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     // Room is currently occupied by Lucas S.
@@ -133,7 +132,7 @@ describe('Frontend Seam: Teacher Override Controls (Liberação de Emergência &
     expect(
       await screen.findByRole('heading', {
         name: /Confirmar Liberação de Emergência/i,
-      })
+      }),
     ).toBeInTheDocument();
 
     const raInput = screen.getByLabelText(/RA para Emergência/i);
@@ -154,13 +153,13 @@ describe('Frontend Seam: Teacher Override Controls (Liberação de Emergência &
           sessionId: 'session-101',
           reason: 'Mal-estar súbito',
         },
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
     // Confirmation status banner displays the authorized emergency exit with abbreviated name
     expect(
-      await screen.findByTestId('override-status-banner')
+      await screen.findByTestId('override-status-banner'),
     ).toHaveTextContent(/João M\./i);
   });
 
@@ -205,7 +204,7 @@ describe('Frontend Seam: Teacher Override Controls (Liberação de Emergência &
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     expect(await screen.findByText(/Sala Livre/i)).toBeInTheDocument();
@@ -219,7 +218,7 @@ describe('Frontend Seam: Teacher Override Controls (Liberação de Emergência &
     expect(
       await screen.findByRole('heading', {
         name: /Confirmar Autorização Avulsa/i,
-      })
+      }),
     ).toBeInTheDocument();
 
     const guestRaInput = screen.getByLabelText(/RA do Aluno Avulso/i);
@@ -232,7 +231,7 @@ describe('Frontend Seam: Teacher Override Controls (Liberação de Emergência &
     // First attempt triggers error alert inside modal
     await user.click(confirmGuestBtn);
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      /RA inválido ou não informado/i
+      /RA inválido ou não informado/i,
     );
 
     // Second attempt succeeds
@@ -244,14 +243,14 @@ describe('Frontend Seam: Teacher Override Controls (Liberação de Emergência &
           ra: '2001',
           sessionId: 'session-101',
         }),
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
     // Public terminal displays abbreviated name "Pedro A." and override confirmation banner
     expect(await screen.findByText('Pedro A.')).toBeInTheDocument();
     expect(screen.getByTestId('override-status-banner')).toHaveTextContent(
-      /Autorização avulsa concedida.*Pedro A\./i
+      /Autorização avulsa concedida.*Pedro A\./i,
     );
   });
 });

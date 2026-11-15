@@ -1,7 +1,7 @@
-import { Server as SocketIOServer } from 'socket.io';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
 import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
+import type { Server as SocketIOServer } from 'socket.io';
 
 export class SocketNotificationSender implements INotificationSender {
   private io: SocketIOServer | null;
@@ -52,7 +52,7 @@ export class SocketNotificationSender implements INotificationSender {
 
   public async notifyQueueUpdated(
     sessionId: string,
-    queue: WaitingQueueDTO[]
+    queue: WaitingQueueDTO[],
   ): Promise<void> {
     if (!this.io) return;
     this.io
@@ -62,7 +62,7 @@ export class SocketNotificationSender implements INotificationSender {
 
   public async notifyQueueSlotCalled(
     sessionId: string,
-    entry: WaitingQueueDTO
+    entry: WaitingQueueDTO,
   ): Promise<void> {
     if (!this.io) return;
     this.io
@@ -93,7 +93,7 @@ export class SocketNotificationSender implements INotificationSender {
   }
 
   public async notifyMovementInTransitUnresolved(
-    movement: MovementDTO
+    movement: MovementDTO,
   ): Promise<void> {
     if (!this.io) return;
     this.io

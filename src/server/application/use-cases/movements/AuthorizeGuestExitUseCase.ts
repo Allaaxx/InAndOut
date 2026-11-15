@@ -1,18 +1,15 @@
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
 import { Student } from '@server/domain/entities/Student';
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 import { StudentRA } from '@server/domain/value-objects/StudentRA';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import {
-  GuestExitRequestDTO,
-  RequestExitResponseDTO,
-} from '@shared/dtos';
+import type { GuestExitRequestDTO, RequestExitResponseDTO } from '@shared/dtos';
+import { MovementAuthorizationError } from './AuthorizeEmergencyExitUseCase';
 import {
   MovementValidationError,
   RequestStudentExitUseCase,
 } from './RequestStudentExitUseCase';
-import { MovementAuthorizationError } from './AuthorizeEmergencyExitUseCase';
 
 export interface AuthorizeGuestExitInput extends GuestExitRequestDTO {
   authorizedByTeacherId: string;
@@ -27,7 +24,7 @@ export class AuthorizeGuestExitUseCase {
     studentRepo: IStudentRepository,
     movementRepo: IMovementRecordRepository,
     notificationSender: INotificationSender,
-    options: { clock?: () => Date } = {}
+    options: { clock?: () => Date } = {},
   ) {
     this.studentRepo = studentRepo;
     this.requestExitUseCase = new RequestStudentExitUseCase(
@@ -35,17 +32,17 @@ export class AuthorizeGuestExitUseCase {
       studentRepo,
       movementRepo,
       notificationSender,
-      options
+      options,
     );
   }
 
   public async execute(
-    input: AuthorizeGuestExitInput
+    input: AuthorizeGuestExitInput,
   ): Promise<RequestExitResponseDTO> {
     const teacherId = (input.authorizedByTeacherId ?? '').trim();
     if (!teacherId) {
       throw new MovementAuthorizationError(
-        'A autorização de aluno avulso exige permissão e identificação do professor responsável.'
+        'A autorização de aluno avulso exige permissão e identificação do professor responsável.',
       );
     }
 
@@ -54,7 +51,7 @@ export class AuthorizeGuestExitUseCase {
       raObj = StudentRA.create(input.ra ?? '');
     } catch (err) {
       throw new MovementValidationError(
-        err instanceof Error ? err.message : 'RA inválido.'
+        err instanceof Error ? err.message : 'RA inválido.',
       );
     }
 
@@ -62,8 +59,7 @@ export class AuthorizeGuestExitUseCase {
     if (!student) {
       const guestName =
         (input.fullName ?? '').trim() || `Aluno Visitante ${raObj.value}`;
-      const originClass =
-        (input.originClassCode ?? '').trim() || 'AVULSO';
+      const originClass = (input.originClassCode ?? '').trim() || 'AVULSO';
       student = Student.create({
         ra: raObj,
         fullName: guestName,

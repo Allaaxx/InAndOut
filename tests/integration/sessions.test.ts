@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest';
 import { createApp } from '@server/main/app';
 import { SessionStatus } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Controller Seam: ClassSession Lifecycle Endpoints (app.inject)', () => {
-  async function loginAsTeacher(app: Awaited<ReturnType<typeof createApp>>['app']) {
+  async function loginAsTeacher(
+    app: Awaited<ReturnType<typeof createApp>>['app'],
+  ) {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/login',

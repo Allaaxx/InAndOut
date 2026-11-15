@@ -1,17 +1,16 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { TerminalPage } from '@client/pages/TerminalPage';
 import { ActiveExitCard } from '@client/components/terminal/ActiveExitCard';
+import { TerminalPage } from '@client/pages/TerminalPage';
 import { api } from '@client/services/api';
+import type { MovementDTO } from '@shared/dtos';
 import {
   AlertLevel,
   MovementStatus,
   SessionStatus,
   UserRole,
 } from '@shared/enums';
-import { MovementDTO } from '@shared/dtos';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const socketListeners: Record<string, Array<(payload: unknown) => void>> = {};
 
@@ -26,7 +25,7 @@ vi.mock('socket.io-client', () => ({
     off: vi.fn((event: string, cb: (payload: unknown) => void) => {
       if (socketListeners[event]) {
         socketListeners[event] = socketListeners[event].filter(
-          (fn) => fn !== cb
+          (fn) => fn !== cb,
         );
       }
     }),
@@ -99,19 +98,19 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
     };
 
     const { rerender } = render(
-      <ActiveExitCard activeMovements={[regularMovementGreen]} />
+      <ActiveExitCard activeMovements={[regularMovementGreen]} />,
     );
 
     // GREEN: displays "Em Trânsito" badge, no warning banner, no escalate button
     expect(screen.getByText('Lucas S.')).toBeInTheDocument();
     expect(screen.getByTestId('status-badge-normal')).toHaveTextContent(
-      /Em Trânsito/i
+      /Em Trânsito/i,
     );
     expect(
-      screen.queryByTestId('overdue-warning-banner')
+      screen.queryByTestId('overdue-warning-banner'),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Escalar para Coordenação/i })
+      screen.queryByRole('button', { name: /Escalar para Coordenação/i }),
     ).not.toBeInTheDocument();
 
     // YELLOW: at 80% threshold, badge transitions to warning
@@ -123,10 +122,10 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
 
     rerender(<ActiveExitCard activeMovements={[regularMovementYellow]} />);
     expect(screen.getByTestId('status-badge-warning')).toHaveTextContent(
-      /Atenção/i
+      /Atenção/i,
     );
     expect(
-      screen.queryByTestId('overdue-warning-banner')
+      screen.queryByTestId('overdue-warning-banner'),
     ).not.toBeInTheDocument();
 
     // RED: at > 100% threshold (OVERDUE), badge transitions to red, warning banner appears with 2-minute tolerance window, and escalate button is visible
@@ -140,14 +139,14 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
 
     rerender(<ActiveExitCard activeMovements={[regularMovementRed]} />);
     expect(screen.getByTestId('status-badge-overdue')).toHaveTextContent(
-      /Tempo Esgotado/i
+      /Tempo Esgotado/i,
     );
     expect(screen.getByTestId('overdue-warning-banner')).toBeInTheDocument();
     expect(screen.getByTestId('overdue-warning-banner')).toHaveTextContent(
-      /2 minutos/i
+      /2 minutos/i,
     );
     expect(
-      screen.getByRole('button', { name: /Escalar para Coordenação/i })
+      screen.getByRole('button', { name: /Escalar para Coordenação/i }),
     ).toBeInTheDocument();
   });
 
@@ -175,10 +174,10 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
 
     expect(screen.getByText('Ana C.')).toBeInTheDocument();
     expect(screen.getByTestId('tempo-especial-badge')).toHaveTextContent(
-      /20 min/i
+      /20 min/i,
     );
     expect(screen.getByTestId('status-badge-normal')).toHaveTextContent(
-      /Em Trânsito/i
+      /Em Trânsito/i,
     );
   });
 
@@ -228,7 +227,7 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     // Card displays overdue warning banner and action button
@@ -246,13 +245,13 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
       expect(api.escalateMovement).toHaveBeenCalledWith(
         'mov-overdue-1',
         expect.any(Object),
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
     // Displays updated status badge and escalated banner
     expect(
-      await screen.findByTestId('status-badge-escalated')
+      await screen.findByTestId('status-badge-escalated'),
     ).toHaveTextContent(/Escalado para Coordenação/i);
     expect(screen.getByTestId('escalated-warning-banner')).toBeInTheDocument();
   });
@@ -289,7 +288,7 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Lucas S.')).toBeInTheDocument();
@@ -309,11 +308,11 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
     });
 
     expect(
-      await screen.findByTestId('status-badge-overdue')
+      await screen.findByTestId('status-badge-overdue'),
     ).toBeInTheDocument();
     expect(screen.getByTestId('overdue-warning-banner')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Escalar para Coordenação/i })
+      screen.getByRole('button', { name: /Escalar para Coordenação/i }),
     ).toBeInTheDocument();
 
     // 2) WebSocket emits movement:escalated (after 2 minutes automatic escalation)
@@ -331,11 +330,11 @@ describe('Frontend Seam: Time Limit Monitoring, Medical Tempo Especial & Hybrid 
     });
 
     expect(
-      await screen.findByTestId('status-badge-escalated')
+      await screen.findByTestId('status-badge-escalated'),
     ).toBeInTheDocument();
     expect(screen.getByTestId('escalated-warning-banner')).toBeInTheDocument();
     expect(screen.getByTestId('escalated-warning-banner')).toHaveTextContent(
-      /automático/i
+      /automático/i,
     );
   });
 });

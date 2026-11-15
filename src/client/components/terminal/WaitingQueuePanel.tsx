@@ -1,10 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
-import { QueueEntryStatus } from '@shared/enums';
-import { api } from '@client/services/api';
-import { Button } from '@client/components/ui/Button';
-import { Input } from '@client/components/ui/Input';
 import { Badge } from '@client/components/ui/Badge';
+import { Button } from '@client/components/ui/Button';
 import {
   Card,
   CardContent,
@@ -12,6 +7,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@client/components/ui/Card';
+import { Input } from '@client/components/ui/Input';
+import { api } from '@client/services/api';
+import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
+import { QueueEntryStatus } from '@shared/enums';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 
 export interface WaitingQueuePanelProps {
   sessionId: string;
@@ -41,7 +42,7 @@ export function WaitingQueuePanel({
   const [error, setError] = useState<string | null>(null);
 
   const calledEntry = queue.find(
-    (item) => item.status === QueueEntryStatus.CALLED
+    (item) => item.status === QueueEntryStatus.CALLED,
   );
 
   const [remainingSeconds, setRemainingSeconds] = useState<number>(() => {
@@ -56,8 +57,9 @@ export function WaitingQueuePanel({
       return;
     }
 
+    const expiresAt = calledEntry.expiresAt;
     const updateRemaining = () => {
-      const expiresMs = new Date(calledEntry.expiresAt!).getTime();
+      const expiresMs = new Date(expiresAt).getTime();
       const diff = Math.max(0, Math.ceil((expiresMs - Date.now()) / 1000));
       setRemainingSeconds(diff);
     };
@@ -65,7 +67,7 @@ export function WaitingQueuePanel({
     updateRemaining();
     const interval = setInterval(updateRemaining, 1000);
     return () => clearInterval(interval);
-  }, [calledEntry?.expiresAt, calledEntry?.id]);
+  }, [calledEntry?.expiresAt]);
 
   const handleEnqueueSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,13 +79,15 @@ export function WaitingQueuePanel({
     try {
       const response = await api.enqueueWaiting(
         { ra: normalizedRa, sessionId },
-        token
+        token,
       );
       setRaInput('');
       onQueueUpdated?.(response.queue);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'Erro ao entrar na fila de espera.'
+        err instanceof Error
+          ? err.message
+          : 'Erro ao entrar na fila de espera.',
       );
     } finally {
       setLoading(false);
@@ -101,7 +105,7 @@ export function WaitingQueuePanel({
       setError(
         err instanceof Error
           ? err.message
-          : 'Erro ao cancelar vaga na fila de espera.'
+          : 'Erro ao cancelar vaga na fila de espera.',
       );
     } finally {
       setLoading(false);
@@ -118,9 +122,7 @@ export function WaitingQueuePanel({
       onQueueUpdated?.(response.queue);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao confirmar saída da fila.'
+        err instanceof Error ? err.message : 'Erro ao confirmar saída da fila.',
       );
     } finally {
       setClaimLoading(false);
@@ -160,9 +162,7 @@ export function WaitingQueuePanel({
                 {nextStudent.studentPublicName || nextStudent.abbreviatedName}
               </span>
             </span>
-            <span className="text-xs text-slate-500 font-mono">
-              Posição #1
-            </span>
+            <span className="text-xs text-slate-500 font-mono">Posição #1</span>
           </div>
         )}
 
@@ -178,8 +178,7 @@ export function WaitingQueuePanel({
               <div>
                 <p className="font-semibold text-sm">
                   Vaga liberada para{' '}
-                  {calledEntry.studentPublicName ||
-                    calledEntry.abbreviatedName}
+                  {calledEntry.studentPublicName || calledEntry.abbreviatedName}
                   !
                 </p>
                 <p className="text-xs text-amber-800">

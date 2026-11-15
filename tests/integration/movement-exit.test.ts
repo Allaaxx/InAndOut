@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '@server/main/app';
 import { AlertLevel, MovementStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Controller Seam: Student Exit by RA & Single-Exit Concurrency (app.inject)', () => {
   async function startActiveSession(
     app: Awaited<ReturnType<typeof createApp>>['app'],
     classCode = '1A',
     subject = 'Matemática',
-    roomId = 'SALA-01'
+    roomId = 'SALA-01',
   ) {
     const loginRes = await app.inject({
       method: 'POST',
@@ -37,7 +37,7 @@ describe('Controller Seam: Student Exit by RA & Single-Exit Concurrency (app.inj
     const { app, container } = await createApp({ clock: () => currentTime });
     const notifyExitSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementExit'
+      'notifyMovementExit',
     );
 
     const { session } = await startActiveSession(app, '1A', 'Matemática');
@@ -77,7 +77,7 @@ describe('Controller Seam: Student Exit by RA & Single-Exit Concurrency (app.inj
         studentRa: '1001',
         studentPublicName: 'Lucas S.',
         status: MovementStatus.IN_TRANSIT,
-      })
+      }),
     );
 
     // Active session endpoint now includes the student in activeMovements
@@ -101,7 +101,7 @@ describe('Controller Seam: Student Exit by RA & Single-Exit Concurrency (app.inj
     const { app, container } = await createApp({ clock: () => currentTime });
     const notifyExitSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementExit'
+      'notifyMovementExit',
     );
 
     const { session } = await startActiveSession(app, '1A', 'História');

@@ -1,6 +1,9 @@
-import { PrismaClient, Student as PrismaStudentModel } from '@prisma/client';
+import type {
+  PrismaClient,
+  Student as PrismaStudentModel,
+} from '@prisma/client';
 import { Student } from '@server/domain/entities/Student';
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 import { getPrismaClient } from '@server/infrastructure/database/prismaClient';
 
 export class PrismaStudentRepository implements IStudentRepository {

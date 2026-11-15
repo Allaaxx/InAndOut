@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
-import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { IncidentOutcome } from '@shared/enums';
 import { GetSchoolOverviewAnalyticsUseCase } from '@server/application/use-cases/analytics/GetSchoolOverviewAnalyticsUseCase';
+import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
+import { IncidentOutcome } from '@shared/enums';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
   let movementRepo: InMemoryMovementRecordRepository;
@@ -61,7 +61,7 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
       'coord-1',
       new Date('2026-03-10T09:10:00.000Z'),
       'Aluno medicado na enfermaria',
-      50
+      50,
     );
     await movementRepo.save(mov3);
 
@@ -192,8 +192,12 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
     expect(Array.isArray(result.hourlyDistribution)).toBe(true);
     expect(result.hourlyDistribution.length).toBeGreaterThan(0);
 
-    const hour8 = result.hourlyDistribution.find((h) => h.hour === 8 || h.label.includes('08'));
-    const hour10 = result.hourlyDistribution.find((h) => h.hour === 10 || h.label.includes('10'));
+    const hour8 = result.hourlyDistribution.find(
+      (h) => h.hour === 8 || h.label.includes('08'),
+    );
+    const hour10 = result.hourlyDistribution.find(
+      (h) => h.hour === 10 || h.label.includes('10'),
+    );
 
     expect(hour8?.count).toBe(3);
     expect(hour10?.count).toBe(5);
@@ -233,7 +237,7 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
       mov.resolve(
         IncidentOutcome.SENT_TO_INFIRMARY,
         'coord-1',
-        new Date('2026-03-10T08:20:00.000Z')
+        new Date('2026-03-10T08:20:00.000Z'),
       );
       await movementRepo.save(mov);
     }
@@ -252,7 +256,7 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
       mov.resolve(
         IncidentOutcome.ATTENDED_AT_COORDINATION,
         'coord-1',
-        new Date('2026-03-10T09:25:00.000Z')
+        new Date('2026-03-10T09:25:00.000Z'),
       );
       await movementRepo.save(mov);
     }
@@ -270,7 +274,7 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
     movEvasion.resolve(
       IncidentOutcome.EVASION,
       'coord-1',
-      new Date('2026-03-10T10:45:00.000Z')
+      new Date('2026-03-10T10:45:00.000Z'),
     );
     await movementRepo.save(movEvasion);
 
@@ -278,16 +282,18 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
 
     // Total finished = 4 + 2 + 3 + 1 = 10
     const returned = result.outcomeDistribution.find(
-      (o) => o.outcome === 'RETURNED_NORMAL' || o.outcome === IncidentOutcome.RETURNED_TO_CLASS
+      (o) =>
+        o.outcome === 'RETURNED_NORMAL' ||
+        o.outcome === IncidentOutcome.RETURNED_TO_CLASS,
     );
     const infirmary = result.outcomeDistribution.find(
-      (o) => o.outcome === IncidentOutcome.SENT_TO_INFIRMARY
+      (o) => o.outcome === IncidentOutcome.SENT_TO_INFIRMARY,
     );
     const coordination = result.outcomeDistribution.find(
-      (o) => o.outcome === IncidentOutcome.ATTENDED_AT_COORDINATION
+      (o) => o.outcome === IncidentOutcome.ATTENDED_AT_COORDINATION,
     );
     const evasion = result.outcomeDistribution.find(
-      (o) => o.outcome === IncidentOutcome.EVASION
+      (o) => o.outcome === IncidentOutcome.EVASION,
     );
 
     expect(returned?.count).toBe(4);

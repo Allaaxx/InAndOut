@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
 import {
-  EmergencyExitRequestDTO,
-  GuestExitRequestDTO,
-  MovementDTO,
-} from '@shared/dtos';
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@client/components/ui/AlertDialog';
 import { Button } from '@client/components/ui/Button';
 import {
   Card,
@@ -13,15 +15,14 @@ import {
   CardTitle,
 } from '@client/components/ui/Card';
 import { Input, Label } from '@client/components/ui/Input';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@client/components/ui/AlertDialog';
 import { api } from '@client/services/api';
+import type {
+  EmergencyExitRequestDTO,
+  GuestExitRequestDTO,
+  MovementDTO,
+} from '@shared/dtos';
+import type React from 'react';
+import { useState } from 'react';
 
 export interface TeacherOverrideControlsProps {
   sessionId: string;
@@ -81,7 +82,7 @@ export function TeacherOverrideControls({
       setEmergencyError(
         err instanceof Error
           ? err.message
-          : 'Erro ao autorizar liberação de emergência.'
+          : 'Erro ao autorizar liberação de emergência.',
       );
     } finally {
       setEmergencyLoading(false);
@@ -117,9 +118,7 @@ export function TeacherOverrideControls({
       setGuestOriginClass('');
     } catch (err) {
       setGuestError(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao autorizar aluno avulso.'
+        err instanceof Error ? err.message : 'Erro ao autorizar aluno avulso.',
       );
     } finally {
       setGuestLoading(false);
@@ -178,7 +177,9 @@ export function TeacherOverrideControls({
       <AlertDialog open={isEmergencyOpen} onOpenChange={setIsEmergencyOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Liberação de Emergência</AlertDialogTitle>
+            <AlertDialogTitle>
+              Confirmar Liberação de Emergência
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Autorize a saída imediata de um estudante em caráter emergencial,
               mesmo com a sala já ocupada. Esta liberação registrará seu ID de
@@ -240,9 +241,9 @@ export function TeacherOverrideControls({
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Autorização Avulsa</AlertDialogTitle>
             <AlertDialogDescription>
-              Autorize a saída de um aluno não matriculado nesta turma específica
-              (visitante, ouvinte ou transferido recente) com seu aval de
-              professor.
+              Autorize a saída de um aluno não matriculado nesta turma
+              específica (visitante, ouvinte ou transferido recente) com seu
+              aval de professor.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <form onSubmit={handleGuestSubmit} className="space-y-4">

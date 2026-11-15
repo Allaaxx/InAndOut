@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { createApp } from '@server/main/app';
+import { describe, expect, it } from 'vitest';
 
 describe('Controller Seam: Auth & 4-Digit PIN Endpoints (app.inject)', () => {
   it('authenticates a teacher with valid email and password via POST /auth/login and rejects invalid credentials with 401', async () => {

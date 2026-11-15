@@ -1,30 +1,30 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { InvalidExportFormatError } from '@server/application/use-cases/analytics/ExportAnalyticsReportUseCase';
+import { StudentNotFoundError } from '@server/application/use-cases/analytics/GetStudentHistoryReportUseCase';
+import {
+  AuthenticationError,
+  ValidationError,
+} from '@server/application/use-cases/auth/LoginUseCase';
+import {
+  MovementNotFoundError as CoordinationMovementNotFoundError,
+  InvalidOutcomeError,
+} from '@server/application/use-cases/coordination/ResolveMovementIncidentUseCase';
+import { MovementAuthorizationError } from '@server/application/use-cases/movements/AuthorizeEmergencyExitUseCase';
+import {
+  QueueConflictError,
+  QueueWindowExpiredError,
+} from '@server/application/use-cases/movements/EnqueueStudentUseCase';
 import {
   MovementConcurrencyConflictError,
   MovementNotFoundError as MovementNotFoundExitError,
   MovementValidationError,
   StudentNotInClassError,
 } from '@server/application/use-cases/movements/RequestStudentExitUseCase';
-import {
-  QueueConflictError,
-  QueueWindowExpiredError,
-} from '@server/application/use-cases/movements/EnqueueStudentUseCase';
-import { MovementAuthorizationError } from '@server/application/use-cases/movements/AuthorizeEmergencyExitUseCase';
-import {
-  AuthenticationError,
-  ValidationError,
-} from '@server/application/use-cases/auth/LoginUseCase';
-import {
-  InvalidOutcomeError,
-  MovementNotFoundError as CoordinationMovementNotFoundError,
-} from '@server/application/use-cases/coordination/ResolveMovementIncidentUseCase';
+import { SessionNotFoundError } from '@server/application/use-cases/sessions/EndClassSessionUseCase';
 import {
   SessionConflictError,
   SessionValidationError,
 } from '@server/application/use-cases/sessions/StartClassSessionUseCase';
-import { SessionNotFoundError } from '@server/application/use-cases/sessions/EndClassSessionUseCase';
-import { StudentNotFoundError } from '@server/application/use-cases/analytics/GetStudentHistoryReportUseCase';
-import { InvalidExportFormatError } from '@server/application/use-cases/analytics/ExportAnalyticsReportUseCase';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 export interface ErrorResponse {
   statusCode: number;
@@ -96,13 +96,9 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
 
 export function setupFastifyErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler(
-    (
-      error: unknown,
-      _request: FastifyRequest,
-      reply: FastifyReply
-    ) => {
+    (error: unknown, _request: FastifyRequest, reply: FastifyReply) => {
       const { statusCode, body } = mapErrorToResponse(error);
       return reply.status(statusCode).send(body);
-    }
+    },
   );
 }

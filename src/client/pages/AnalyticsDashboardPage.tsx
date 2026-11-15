@@ -1,47 +1,48 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { OutcomesPieChart } from '@client/components/charts/OutcomesPieChart';
+import { PeakHoursBarChart } from '@client/components/charts/PeakHoursBarChart';
+import { Badge } from '@client/components/ui/Badge';
+import { Button } from '@client/components/ui/Button';
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@client/components/ui/Card';
+import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
+import { Input } from '@client/components/ui/Input';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@client/components/ui/Tabs';
+import { api } from '@client/services/api';
+import type {
   MovementDTO,
   SchoolOverviewAnalyticsDTO,
   StudentHistoryReportDTO,
   UserDTO,
 } from '@shared/dtos';
-import { api } from '@client/services/api';
+import { MovementStatus } from '@shared/enums';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@client/components/ui/Card';
-import { Button } from '@client/components/ui/Button';
-import { Input } from '@client/components/ui/Input';
-import { Badge } from '@client/components/ui/Badge';
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from '@client/components/ui/Tabs';
-import { ColumnDef, DataTable } from '@client/components/ui/DataTable';
-import { PeakHoursBarChart } from '@client/components/charts/PeakHoursBarChart';
-import { OutcomesPieChart } from '@client/components/charts/OutcomesPieChart';
-import {
-  Clock,
-  LogOut,
-  CheckCircle2,
   AlertTriangle,
-  School,
-  RefreshCw,
   ArrowLeft,
   Calendar,
-  Filter,
-  Search,
+  CheckCircle2,
+  Clock,
   FileSpreadsheet,
   FileText,
-  User,
+  Filter,
   GraduationCap,
+  LogOut,
+  RefreshCw,
+  School,
+  Search,
+  User,
 } from 'lucide-react';
-import { MovementStatus } from '@shared/enums';
+import type React from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export interface AnalyticsDashboardPageProps {
   user: UserDTO;
@@ -51,7 +52,7 @@ export interface AnalyticsDashboardPageProps {
 }
 
 export function AnalyticsDashboardPage({
-  user,
+  user: _user,
   token,
   onLogout,
   onNavigateBack,
@@ -94,7 +95,7 @@ export function AnalyticsDashboardPage({
       setError(
         err instanceof Error
           ? err.message
-          : 'Erro ao carregar dados do dashboard analítico.'
+          : 'Erro ao carregar dados do dashboard analítico.',
       );
     } finally {
       setLoading(false);
@@ -121,7 +122,7 @@ export function AnalyticsDashboardPage({
           startDate: studentStartDate || undefined,
           endDate: studentEndDate || undefined,
         },
-        token
+        token,
       );
       setStudentReport(report);
     } catch (err) {
@@ -129,7 +130,7 @@ export function AnalyticsDashboardPage({
       setStudentError(
         err instanceof Error
           ? err.message
-          : 'Erro ao consultar histórico do aluno.'
+          : 'Erro ao consultar histórico do aluno.',
       );
     } finally {
       setStudentLoading(false);
@@ -163,7 +164,7 @@ export function AnalyticsDashboardPage({
       alert(
         err instanceof Error
           ? err.message
-          : 'Erro ao exportar relatório analítico.'
+          : 'Erro ao exportar relatório analítico.',
       );
     } finally {
       setExporting(false);
@@ -483,7 +484,8 @@ export function AnalyticsDashboardPage({
                         Comparativo por Turma
                       </CardTitle>
                       <CardDescription>
-                        Frequência de saídas e tempo total fora de sala por turma
+                        Frequência de saídas e tempo total fora de sala por
+                        turma
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -495,20 +497,33 @@ export function AnalyticsDashboardPage({
                           <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
                             <tr>
                               <th className="px-4 py-3 font-semibold">Turma</th>
-                              <th className="px-4 py-3 font-semibold">Total de Saídas</th>
-                              <th className="px-4 py-3 font-semibold">Tempo Total Fora</th>
-                              <th className="px-4 py-3 font-semibold">Média por Saída</th>
+                              <th className="px-4 py-3 font-semibold">
+                                Total de Saídas
+                              </th>
+                              <th className="px-4 py-3 font-semibold">
+                                Tempo Total Fora
+                              </th>
+                              <th className="px-4 py-3 font-semibold">
+                                Média por Saída
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {data.classComparison.map((item) => (
-                              <tr key={item.classCode} className="hover:bg-slate-50/50">
+                              <tr
+                                key={item.classCode}
+                                className="hover:bg-slate-50/50"
+                              >
                                 <td className="px-4 py-3 font-semibold text-slate-900">
                                   {item.classCode}
                                 </td>
                                 <td className="px-4 py-3">{item.totalExits}</td>
-                                <td className="px-4 py-3">{item.totalOutsideMinutes} min</td>
-                                <td className="px-4 py-3">{item.averageOutsideMinutes} min</td>
+                                <td className="px-4 py-3">
+                                  {item.totalOutsideMinutes} min
+                                </td>
+                                <td className="px-4 py-3">
+                                  {item.averageOutsideMinutes} min
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -640,7 +655,9 @@ export function AnalyticsDashboardPage({
             {studentLoading && (
               <div className="flex flex-col items-center justify-center p-12 text-slate-500 space-y-3">
                 <RefreshCw className="h-8 w-8 animate-spin text-indigo-600" />
-                <p className="text-sm font-medium">Buscando histórico do aluno...</p>
+                <p className="text-sm font-medium">
+                  Buscando histórico do aluno...
+                </p>
               </div>
             )}
 
@@ -679,7 +696,9 @@ export function AnalyticsDashboardPage({
                       <div className="text-xl font-bold text-slate-900">
                         {studentReport.student.classCode}
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">Classe regular</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Classe regular
+                      </p>
                     </CardContent>
                   </Card>
 
@@ -711,7 +730,9 @@ export function AnalyticsDashboardPage({
                       <div className="text-2xl font-bold text-amber-600">
                         {studentReport.summary.totalAbsentMinutes} min
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">Tempo ausente</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Tempo ausente
+                      </p>
                     </CardContent>
                   </Card>
 
@@ -743,7 +764,9 @@ export function AnalyticsDashboardPage({
                       <div className="text-2xl font-bold text-emerald-600">
                         {studentReport.summary.attendancePercentage}%
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">Tempo em sala</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Tempo em sala
+                      </p>
                     </CardContent>
                   </Card>
                 </div>
@@ -788,5 +811,3 @@ export function AnalyticsDashboardPage({
     </div>
   );
 }
-
-export default AnalyticsDashboardPage;
