@@ -48,6 +48,10 @@ _Avoid_: Limite de um, vaga única
 Estrutura FIFO virtual onde solicitações adicionais de saída são enfileiradas quando a sala já possui um aluno em trânsito.
 _Avoid_: Lista de espera, fila do banheiro, fila virtual
 
+**Auto-Enfileiramento por RA**:
+Comportamento reativo do Terminal de Sala onde a submissão de um RA válido no teclado virtual posiciona o estudante diretamente na fila de espera caso a concorrência única já esteja ocupada.
+_Avoid_: Fila automática, fila rápida, pré-reserva
+
 **Janela de Confirmação**:
 Intervalo de 2 minutos concedido ao primeiro aluno da fila após o retorno do aluno anterior para confirmar sua saída antes da vaga expirar.
 _Avoid_: Tempo de espera, tolerância da fila, reserva
