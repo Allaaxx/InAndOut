@@ -18,6 +18,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from '@client/components/ui/Sheet';
 import { Toaster, toast } from '@client/components/ui/Sonner';
 import {
@@ -645,10 +646,10 @@ export function CoordinationPage({
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-xs text-slate-500">
+                <SheetDescription className="text-xs text-slate-500">
                   Registre o desfecho formal para a saída do estudante sob
                   tutela da Coordenação.
-                </p>
+                </SheetDescription>
               </SheetHeader>
 
               <div className="mt-4 space-y-4">
