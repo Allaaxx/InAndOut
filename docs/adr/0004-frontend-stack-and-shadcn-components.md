@@ -6,7 +6,7 @@ A interface precisa oferecer alta reatividade com baixa sobrecarga em dispositiv
 
 ## Decisão
 
-Adotamos:
+O frontend da aplicação InAndOut é construído com React 19, Vite, Tailwind CSS e a biblioteca de componentes aberta Shadcn UI:
 
 1. **React 19 com Vite e Tailwind CSS**: Proporciona carregamento instantâneo, baixo bundle size e suporte nativo a componentes modernos e transições de estado.
 2. **Componentes baseados em Shadcn UI**:
@@ -15,4 +15,4 @@ Adotamos:
    - `Sheet` (Gaveta lateral): Utilizado para o formulário de resolução rápida de ocorrências na Coordenação sem perder o contexto visual do painel.
    - `AlertDialog`: Utilizado para confirmação protegida de Liberações de Emergência e Autorizações Avulsas pelo professor.
    - `Sonner Toast`: Alertas flutuantes em tempo real com ações diretas integrados a notificações sonoras por AudioContext nativo.
-3. **Visualizações Recharts**: Utilizadas para apresentar a distribuição de saídas por faixa horária (BarChart) e composição de desfechos de ocorrência (PieChart).
+3. **Visualizações Recharts**: Blocos de gráficos analíticos utilizados para apresentar a distribuição de saídas por faixa horária (BarChart) e composição de desfechos de ocorrência (PieChart).
