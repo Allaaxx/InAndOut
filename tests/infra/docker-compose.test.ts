@@ -75,8 +75,12 @@ describe('Infrastructure Configuration (Ticket #30)', () => {
       );
     });
 
-    it('.env exists and contains working values for local development', () => {
-      expect(fs.existsSync(envPath)).toBe(true);
+    it('.env contains working values for local development when present', () => {
+      if (!fs.existsSync(envPath)) {
+        // In CI environments, .env is gitignored and omitted by design
+        expect(fs.existsSync(envExamplePath)).toBe(true);
+        return;
+      }
       const content = fs.readFileSync(envPath, 'utf-8');
 
       expect(content).toMatch(/^PORT=/m);
