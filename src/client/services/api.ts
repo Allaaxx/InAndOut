@@ -36,7 +36,7 @@ const API_BASE_URL =
   (typeof import.meta !== 'undefined' &&
     (import.meta as unknown as { env?: Record<string, string> }).env
       ?.VITE_API_URL) ||
-  'http://localhost:3333';
+  'http://localhost:3000';
 
 async function request<T>(
   path: string,
