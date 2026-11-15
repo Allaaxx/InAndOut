@@ -1,17 +1,16 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
-import { InMemoryStudentRepository } from '@server/infrastructure/repositories/InMemoryStudentRepository';
-import { Student } from '@server/domain/entities/Student';
-import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { IncidentOutcome } from '@shared/enums';
-import {
-  GetStudentHistoryReportUseCase,
-  StudentNotFoundError,
-} from '@server/application/use-cases/analytics/GetStudentHistoryReportUseCase';
 import {
   ExportAnalyticsReportUseCase,
   InvalidExportFormatError,
 } from '@server/application/use-cases/analytics/ExportAnalyticsReportUseCase';
+import {
+  GetStudentHistoryReportUseCase,
+  StudentNotFoundError,
+} from '@server/application/use-cases/analytics/GetStudentHistoryReportUseCase';
+import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { Student } from '@server/domain/entities/Student';
+import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
+import { InMemoryStudentRepository } from '@server/infrastructure/repositories/InMemoryStudentRepository';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Domain Seam: Student History Report & Export Use Cases', () => {
   let studentRepo: InMemoryStudentRepository;
@@ -29,7 +28,7 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
         ra: '1001',
         fullName: 'Lucas Silva Pereira',
         classCode: '1A',
-      })
+      }),
     );
 
     await studentRepo.save(
@@ -38,7 +37,7 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
         ra: '1002',
         fullName: 'Mariana Lima Rocha',
         classCode: '1A',
-      })
+      }),
     );
   });
 
@@ -47,7 +46,7 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       const useCase = new GetStudentHistoryReportUseCase(
         studentRepo,
         movementRepo,
-        { clock: () => fixedClock }
+        { clock: () => fixedClock },
       );
 
       // Exit 1: 5 minutes out of 50m session -> 45m attended (90%)
@@ -106,11 +105,11 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       const useCase = new GetStudentHistoryReportUseCase(
         studentRepo,
         movementRepo,
-        { clock: () => fixedClock }
+        { clock: () => fixedClock },
       );
 
       await expect(useCase.execute({ ra: '9999' })).rejects.toThrow(
-        StudentNotFoundError
+        StudentNotFoundError,
       );
     });
 
@@ -118,7 +117,7 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       const useCase = new GetStudentHistoryReportUseCase(
         studentRepo,
         movementRepo,
-        { clock: () => fixedClock }
+        { clock: () => fixedClock },
       );
 
       const report = await useCase.execute({ ra: '1002' });
@@ -136,7 +135,7 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       const useCase = new GetStudentHistoryReportUseCase(
         studentRepo,
         movementRepo,
-        { clock: () => fixedClock }
+        { clock: () => fixedClock },
       );
 
       // Day 1
@@ -197,7 +196,7 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       const useCase = new ExportAnalyticsReportUseCase(
         movementRepo,
         studentRepo,
-        { clock: () => fixedClock }
+        { clock: () => fixedClock },
       );
 
       const mov1 = MovementRecord.create({
@@ -233,7 +232,7 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       const useCase = new ExportAnalyticsReportUseCase(
         movementRepo,
         studentRepo,
-        { clock: () => fixedClock }
+        { clock: () => fixedClock },
       );
 
       const mov1 = MovementRecord.create({
@@ -270,11 +269,11 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       const useCase = new ExportAnalyticsReportUseCase(
         movementRepo,
         studentRepo,
-        { clock: () => fixedClock }
+        { clock: () => fixedClock },
       );
 
       await expect(
-        useCase.execute({ format: 'docx' as unknown as 'csv' })
+        useCase.execute({ format: 'docx' as unknown as 'csv' }),
       ).rejects.toThrow(InvalidExportFormatError);
     });
   });

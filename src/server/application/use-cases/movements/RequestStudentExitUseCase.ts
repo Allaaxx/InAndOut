@@ -1,15 +1,15 @@
-import { ClassSession } from '@server/domain/entities/ClassSession';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { ClassSession } from '@server/domain/entities/ClassSession';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 import { StudentRA } from '@server/domain/value-objects/StudentRA';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import { MovementStatus } from '@shared/enums';
-import {
+import type {
   RequestExitRequestDTO,
   RequestExitResponseDTO,
 } from '@shared/dtos';
+import { MovementStatus } from '@shared/enums';
 
 export class MovementValidationError extends Error {
   constructor(message: string) {
@@ -57,7 +57,7 @@ export class RequestStudentExitUseCase {
     studentRepo: IStudentRepository,
     movementRepo: IMovementRecordRepository,
     notificationSender: INotificationSender,
-    options: { clock?: () => Date } = {}
+    options: { clock?: () => Date } = {},
   ) {
     this.sessionRepo = sessionRepo;
     this.studentRepo = studentRepo;
@@ -67,14 +67,14 @@ export class RequestStudentExitUseCase {
   }
 
   public async execute(
-    input: RequestStudentExitInput
+    input: RequestStudentExitInput,
   ): Promise<RequestExitResponseDTO> {
     let raObj: StudentRA;
     try {
       raObj = StudentRA.create(input.ra ?? '');
     } catch (err) {
       throw new MovementValidationError(
-        err instanceof Error ? err.message : 'RA inválido.'
+        err instanceof Error ? err.message : 'RA inválido.',
       );
     }
 
@@ -91,31 +91,31 @@ export class RequestStudentExitUseCase {
 
     if (!session) {
       throw new MovementNotFoundError(
-        'Nenhuma sessão de aula ativa foi encontrada para registrar a saída.'
+        'Nenhuma sessão de aula ativa foi encontrada para registrar a saída.',
       );
     }
 
     const student = await this.studentRepo.findByRa(raObj.value);
     if (!student) {
       throw new MovementNotFoundError(
-        `Aluno com RA ${raObj.value} não encontrado.`
+        `Aluno com RA ${raObj.value} não encontrado.`,
       );
     }
 
     if (!input.isGuest && student.classCode !== session.classCode) {
       throw new StudentNotInClassError(
-        `O aluno (${student.publicName}) pertence à turma ${student.classCode} e não está matriculado na turma ativa (${session.classCode}). Solicite Autorização Avulsa ao professor.`
+        `O aluno (${student.publicName}) pertence à turma ${student.classCode} e não está matriculado na turma ativa (${session.classCode}). Solicite Autorização Avulsa ao professor.`,
       );
     }
 
     const activeMovements = await this.movementRepo.findActiveBySessionId(
-      session.id
+      session.id,
     );
 
     if (!input.isEmergency && activeMovements.length > 0) {
       const currentOut = activeMovements[0];
       throw new MovementConcurrencyConflictError(
-        `Sala ocupada: ${currentOut.studentPublicName} já está fora da sala. Apenas 1 estudante pode sair por vez. Aguarde o retorno.`
+        `Sala ocupada: ${currentOut.studentPublicName} já está fora da sala. Apenas 1 estudante pode sair por vez. Aguarde o retorno.`,
       );
     }
 

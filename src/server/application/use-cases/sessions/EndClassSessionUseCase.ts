@@ -1,8 +1,8 @@
-import { ClassSession } from '@server/domain/entities/ClassSession';
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import {
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { ClassSession } from '@server/domain/entities/ClassSession';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type {
   EndSessionRequestDTO,
   EndSessionResponseDTO,
   MovementDTO,
@@ -27,7 +27,7 @@ export class EndClassSessionUseCase {
       clock?: () => Date;
       movementRepo?: IMovementRecordRepository;
       notificationSender?: INotificationSender;
-    } = {}
+    } = {},
   ) {
     this.sessionRepo = sessionRepo;
     this.movementRepo = options.movementRepo;
@@ -36,7 +36,7 @@ export class EndClassSessionUseCase {
   }
 
   public async execute(
-    input: EndSessionRequestDTO = {}
+    input: EndSessionRequestDTO = {},
   ): Promise<EndSessionResponseDTO> {
     let session: ClassSession | null = null;
 
@@ -44,7 +44,7 @@ export class EndClassSessionUseCase {
       session = await this.sessionRepo.findById(input.sessionId);
       if (session && !session.isActive()) {
         throw new SessionNotFoundError(
-          'A sessão de aula informada já se encontra encerrada.'
+          'A sessão de aula informada já se encontra encerrada.',
         );
       }
     } else {
@@ -54,7 +54,7 @@ export class EndClassSessionUseCase {
 
     if (!session) {
       throw new SessionNotFoundError(
-        'Nenhuma sessão de aula ativa foi encontrada para encerramento.'
+        'Nenhuma sessão de aula ativa foi encontrada para encerramento.',
       );
     }
 
@@ -77,7 +77,7 @@ export class EndClassSessionUseCase {
           inTransitMovements.push(movDto);
           if (this.notificationSender) {
             await this.notificationSender.notifyMovementInTransitUnresolved(
-              movDto
+              movDto,
             );
           }
         }

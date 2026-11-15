@@ -1,7 +1,7 @@
+export type { StartClassSessionInput } from './StartClassSessionUseCase';
 export {
-  StartClassSessionUseCase,
-  StartSessionUseCase,
   SessionConflictError,
   SessionValidationError,
+  StartClassSessionUseCase,
+  StartSessionUseCase,
 } from './StartClassSessionUseCase';
-export type { StartClassSessionInput } from './StartClassSessionUseCase';

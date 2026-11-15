@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { StudentRA } from '@server/domain/value-objects/StudentRA';
-import { Student } from '@server/domain/entities/Student';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { Student } from '@server/domain/entities/Student';
+import { StudentRA } from '@server/domain/value-objects/StudentRA';
 import { AlertLevel, MovementStatus } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Domain Seam: StudentRA, Student & MovementRecord', () => {
   it('validates and normalizes StudentRA and rejects invalid or empty values', () => {
@@ -84,7 +84,7 @@ describe('Domain Seam: StudentRA, Student & MovementRecord', () => {
     expect(movement.allowedLimitMinutes).toBe(10);
     expect(movement.isActive()).toBe(true);
     expect(movement.getAlertLevel(new Date('2026-03-10T08:18:00.000Z'))).toBe(
-      AlertLevel.GREEN
+      AlertLevel.GREEN,
     );
 
     const dto = movement.toDTO(new Date('2026-03-10T08:18:00.000Z'));

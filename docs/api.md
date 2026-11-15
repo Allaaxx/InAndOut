@@ -7,8 +7,11 @@ A API do InAndOut é construída em **Fastify** com TypeScript e fornece endpoin
 ## 1. Autenticação e Terminal
 
 ### `POST /auth/login`
+
 Autentica o professor ou coordenador através de email e senha, retornando token JWT e token de atualização.
+
 - **Corpo da requisição**:
+
   ```json
   {
     "email": "prof@linsdorego.edu.br",
@@ -16,6 +19,7 @@ Autentica o professor ou coordenador através de email e senha, retornando token
   }
   ```
 - **Resposta (200 OK)**:
+
   ```json
   {
     "token": "jwt-token",
@@ -30,12 +34,16 @@ Autentica o professor ou coordenador através de email e senha, retornando token
   ```
 
 ### `POST /auth/verify-pin`
+
 Verifica o PIN de 4 dígitos digitado pelo professor para desbloquear a tela do terminal de sala.
+
 - **Corpo da requisição**:
+
   ```json
   { "pin": "1234" }
   ```
 - **Resposta (200 OK)**:
+
   ```json
   {
     "valid": true,
@@ -45,6 +53,7 @@ Verifica o PIN de 4 dígitos digitado pelo professor para desbloquear a tela do 
   ```
 
 ### `POST /auth/refresh-token`
+
 Renova o token de acesso através do refresh token.
 
 ---
@@ -52,8 +61,11 @@ Renova o token de acesso através do refresh token.
 ## 2. Sessões de Aula
 
 ### `POST /sessions/start`
+
 Inicia uma nova sessão de aula para a turma e disciplina informadas. Requer perfil `TEACHER` ou `ADMIN`.
+
 - **Corpo da requisição**:
+
   ```json
   {
     "classCode": "1A",
@@ -64,6 +76,7 @@ Inicia uma nova sessão de aula para a turma e disciplina informadas. Requer per
   }
   ```
 - **Resposta (201 Created)**:
+
   ```json
   {
     "session": {
@@ -77,9 +90,12 @@ Inicia uma nova sessão de aula para a turma e disciplina informadas. Requer per
   ```
 
 ### `GET /sessions/active`
+
 Consulta a sessão ativa para uma sala ou professor, retornando também os alunos fora e a fila de espera.
+
 - **Query Params**: `?roomId=SALA-01` ou `?sessionId=session-id`
 - **Resposta (200 OK)**:
+
   ```json
   {
     "session": { ... },
@@ -89,12 +105,16 @@ Consulta a sessão ativa para uma sala ou professor, retornando também os aluno
   ```
 
 ### `POST /sessions/end`
+
 Encerra a sessão ativa. Quaisquer alunos ainda em trânsito são automaticamente convertidos para `IN_TRANSIT_UNRESOLVED` (Saída em Trânsito) para resolução da Coordenação.
+
 - **Corpo da requisição**:
+
   ```json
   { "sessionId": "session-id" }
   ```
 - **Resposta (200 OK)**:
+
   ```json
   {
     "session": { ... },
@@ -112,8 +132,11 @@ Encerra a sessão ativa. Quaisquer alunos ainda em trânsito são automaticament
 ## 3. Movimentações de Saída e Retorno
 
 ### `POST /movements/exit`
+
 Registra a saída de um aluno pelo RA digitado no terminal. Se já houver um aluno fora, retorna status 409 Conflict orientando o enfileiramento.
+
 - **Corpo da requisição**:
+
   ```json
   {
     "ra": "1001",
@@ -121,6 +144,7 @@ Registra a saída de um aluno pelo RA digitado no terminal. Se já houver um alu
   }
   ```
 - **Resposta (201 Created)**:
+
   ```json
   {
     "movement": {
@@ -136,8 +160,11 @@ Registra a saída de um aluno pelo RA digitado no terminal. Se já houver um alu
   ```
 
 ### `POST /movements/return`
+
 Registra o retorno do aluno pelo RA no terminal, finaliza o cálculo de duração e chama o próximo estudante da fila virtual se houver.
+
 - **Corpo da requisição**:
+
   ```json
   {
     "ra": "1001",
@@ -145,6 +172,7 @@ Registra o retorno do aluno pelo RA no terminal, finaliza o cálculo de duraçã
   }
   ```
 - **Resposta (200 OK)**:
+
   ```json
   {
     "movement": {
@@ -160,8 +188,11 @@ Registra o retorno do aluno pelo RA no terminal, finaliza o cálculo de duraçã
   ```
 
 ### `POST /movements/emergency-exit`
+
 Liberação de emergência acionada pelo professor, permitindo saída imediata mesmo com a sala ocupada.
+
 - **Corpo da requisição**:
+
   ```json
   {
     "ra": "1002",
@@ -171,8 +202,11 @@ Liberação de emergência acionada pelo professor, permitindo saída imediata m
   ```
 
 ### `POST /movements/guest-exit`
+
 Autorização avulsa para aluno não matriculado na turma atual ou transferido.
+
 - **Corpo da requisição**:
+
   ```json
   {
     "ra": "9999",
@@ -183,9 +217,11 @@ Autorização avulsa para aluno não matriculado na turma atual ou transferido.
   ```
 
 ### `POST /movements/:id/escalate`
+
 Aciona manualmente o escalonamento da saída em atraso para a Coordenação Pedagógica.
 
 ### `POST /movements/check-overdue` e `POST /movements/evaluate-overdue`
+
 Avalia as saídas ativas contra o relógio do sistema, transitando para `OVERDUE` ou acionando o escalonamento automático via WebSocket.
 
 ---
@@ -193,12 +229,15 @@ Avalia as saídas ativas contra o relógio do sistema, transitando para `OVERDUE
 ## 4. Fila Virtual de Espera (FIFO)
 
 ### `POST /movements/queue/enqueue`
+
 Adiciona um estudante na fila de espera da sessão atual.
 
 ### `POST /movements/queue/:id/cancel`
+
 Cancela a posição de um estudante na fila de espera.
 
 ### `POST /movements/queue/:id/claim`
+
 Confirma a saída do estudante chamado dentro da janela de tolerância de 2 minutos.
 
 ---
@@ -206,12 +245,17 @@ Confirma a saída do estudante chamado dentro da janela de tolerância de 2 minu
 ## 5. Painel da Coordenação
 
 ### `GET /coordination/active-movements`
+
 Retorna todas as saídas ativas em toda a escola (`IN_TRANSIT`, `OVERDUE`, `ESCALATED_TO_COORDINATION`, `IN_TRANSIT_UNRESOLVED`). Requer perfil `COORDINATOR` ou `ADMIN`.
+
 - **Query Params**: `?classCode=1A&status=OVERDUE`
 
 ### `POST /coordination/movements/:id/resolve`
+
 Registra o desfecho formal de uma ocorrência ou Saída em Trânsito.
+
 - **Corpo da requisição**:
+
   ```json
   {
     "outcome": "RETURNED_TO_CLASS",
@@ -229,13 +273,19 @@ Registra o desfecho formal de uma ocorrência ou Saída em Trânsito.
 ## 6. Métricas e Análises Escolares
 
 ### `GET /analytics/overview`
+
 Retorna indicadores agregados da escola: tempo médio fora, conformidade, saídas no dia, distribuição horária, desfechos e comparativo por turma.
+
 - **Query Params**: `?classCode=1A&date=2026-03-10`
 
 ### `GET /analytics/students/:ra`
+
 Retorna o histórico individual completo de um estudante por RA (total de saídas, minutos ausente, % de presença efetiva e lista detalhada de saídas).
+
 - **Query Params**: `?startDate=2026-03-01&endDate=2026-03-31`
 
 ### `GET /analytics/export`
+
 Exporta os dados analíticos e de histórico no formato especificado.
+
 - **Query Params**: `?format=csv` ou `?format=pdf` (`&ra=1001` ou `&classCode=1A`)

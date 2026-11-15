@@ -1,12 +1,12 @@
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type { ExportAnalyticsQueryDTO } from '@shared/dtos';
 import PDFDocument from 'pdfkit';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
-import { ExportAnalyticsQueryDTO } from '@shared/dtos';
 
 export class InvalidExportFormatError extends Error {
   constructor(format?: string) {
     super(
-      `Formato inválido: "${format}". Os formatos suportados são "csv" e "pdf".`
+      `Formato inválido: "${format}". Os formatos suportados são "csv" e "pdf".`,
     );
     this.name = 'InvalidExportFormatError';
   }
@@ -66,7 +66,7 @@ function createPdfDocument(params: CreatePdfDocumentParams): Promise<Buffer> {
 
     const chunks: Buffer[] = [];
     doc.on('data', (chunk) =>
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)),
     );
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', (err) => reject(err));
@@ -108,7 +108,7 @@ function createPdfDocument(params: CreatePdfDocumentParams): Promise<Buffer> {
         `Filtros: ${params.filtersSummary}  |  Total de registros: ${params.totalRecords}`,
         48,
         104,
-        { width: 500, lineBreak: false, ellipsis: true }
+        { width: 500, lineBreak: false, ellipsis: true },
       );
 
     // Columns configuration
@@ -150,7 +150,7 @@ function createPdfDocument(params: CreatePdfDocumentParams): Promise<Buffer> {
         'Nenhuma movimentação encontrada para os filtros especificados.',
         48,
         currentY + 12,
-        { width: 500, align: 'center' }
+        { width: 500, align: 'center' },
       );
     } else {
       for (let i = 0; i < params.movements.length; i++) {
@@ -231,13 +231,13 @@ function createPdfDocument(params: CreatePdfDocumentParams): Promise<Buffer> {
         'InAndOut — Sistema de Controle de Fluxo Escolar',
         40,
         doc.page.height - 32,
-        { width: 300, align: 'left', lineBreak: false }
+        { width: 300, align: 'left', lineBreak: false },
       );
       doc.text(
         `Página ${p + 1} de ${range.count}`,
         doc.page.width - 240,
         doc.page.height - 32,
-        { width: 200, align: 'right', lineBreak: false }
+        { width: 200, align: 'right', lineBreak: false },
       );
     }
 
@@ -250,14 +250,14 @@ export class ExportAnalyticsReportUseCase {
 
   constructor(
     private readonly movementRepo: IMovementRecordRepository,
-    private readonly studentRepo: IStudentRepository,
-    options: ExportAnalyticsReportOptions = {}
+    readonly _studentRepo: IStudentRepository,
+    options: ExportAnalyticsReportOptions = {},
   ) {
     this.clock = options.clock ?? (() => new Date());
   }
 
   public async execute(
-    query: ExportAnalyticsQueryDTO
+    query: ExportAnalyticsQueryDTO,
   ): Promise<ExportReportResult> {
     const format = query.format?.toLowerCase();
     if (format !== 'csv' && format !== 'pdf') {
@@ -377,7 +377,7 @@ export class ExportAnalyticsReportUseCase {
     }
     if (query.startDate || query.endDate) {
       filterParts.push(
-        `Período: ${query.startDate ?? ''} a ${query.endDate ?? ''}`
+        `Período: ${query.startDate ?? ''} a ${query.endDate ?? ''}`,
       );
     }
     const filtersSummary =

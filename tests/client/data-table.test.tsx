@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect } from 'vitest';
-import { DataTable, ColumnDef } from '@client/components/ui/DataTable';
+import { useState } from 'react';
+import { describe, expect, it } from 'vitest';
 
 interface TestItem {
   id: string;
@@ -11,37 +11,57 @@ interface TestItem {
   count: number;
 }
 
+const sampleData: TestItem[] = [
+  { id: '1', name: 'Alice', role: 'Developer', count: 10 },
+  { id: '2', name: 'Bob', role: 'Designer', count: 5 },
+  { id: '3', name: 'Charlie', role: 'Manager', count: 8 },
+];
+
+const columns: ColumnDef<TestItem>[] = [
+  { key: 'id', header: 'ID' },
+  {
+    key: 'name',
+    header: 'Nome',
+    render: (item) => (
+      <span data-testid={`name-${item.id}`}>{item.name.toUpperCase()}</span>
+    ),
+  },
+  { key: 'role', header: 'Cargo' },
+  {
+    key: 'count',
+    header: 'Pontos',
+    render: (item) => <strong>{item.count * 2} pts</strong>,
+  },
+];
+
+function DynamicTable() {
+  const [items, setItems] = useState(sampleData);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() =>
+          setItems((prev) => [
+            ...prev,
+            { id: '4', name: 'Diana', role: 'Analyst', count: 12 },
+          ])
+        }
+      >
+        Adicionar Item
+      </button>
+      <DataTable columns={columns} data={items} rowKey={(item) => item.id} />
+    </div>
+  );
+}
+
 describe('UI Component: DataTable (with @tanstack/react-table)', () => {
-  const sampleData: TestItem[] = [
-    { id: '1', name: 'Alice', role: 'Developer', count: 10 },
-    { id: '2', name: 'Bob', role: 'Designer', count: 5 },
-    { id: '3', name: 'Charlie', role: 'Manager', count: 8 },
-  ];
-
-  const columns: ColumnDef<TestItem>[] = [
-    { key: 'id', header: 'ID' },
-    {
-      key: 'name',
-      header: 'Nome',
-      render: (item) => (
-        <span data-testid={`name-${item.id}`}>{item.name.toUpperCase()}</span>
-      ),
-    },
-    { key: 'role', header: 'Cargo' },
-    {
-      key: 'count',
-      header: 'Pontos',
-      render: (item) => <strong>{item.count * 2} pts</strong>,
-    },
-  ];
-
   it('renders table headers and data rows correctly using TanStack Table', () => {
     render(
       <DataTable
         columns={columns}
         data={sampleData}
         rowKey={(item) => item.id}
-      />
+      />,
     );
 
     // Headers
@@ -68,11 +88,7 @@ describe('UI Component: DataTable (with @tanstack/react-table)', () => {
 
   it('renders default empty message when data is empty', () => {
     render(
-      <DataTable
-        columns={columns}
-        data={[]}
-        rowKey={(item) => item.id}
-      />
+      <DataTable columns={columns} data={[]} rowKey={(item) => item.id} />,
     );
 
     expect(screen.getByText('Nenhum registro encontrado.')).toBeInTheDocument();
@@ -85,11 +101,11 @@ describe('UI Component: DataTable (with @tanstack/react-table)', () => {
         data={[]}
         rowKey={(item) => item.id}
         emptyMessage="Nenhum estudante em trânsito no momento."
-      />
+      />,
     );
 
     expect(
-      screen.getByText('Nenhum estudante em trânsito no momento.')
+      screen.getByText('Nenhum estudante em trânsito no momento.'),
     ).toBeInTheDocument();
   });
 
@@ -99,10 +115,8 @@ describe('UI Component: DataTable (with @tanstack/react-table)', () => {
         columns={columns}
         data={sampleData}
         rowKey={(item) => item.id}
-        rowClassName={(item) =>
-          item.id === '1' ? 'bg-red-50' : 'bg-green-50'
-        }
-      />
+        rowClassName={(item) => (item.id === '1' ? 'bg-red-50' : 'bg-green-50')}
+      />,
     );
 
     const rows = container.querySelectorAll('tbody tr');
@@ -112,29 +126,6 @@ describe('UI Component: DataTable (with @tanstack/react-table)', () => {
   });
 
   it('reactively updates rows when data changes', async () => {
-    function DynamicTable() {
-      const [items, setItems] = useState(sampleData);
-      return (
-        <div>
-          <button
-            onClick={() =>
-              setItems((prev) => [
-                ...prev,
-                { id: '4', name: 'Diana', role: 'Analyst', count: 12 },
-              ])
-            }
-          >
-            Adicionar Item
-          </button>
-          <DataTable
-            columns={columns}
-            data={items}
-            rowKey={(item) => item.id}
-          />
-        </div>
-      );
-    }
-
     const user = userEvent.setup();
     render(<DynamicTable />);
 

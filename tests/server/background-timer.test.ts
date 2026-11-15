@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { ClassSession } from '@server/domain/entities/ClassSession';
+import { MovementRecord } from '@server/domain/entities/MovementRecord';
 import { createApp } from '@server/main/app';
 import { MovementStatus } from '@shared/enums';
-import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { ClassSession } from '@server/domain/entities/ClassSession';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Server Seam: Automatic Overdue Escalation Timer (User Story 17)', () => {
   it('automatically triggers evaluateOverdueMovements on the configured interval and supports graceful stop', async () => {
@@ -13,7 +13,7 @@ describe('Server Seam: Automatic Overdue Escalation Timer (User Story 17)', () =
 
     const { app, container, stopBackgroundTimer } = await createApp(
       { clock: () => currentTime },
-      { enableBackgroundTimer: true, autoEvaluateIntervalMs: 1000 }
+      { enableBackgroundTimer: true, autoEvaluateIntervalMs: 1000 },
     );
 
     const session = ClassSession.create({
@@ -50,7 +50,7 @@ describe('Server Seam: Automatic Overdue Escalation Timer (User Story 17)', () =
 
     const notifyEscalatedSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementEscalated'
+      'notifyMovementEscalated',
     );
 
     // Advance timer by 1 second to trigger interval
@@ -61,7 +61,7 @@ describe('Server Seam: Automatic Overdue Escalation Timer (User Story 17)', () =
         id: movement.id,
         status: MovementStatus.ESCALATED_TO_COORDINATION,
         escalationType: 'AUTOMATIC',
-      })
+      }),
     );
 
     const updated = await container.movementRepo.findById(movement.id);

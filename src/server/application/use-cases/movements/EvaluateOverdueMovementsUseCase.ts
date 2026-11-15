@@ -1,12 +1,12 @@
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import { AlertLevel, MovementStatus } from '@shared/enums';
-import {
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type {
   CheckOverdueRequestDTO,
   CheckOverdueResponseDTO,
   MovementDTO,
 } from '@shared/dtos';
+import { AlertLevel, MovementStatus } from '@shared/enums';
 
 export class EvaluateOverdueMovementsUseCase {
   private readonly movementRepo: IMovementRecordRepository;
@@ -20,7 +20,7 @@ export class EvaluateOverdueMovementsUseCase {
     options: {
       sessionRepo?: IClassSessionRepository;
       clock?: () => Date;
-    } = {}
+    } = {},
   ) {
     this.movementRepo = movementRepo;
     this.notificationSender = notificationSender;
@@ -29,14 +29,14 @@ export class EvaluateOverdueMovementsUseCase {
   }
 
   public async execute(
-    input: CheckOverdueRequestDTO = {}
+    input: CheckOverdueRequestDTO = {},
   ): Promise<CheckOverdueResponseDTO> {
     const now = input.now ? new Date(input.now) : this.clock();
 
     let targetSessionId = input.sessionId?.trim();
     if (!targetSessionId && input.roomId && this.sessionRepo) {
       const activeSession = await this.sessionRepo.findActiveByRoomId(
-        input.roomId.trim()
+        input.roomId.trim(),
       );
       targetSessionId = activeSession?.id;
     }

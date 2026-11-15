@@ -1,6 +1,6 @@
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import { MovementDTO } from '@shared/dtos';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { MovementDTO } from '@shared/dtos';
 import { IncidentOutcome } from '@shared/enums';
 
 export class MovementNotFoundError extends Error {
@@ -39,7 +39,7 @@ export class ResolveMovementIncidentUseCase {
     options: {
       notificationSender?: INotificationSender;
       clock?: () => Date;
-    } = {}
+    } = {},
   ) {
     this.movementRepo = movementRepo;
     this.notificationSender = options.notificationSender;
@@ -47,18 +47,21 @@ export class ResolveMovementIncidentUseCase {
   }
 
   public async execute(
-    input: ResolveMovementIncidentInput
+    input: ResolveMovementIncidentInput,
   ): Promise<ResolveMovementIncidentOutput> {
     const movement = await this.movementRepo.findById(input.movementId);
     if (!movement) {
       throw new MovementNotFoundError(
-        `Registro de saída com ID '${input.movementId}' não foi encontrado.`
+        `Registro de saída com ID '${input.movementId}' não foi encontrado.`,
       );
     }
 
-    if (!input.outcome || !Object.values(IncidentOutcome).includes(input.outcome)) {
+    if (
+      !input.outcome ||
+      !Object.values(IncidentOutcome).includes(input.outcome)
+    ) {
       throw new InvalidOutcomeError(
-        'Desfecho de ocorrência inválido ou não informado.'
+        'Desfecho de ocorrência inválido ou não informado.',
       );
     }
 
@@ -68,7 +71,7 @@ export class ResolveMovementIncidentUseCase {
       input.coordinatorId,
       now,
       input.notes,
-      input.plannedSessionDurationMinutes ?? 50
+      input.plannedSessionDurationMinutes ?? 50,
     );
 
     await this.movementRepo.update(movement);

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '@server/main/app';
 import { AlertLevel, MovementStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Minute Hybrid Escalation (app.inject)', () => {
   async function startActiveSession(
@@ -8,7 +8,7 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
     classCode = '1A',
     subject = 'Matemática',
     roomId = 'SALA-01',
-    defaultTimeLimitMinutes = 10
+    defaultTimeLimitMinutes = 10,
   ) {
     const loginRes = await app.inject({
       method: 'POST',
@@ -38,10 +38,14 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
     const { app, container } = await createApp({ clock: () => currentTime });
     const notifyEscalatedSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementEscalated'
+      'notifyMovementEscalated',
     );
 
-    const { token, session } = await startActiveSession(app, '1A', 'Matemática');
+    const { token, session } = await startActiveSession(
+      app,
+      '1A',
+      'Matemática',
+    );
 
     const exitRes = await app.inject({
       method: 'POST',
@@ -59,7 +63,8 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
       url: `/movements/${movementId}/escalate`,
       headers: { authorization: `Bearer ${token}` },
       payload: {
-        notes: 'Aluno demorou mais de 10 minutos, solicitando apoio da Coordenação.',
+        notes:
+          'Aluno demorou mais de 10 minutos, solicitando apoio da Coordenação.',
       },
     });
 
@@ -83,7 +88,7 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
         studentRa: '1001',
         status: MovementStatus.ESCALATED_TO_COORDINATION,
         escalationType: 'MANUAL',
-      })
+      }),
     );
 
     // Non-existent movement returns 404
@@ -112,11 +117,11 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
     const { app, container } = await createApp({ clock: () => currentTime });
     const notifyOverdueSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementOverdue'
+      'notifyMovementOverdue',
     );
     const notifyEscalatedSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementEscalated'
+      'notifyMovementEscalated',
     );
 
     const { session } = await startActiveSession(
@@ -124,7 +129,7 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
       '1A',
       'Física',
       'SALA-01',
-      10
+      10,
     );
 
     // Student Lucas S. (RA 1001, 10m limit) exits at 08:00
@@ -186,7 +191,7 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
         id: movementId,
         status: MovementStatus.OVERDUE,
         alertLevel: AlertLevel.RED,
-      })
+      }),
     );
     expect(notifyEscalatedSpy).not.toHaveBeenCalled();
 
@@ -228,7 +233,7 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
         studentRa: '1001',
         status: MovementStatus.ESCALATED_TO_COORDINATION,
         escalationType: 'AUTOMATIC',
-      })
+      }),
     );
 
     await app.close();
@@ -239,11 +244,11 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
     const { app, container } = await createApp({ clock: () => currentTime });
     const notifyOverdueSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementOverdue'
+      'notifyMovementOverdue',
     );
     const notifyEscalatedSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementEscalated'
+      'notifyMovementEscalated',
     );
 
     const { session } = await startActiveSession(
@@ -251,7 +256,7 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
       '1A',
       'Química',
       'SALA-01',
-      10
+      10,
     );
 
     // Ana Costa (RA 1003, medical specialTimeLimitMinutes: 20) exits at 09:00
@@ -313,7 +318,7 @@ describe('Controller Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Min
     });
     expect(returnRes.statusCode).toBe(200);
     expect(returnRes.json().movement.status).toBe(
-      MovementStatus.RETURNED_NORMAL
+      MovementStatus.RETURNED_NORMAL,
     );
 
     // At 09:25 (after the 2-minute grace window would have ended), check-overdue does NOT auto-escalate

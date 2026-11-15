@@ -1,5 +1,5 @@
-import { ClassSession } from '@server/domain/entities/ClassSession';
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { ClassSession } from '@server/domain/entities/ClassSession';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import { SessionStatus } from '@shared/enums';
 
 export class InMemoryClassSessionRepository implements IClassSessionRepository {
@@ -21,7 +21,9 @@ export class InMemoryClassSessionRepository implements IClassSessionRepository {
     return this.sessions.get(id) ?? null;
   }
 
-  public async findActiveByRoomId(roomId: string): Promise<ClassSession | null> {
+  public async findActiveByRoomId(
+    roomId: string,
+  ): Promise<ClassSession | null> {
     const normalizedRoom = roomId.trim() || 'SALA-01';
     for (const session of this.sessions.values()) {
       if (
@@ -35,7 +37,7 @@ export class InMemoryClassSessionRepository implements IClassSessionRepository {
   }
 
   public async findActiveByTeacherId(
-    teacherId: string
+    teacherId: string,
   ): Promise<ClassSession | null> {
     for (const session of this.sessions.values()) {
       if (

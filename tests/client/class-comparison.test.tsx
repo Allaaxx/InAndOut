@@ -1,10 +1,9 @@
-import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
 import { AnalyticsDashboardPage } from '@client/pages/AnalyticsDashboardPage';
 import { api } from '@client/services/api';
+import type { SchoolOverviewAnalyticsDTO, UserDTO } from '@shared/dtos';
 import { UserRole } from '@shared/enums';
-import { SchoolOverviewAnalyticsDTO, UserDTO } from '@shared/dtos';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@client/services/api', () => ({
   api: {
@@ -52,16 +51,15 @@ describe('Frontend Seam: Class Comparison Analytics (User Story 25)', () => {
   };
 
   it('renders the Comparativo por Turma section with frequency and total outside time per class', async () => {
-    vi.mocked(api.getOverviewAnalytics).mockResolvedValueOnce(mockAnalyticsData);
-
-    render(
-      <AnalyticsDashboardPage
-        user={adminUser}
-        token="jwt-token"
-      />
+    vi.mocked(api.getOverviewAnalytics).mockResolvedValueOnce(
+      mockAnalyticsData,
     );
 
-    expect(await screen.findByText('Comparativo por Turma')).toBeInTheDocument();
+    render(<AnalyticsDashboardPage user={adminUser} token="jwt-token" />);
+
+    expect(
+      await screen.findByText('Comparativo por Turma'),
+    ).toBeInTheDocument();
     expect(screen.getByTestId('class-comparison-table')).toBeInTheDocument();
 
     expect(screen.getByText('1A')).toBeInTheDocument();

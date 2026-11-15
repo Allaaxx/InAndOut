@@ -19,7 +19,7 @@ export class DurationMinutes {
   public static fromDates(
     startedAt: Date,
     endedAt: Date,
-    plannedMinutes = 50
+    plannedMinutes = 50,
   ): DurationMinutes {
     if (
       !(startedAt instanceof Date) ||
@@ -33,7 +33,7 @@ export class DurationMinutes {
     const diffMs = endedAt.getTime() - startedAt.getTime();
     if (diffMs < 0) {
       throw new Error(
-        'O horário de retorno não pode ser anterior ao horário de saída.'
+        'O horário de retorno não pode ser anterior ao horário de saída.',
       );
     }
 
@@ -43,14 +43,14 @@ export class DurationMinutes {
 
   public static create(
     durationMinutes: number,
-    plannedMinutes = 50
+    plannedMinutes = 50,
   ): DurationMinutes {
     if (!Number.isFinite(durationMinutes) || durationMinutes < 0) {
       throw new Error('A duração da ausência não pode ser negativa.');
     }
     if (!Number.isFinite(plannedMinutes) || plannedMinutes <= 0) {
       throw new Error(
-        'A duração planejada da sessão deve ser maior que zero minutos.'
+        'A duração planejada da sessão deve ser maior que zero minutos.',
       );
     }
 
@@ -62,7 +62,7 @@ export class DurationMinutes {
       ((plannedMinutes - normalizedDuration) / plannedMinutes) * 100;
     const attendancePercentage = Math.max(
       0,
-      Math.min(100, Math.round(rawPercentage * 100) / 100)
+      Math.min(100, Math.round(rawPercentage * 100) / 100),
     );
 
     return new DurationMinutes({

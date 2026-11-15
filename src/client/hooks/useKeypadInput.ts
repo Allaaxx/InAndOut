@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 export interface UseKeypadInputOptions {
   maxLength?: number;
@@ -10,7 +10,7 @@ export function useKeypadInput({
   initialValue = '',
 }: UseKeypadInputOptions = {}) {
   const [value, setRawValue] = useState<string>(
-    initialValue.replace(/\D/g, '').slice(0, maxLength)
+    initialValue.replace(/\D/g, '').slice(0, maxLength),
   );
 
   const setValue = useCallback(
@@ -18,7 +18,7 @@ export function useKeypadInput({
       const sanitized = (next ?? '').replace(/\D/g, '').slice(0, maxLength);
       setRawValue(sanitized);
     },
-    [maxLength]
+    [maxLength],
   );
 
   const appendDigit = useCallback(
@@ -30,7 +30,7 @@ export function useKeypadInput({
         return (prev + cleanDigit).slice(0, maxLength);
       });
     },
-    [maxLength]
+    [maxLength],
   );
 
   const backspace = useCallback(() => {

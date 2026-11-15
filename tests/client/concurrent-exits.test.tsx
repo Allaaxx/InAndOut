@@ -1,9 +1,8 @@
-import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
 import { ActiveExitCard } from '@client/components/terminal/ActiveExitCard';
+import type { MovementDTO } from '@shared/dtos';
 import { AlertLevel, MovementStatus } from '@shared/enums';
-import { MovementDTO } from '@shared/dtos';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 
 describe('Frontend Seam: Multiple Concurrent Exits in ActiveExitCard (User Story 10)', () => {
   const normalMovement: MovementDTO = {
@@ -44,9 +43,7 @@ describe('Frontend Seam: Multiple Concurrent Exits in ActiveExitCard (User Story
 
   it('renders all concurrent active exits when emergency exit is authorized alongside regular exit', () => {
     render(
-      <ActiveExitCard
-        activeMovements={[normalMovement, emergencyMovement]}
-      />
+      <ActiveExitCard activeMovements={[normalMovement, emergencyMovement]} />,
     );
 
     // Both student public names must be visible simultaneously

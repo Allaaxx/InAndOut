@@ -1,10 +1,10 @@
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { EscalateMovementRequestDTO, MovementDTO } from '@shared/dtos';
 import {
   MovementNotFoundError,
   MovementValidationError,
 } from './RequestStudentExitUseCase';
-import { EscalateMovementRequestDTO, MovementDTO } from '@shared/dtos';
 
 export interface EscalateMovementInput extends EscalateMovementRequestDTO {
   movementId: string;
@@ -22,7 +22,7 @@ export class EscalateMovementUseCase {
   constructor(
     movementRepo: IMovementRecordRepository,
     notificationSender: INotificationSender,
-    options: { clock?: () => Date } = {}
+    options: { clock?: () => Date } = {},
   ) {
     this.movementRepo = movementRepo;
     this.notificationSender = notificationSender;
@@ -30,25 +30,25 @@ export class EscalateMovementUseCase {
   }
 
   public async execute(
-    input: EscalateMovementInput
+    input: EscalateMovementInput,
   ): Promise<EscalateMovementOutput> {
     const movementId = (input.movementId ?? '').trim();
     if (!movementId) {
       throw new MovementValidationError(
-        'O identificador da saída (movementId) é obrigatório.'
+        'O identificador da saída (movementId) é obrigatório.',
       );
     }
 
     const movement = await this.movementRepo.findById(movementId);
     if (!movement) {
       throw new MovementNotFoundError(
-        `Registro de saída (${movementId}) não encontrado.`
+        `Registro de saída (${movementId}) não encontrado.`,
       );
     }
 
     if (!movement.isActive()) {
       throw new MovementValidationError(
-        'Não é possível escalar uma saída que já foi encerrada.'
+        'Não é possível escalar uma saída que já foi encerrada.',
       );
     }
 

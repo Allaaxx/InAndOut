@@ -54,4 +54,3 @@ export const INCIDENT_OUTCOME_LABELS: Record<IncidentOutcome, string> = {
  * @deprecated Import directly from `@shared/formatters`.
  */
 export { formatPublicStudentName } from './formatters';
-

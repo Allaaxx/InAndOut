@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
-import { LoginRequestDTO, UserDTO } from '@shared/dtos';
+import type { LoginRequestDTO, UserDTO } from '@shared/dtos';
 import { UserRole } from '@shared/enums';
-import { api } from './services/api';
+import { useState } from 'react';
+import { AnalyticsDashboardPage } from './pages/AnalyticsDashboardPage';
+import { CoordinationPage } from './pages/CoordinationPage';
 import { LoginPage } from './pages/LoginPage';
 import { TerminalPage } from './pages/TerminalPage';
-import { CoordinationPage } from './pages/CoordinationPage';
-import { AnalyticsDashboardPage } from './pages/AnalyticsDashboardPage';
+import { api } from './services/api';
 
 export function App() {
   const [user, setUser] = useState<UserDTO | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<'default' | 'analytics'>('default');
+  const [currentPage, setCurrentPage] = useState<'default' | 'analytics'>(
+    'default',
+  );
 
   const handleLogin = async (credentials: LoginRequestDTO) => {
     const response = await api.login(credentials);

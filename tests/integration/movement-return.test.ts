@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '@server/main/app';
 import { MovementStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Controller Seam: Student Return by RA & Attended Time Calculation (app.inject)', () => {
   async function startActiveSession(
@@ -10,7 +10,7 @@ describe('Controller Seam: Student Return by RA & Attended Time Calculation (app
       subject?: string;
       roomId?: string;
       plannedDurationMinutes?: number;
-    } = {}
+    } = {},
   ) {
     const loginRes = await app.inject({
       method: 'POST',
@@ -49,7 +49,7 @@ describe('Controller Seam: Student Return by RA & Attended Time Calculation (app
     const { app, container } = await createApp({ clock: () => currentTime });
     const notifyReturnSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementReturn'
+      'notifyMovementReturn',
     );
 
     const { session } = await startActiveSession(app, {
@@ -108,7 +108,7 @@ describe('Controller Seam: Student Return by RA & Attended Time Calculation (app
         durationMinutes: 6,
         attendedMinutes: 44,
         attendancePercentage: 88,
-      })
+      }),
     );
 
     // 4. Active session now has 0 active movements (room is free)

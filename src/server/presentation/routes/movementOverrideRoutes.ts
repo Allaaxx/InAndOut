@@ -1,5 +1,3 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { AppContainer } from '@server/main/container';
 import {
   AuthorizeEmergencyExitUseCase,
   AuthorizeGuestExitUseCase,
@@ -11,12 +9,14 @@ import {
   MovementValidationError,
   StudentNotInClassError,
 } from '@server/application/use-cases/movements/RequestStudentExitUseCase';
+import type { AppContainer } from '@server/main/container';
 import { extractBearerToken } from '@server/presentation/middlewares/authMiddleware';
-import {
+import type {
   EmergencyExitRequestDTO,
   GuestExitRequestDTO,
 } from '@shared/dtos';
 import { UserRole } from '@shared/enums';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 interface OverrideAuthFields {
   pin?: string;
@@ -27,14 +27,14 @@ interface OverrideAuthFields {
 
 export async function registerMovementOverrideRoutes(
   app: FastifyInstance,
-  container: AppContainer
+  container: AppContainer,
 ): Promise<void> {
   const authorizeEmergencyExitUseCase = new AuthorizeEmergencyExitUseCase(
     container.sessionRepo,
     container.studentRepo,
     container.movementRepo,
     container.notificationSender,
-    { clock: container.clock }
+    { clock: container.clock },
   );
 
   const authorizeGuestExitUseCase = new AuthorizeGuestExitUseCase(
@@ -42,12 +42,12 @@ export async function registerMovementOverrideRoutes(
     container.studentRepo,
     container.movementRepo,
     container.notificationSender,
-    { clock: container.clock }
+    { clock: container.clock },
   );
 
   async function resolveAuthorizedTeacherId(
     request: FastifyRequest<{ Body?: OverrideAuthFields }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<string | null> {
     const token = extractBearerToken(request);
     const body = request.body ?? {};
@@ -70,7 +70,7 @@ export async function registerMovementOverrideRoutes(
 
         if (body.pin !== undefined) {
           const user = await container.userRepo.findById(payload.sub);
-          if (!user || !user.verifyPin(body.pin)) {
+          if (!user?.verifyPin(body.pin)) {
             reply.status(401).send({
               error: 'PIN do professor inválido.',
             });
@@ -96,13 +96,13 @@ export async function registerMovementOverrideRoutes(
         const session = body.sessionId
           ? await container.sessionRepo.findById(body.sessionId)
           : await container.sessionRepo.findActiveByRoomId(
-              body.roomId ?? 'SALA-01'
+              body.roomId ?? 'SALA-01',
             );
         targetTeacherId = session?.teacherId ?? 'teacher-1';
       }
 
       const user = await container.userRepo.findById(targetTeacherId);
-      if (user && user.verifyPin(body.pin)) {
+      if (user?.verifyPin(body.pin)) {
         return user.id;
       }
 
@@ -148,7 +148,7 @@ export async function registerMovementOverrideRoutes(
     async (request, reply) => {
       const authorizedByTeacherId = await resolveAuthorizedTeacherId(
         request,
-        reply
+        reply,
       );
       if (reply.sent || !authorizedByTeacherId) {
         return;
@@ -167,7 +167,7 @@ export async function registerMovementOverrideRoutes(
       } catch (err) {
         return handleOverrideError(err, reply);
       }
-    }
+    },
   );
 
   app.post<{ Body: GuestExitRequestDTO & OverrideAuthFields }>(
@@ -175,7 +175,7 @@ export async function registerMovementOverrideRoutes(
     async (request, reply) => {
       const authorizedByTeacherId = await resolveAuthorizedTeacherId(
         request,
-        reply
+        reply,
       );
       if (reply.sent || !authorizedByTeacherId) {
         return;
@@ -196,6 +196,6 @@ export async function registerMovementOverrideRoutes(
       } catch (err) {
         return handleOverrideError(err, reply);
       }
-    }
+    },
   );
 }

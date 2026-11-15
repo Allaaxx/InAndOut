@@ -1,32 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createContainer } from '@server/main/container';
+import type { PrismaClient } from '@prisma/client';
+import { ClassSession } from '@server/domain/entities/ClassSession';
+import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { Student } from '@server/domain/entities/Student';
+import { User } from '@server/domain/entities/User';
+import { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
 import {
-  InMemoryUserRepository,
   InMemoryClassSessionRepository,
-  InMemoryStudentRepository,
   InMemoryMovementRecordRepository,
+  InMemoryStudentRepository,
+  InMemoryUserRepository,
   InMemoryWaitingQueueRepository,
 } from '@server/infrastructure/repositories';
 import {
-  PrismaUserRepository,
   PrismaClassSessionRepository,
-  PrismaStudentRepository,
   PrismaMovementRecordRepository,
+  PrismaStudentRepository,
+  PrismaUserRepository,
   PrismaWaitingQueueRepository,
 } from '@server/infrastructure/repositories/prisma';
-import { User } from '@server/domain/entities/User';
-import { ClassSession } from '@server/domain/entities/ClassSession';
-import { Student } from '@server/domain/entities/Student';
-import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
-import {
-  UserRole,
-  SessionStatus,
-  MovementStatus,
-  QueueEntryStatus,
-  IncidentOutcome,
-} from '@shared/enums';
-import { PrismaClient } from '@prisma/client';
+import { createContainer } from '@server/main/container';
+import { MovementStatus, QueueEntryStatus, UserRole } from '@shared/enums';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
   const originalEnv = process.env.DATABASE_URL;
@@ -46,10 +40,16 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
       const container = createContainer();
 
       expect(container.userRepo).toBeInstanceOf(InMemoryUserRepository);
-      expect(container.sessionRepo).toBeInstanceOf(InMemoryClassSessionRepository);
+      expect(container.sessionRepo).toBeInstanceOf(
+        InMemoryClassSessionRepository,
+      );
       expect(container.studentRepo).toBeInstanceOf(InMemoryStudentRepository);
-      expect(container.movementRepo).toBeInstanceOf(InMemoryMovementRecordRepository);
-      expect(container.queueRepo).toBeInstanceOf(InMemoryWaitingQueueRepository);
+      expect(container.movementRepo).toBeInstanceOf(
+        InMemoryMovementRecordRepository,
+      );
+      expect(container.queueRepo).toBeInstanceOf(
+        InMemoryWaitingQueueRepository,
+      );
     });
 
     it('instantiates InMemory repositories when DATABASE_URL is empty', () => {
@@ -58,32 +58,46 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
       const container = createContainer();
 
       expect(container.userRepo).toBeInstanceOf(InMemoryUserRepository);
-      expect(container.sessionRepo).toBeInstanceOf(InMemoryClassSessionRepository);
+      expect(container.sessionRepo).toBeInstanceOf(
+        InMemoryClassSessionRepository,
+      );
       expect(container.studentRepo).toBeInstanceOf(InMemoryStudentRepository);
-      expect(container.movementRepo).toBeInstanceOf(InMemoryMovementRecordRepository);
-      expect(container.queueRepo).toBeInstanceOf(InMemoryWaitingQueueRepository);
+      expect(container.movementRepo).toBeInstanceOf(
+        InMemoryMovementRecordRepository,
+      );
+      expect(container.queueRepo).toBeInstanceOf(
+        InMemoryWaitingQueueRepository,
+      );
     });
 
     it('instantiates Prisma repositories when DATABASE_URL is set', () => {
-      process.env.DATABASE_URL = 'postgresql://user:secret@localhost:5432/inandout?schema=public';
+      process.env.DATABASE_URL =
+        'postgresql://user:secret@localhost:5432/inandout?schema=public';
 
       const container = createContainer();
 
       expect(container.userRepo).toBeInstanceOf(PrismaUserRepository);
-      expect(container.sessionRepo).toBeInstanceOf(PrismaClassSessionRepository);
+      expect(container.sessionRepo).toBeInstanceOf(
+        PrismaClassSessionRepository,
+      );
       expect(container.studentRepo).toBeInstanceOf(PrismaStudentRepository);
-      expect(container.movementRepo).toBeInstanceOf(PrismaMovementRecordRepository);
+      expect(container.movementRepo).toBeInstanceOf(
+        PrismaMovementRecordRepository,
+      );
       expect(container.queueRepo).toBeInstanceOf(PrismaWaitingQueueRepository);
     });
 
     it('honors repository overrides regardless of DATABASE_URL', () => {
-      process.env.DATABASE_URL = 'postgresql://user:secret@localhost:5432/inandout';
+      process.env.DATABASE_URL =
+        'postgresql://user:secret@localhost:5432/inandout';
 
       const customUserRepo = new InMemoryUserRepository();
       const container = createContainer({ userRepo: customUserRepo });
 
       expect(container.userRepo).toBe(customUserRepo);
-      expect(container.sessionRepo).toBeInstanceOf(PrismaClassSessionRepository);
+      expect(container.sessionRepo).toBeInstanceOf(
+        PrismaClassSessionRepository,
+      );
     });
   });
 

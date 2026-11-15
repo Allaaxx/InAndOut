@@ -1,24 +1,21 @@
-import { ClassSession } from '@server/domain/entities/ClassSession';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { ClassSession } from '@server/domain/entities/ClassSession';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
-import { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
 import { StudentRA } from '@server/domain/value-objects/StudentRA';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import {
-  MovementNotFoundError,
-  MovementValidationError,
-} from './RequestStudentExitUseCase';
+import type { ClaimQueueRequestDTO, ClaimQueueResponseDTO } from '@shared/dtos';
+import { MovementStatus, QueueEntryStatus } from '@shared/enums';
 import {
   QueueConflictError,
   QueueWindowExpiredError,
 } from './EnqueueStudentUseCase';
-import { MovementStatus, QueueEntryStatus } from '@shared/enums';
 import {
-  ClaimQueueRequestDTO,
-  ClaimQueueResponseDTO,
-} from '@shared/dtos';
+  MovementNotFoundError,
+  MovementValidationError,
+} from './RequestStudentExitUseCase';
 
 export class ClaimQueueSlotUseCase {
   private readonly sessionRepo: IClassSessionRepository;
@@ -34,7 +31,7 @@ export class ClaimQueueSlotUseCase {
     movementRepo: IMovementRecordRepository,
     queueRepo: IWaitingQueueRepository,
     notificationSender: INotificationSender,
-    options: { clock?: () => Date } = {}
+    options: { clock?: () => Date } = {},
   ) {
     this.sessionRepo = sessionRepo;
     this.studentRepo = studentRepo;
@@ -45,14 +42,14 @@ export class ClaimQueueSlotUseCase {
   }
 
   public async execute(
-    input: ClaimQueueRequestDTO
+    input: ClaimQueueRequestDTO,
   ): Promise<ClaimQueueResponseDTO> {
     let raObj: StudentRA;
     try {
       raObj = StudentRA.create(input.ra ?? '');
     } catch (err) {
       throw new MovementValidationError(
-        err instanceof Error ? err.message : 'RA inválido.'
+        err instanceof Error ? err.message : 'RA inválido.',
       );
     }
 
@@ -69,24 +66,24 @@ export class ClaimQueueSlotUseCase {
 
     if (!session) {
       throw new MovementNotFoundError(
-        'Nenhuma sessão de aula ativa foi encontrada para confirmar a saída.'
+        'Nenhuma sessão de aula ativa foi encontrada para confirmar a saída.',
       );
     }
 
     const student = await this.studentRepo.findByRa(raObj.value);
     if (!student) {
       throw new MovementNotFoundError(
-        `Aluno com RA ${raObj.value} não encontrado.`
+        `Aluno com RA ${raObj.value} não encontrado.`,
       );
     }
 
     const activeMovements = await this.movementRepo.findActiveBySessionId(
-      session.id
+      session.id,
     );
     if (activeMovements.length > 0) {
       const currentOut = activeMovements[0];
       throw new QueueConflictError(
-        `Sala ocupada: ${currentOut.studentPublicName} ainda está fora da sala.`
+        `Sala ocupada: ${currentOut.studentPublicName} ainda está fora da sala.`,
       );
     }
 
@@ -108,7 +105,7 @@ export class ClaimQueueSlotUseCase {
     }
 
     const refreshedQueue = await this.queueRepo.findActiveBySessionId(
-      session.id
+      session.id,
     );
 
     // If an entry expired and there is a next WAITING entry, promote the next student in FIFO order
@@ -119,12 +116,12 @@ export class ClaimQueueSlotUseCase {
         await this.queueRepo.update(nextHead);
         await this.notificationSender.notifyQueueSlotCalled(
           session.id,
-          nextHead.toDTO()
+          nextHead.toDTO(),
         );
       }
       await this.notificationSender.notifyQueueUpdated(
         session.id,
-        refreshedQueue.map((q) => q.toDTO())
+        refreshedQueue.map((q) => q.toDTO()),
       );
     } else if (anyExpired) {
       await this.notificationSender.notifyQueueUpdated(session.id, []);
@@ -136,26 +133,26 @@ export class ClaimQueueSlotUseCase {
           ? ` A vaga foi transferida para o próximo da fila (${refreshedQueue[0].studentPublicName}).`
           : '';
       throw new QueueWindowExpiredError(
-        `A janela de confirmação de 2 minutos para ${student.publicName} expirou.${nextStudentMsg}`
+        `A janela de confirmação de 2 minutos para ${student.publicName} expirou.${nextStudentMsg}`,
       );
     }
 
     if (refreshedQueue.length === 0) {
       // Check if the caller previously had an expired entry in this session
       const allSessionEntries = await this.queueRepo.findBySessionId(
-        session.id
+        session.id,
       );
       const hadExpired = allSessionEntries.some(
         (e) =>
-          e.studentRa === student.ra && e.status === QueueEntryStatus.EXPIRED
+          e.studentRa === student.ra && e.status === QueueEntryStatus.EXPIRED,
       );
       if (hadExpired) {
         throw new QueueWindowExpiredError(
-          `A janela de confirmação de 2 minutos para ${student.publicName} expirou.`
+          `A janela de confirmação de 2 minutos para ${student.publicName} expirou.`,
         );
       }
       throw new MovementNotFoundError(
-        `Aluno com RA ${student.ra} não está na fila de espera.`
+        `Aluno com RA ${student.ra} não está na fila de espera.`,
       );
     }
 
@@ -163,27 +160,27 @@ export class ClaimQueueSlotUseCase {
     if (head.studentRa !== student.ra) {
       // Check if the caller previously had an expired entry in this session
       const allSessionEntries = await this.queueRepo.findBySessionId(
-        session.id
+        session.id,
       );
       const hadExpired = allSessionEntries.some(
         (e) =>
-          e.studentRa === student.ra && e.status === QueueEntryStatus.EXPIRED
+          e.studentRa === student.ra && e.status === QueueEntryStatus.EXPIRED,
       );
       if (hadExpired) {
         throw new QueueWindowExpiredError(
-          `A janela de confirmação de 2 minutos para ${student.publicName} expirou. A vaga foi transferida para o próximo da fila (${head.studentPublicName}).`
+          `A janela de confirmação de 2 minutos para ${student.publicName} expirou. A vaga foi transferida para o próximo da fila (${head.studentPublicName}).`,
         );
       }
 
       const inQueue = refreshedQueue.some((e) => e.studentRa === student.ra);
       if (!inQueue) {
         throw new MovementNotFoundError(
-          `Aluno com RA ${student.ra} não está na fila de espera.`
+          `Aluno com RA ${student.ra} não está na fila de espera.`,
         );
       }
 
       throw new QueueConflictError(
-        `A vaga está reservada para o primeiro da fila (${head.studentPublicName}). Aguarde sua vez.`
+        `A vaga está reservada para o primeiro da fila (${head.studentPublicName}). Aguarde sua vez.`,
       );
     }
 
@@ -220,7 +217,7 @@ export class ClaimQueueSlotUseCase {
     await this.notificationSender.notifyMovementExit(movementDTO);
     await this.notificationSender.notifyQueueUpdated(
       session.id,
-      finalQueueDTOs
+      finalQueueDTOs,
     );
 
     return {
