@@ -14,6 +14,8 @@ export interface UseSocketOptions {
   room?: string;
   isCoordination?: boolean;
   enabled?: boolean;
+  url?: string;
+  autoConnect?: boolean;
   onMovementExit?: (movement: MovementDTO) => void;
   onMovementStarted?: (movement: MovementDTO) => void;
   onMovementReturn?: (movement: MovementDTO) => void;
@@ -38,6 +40,8 @@ export function useSocket({
   room,
   isCoordination = false,
   enabled = true,
+  url,
+  autoConnect,
   onMovementExit,
   onMovementStarted,
   onMovementReturn,
@@ -104,10 +108,13 @@ export function useSocket({
     const isTestEnv =
       typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
 
+    const socketUrl = url ?? SOCKET_URL;
+    const shouldAutoConnect = autoConnect ?? !isTestEnv;
+
     let socket: Socket | null = null;
     try {
-      socket = io(SOCKET_URL, {
-        autoConnect: !isTestEnv,
+      socket = io(socketUrl, {
+        autoConnect: shouldAutoConnect,
         transports: ['websocket', 'polling'],
       });
     } catch {
@@ -173,7 +180,18 @@ export function useSocket({
       callbacksRef.current.onMovementResolved?.(movement);
     };
 
-    socket.emit('join:room', targetRoom);
+    const joinRooms = () => {
+      socket?.emit(SOCKET_EVENTS.JOIN_ROOM, targetRoom);
+      if (isCoordination) {
+        socket?.emit(SOCKET_EVENTS.JOIN_COORDINATION);
+      } else if (sessionId) {
+        socket?.emit(SOCKET_EVENTS.JOIN_SESSION, sessionId);
+      }
+    };
+
+    socket.on('connect', joinRooms);
+    joinRooms();
+
     socket.on(SOCKET_EVENTS.MOVEMENT_EXIT, handleStarted);
     socket.on(SOCKET_EVENTS.MOVEMENT_STARTED, handleStarted);
     socket.on(SOCKET_EVENTS.MOVEMENT_RETURN, handleReturn);
@@ -189,6 +207,16 @@ export function useSocket({
     socket.on(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
 
     return () => {
+      if (isCoordination) {
+        socket?.emit(SOCKET_EVENTS.LEAVE_COORDINATION);
+      } else if (sessionId) {
+        socket?.emit(SOCKET_EVENTS.LEAVE_SESSION, sessionId);
+      }
+      if (targetRoom) {
+        socket?.emit(SOCKET_EVENTS.LEAVE_ROOM, targetRoom);
+      }
+
+      socket?.off('connect', joinRooms);
       socket?.off(SOCKET_EVENTS.MOVEMENT_EXIT, handleStarted);
       socket?.off(SOCKET_EVENTS.MOVEMENT_STARTED, handleStarted);
       socket?.off(SOCKET_EVENTS.MOVEMENT_RETURN, handleReturn);
@@ -204,5 +232,5 @@ export function useSocket({
       socket?.off(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
       socket?.disconnect();
     };
-  }, [enabled, sessionId, room, isCoordination]);
+  }, [enabled, sessionId, room, isCoordination, url, autoConnect]);
 }

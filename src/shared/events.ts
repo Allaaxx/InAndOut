@@ -9,6 +9,14 @@ export const SOCKET_EVENTS = {
   MOVEMENT_ESCALATED: 'movement:escalated',
   MOVEMENT_IN_TRANSIT_UNRESOLVED: 'movement:in-transit-unresolved',
   MOVEMENT_RESOLVED: 'movement:resolved',
+
+  // Client events
+  JOIN_SESSION: 'join_session',
+  LEAVE_SESSION: 'leave_session',
+  JOIN_COORDINATION: 'join_coordination',
+  LEAVE_COORDINATION: 'leave_coordination',
+  JOIN_ROOM: 'join:room',
+  LEAVE_ROOM: 'leave:room',
 } as const;
 
 export const SOCKET_ROOMS = {
@@ -16,3 +24,4 @@ export const SOCKET_ROOMS = {
   COORDINATION_ROOM: 'room:coordenacao',
   sessionRoom: (sessionId: string) => `room:session:${sessionId}`,
 } as const;
+
