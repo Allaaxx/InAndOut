@@ -137,7 +137,10 @@ export function AnalyticsDashboardPage({
     }
   };
 
-  const handleExport = async (format: 'csv' | 'pdf', targetRa?: string) => {
+  const handleExport = async (
+    format: 'xlsx' | 'pdf' | 'csv',
+    targetRa?: string,
+  ) => {
     try {
       setExporting(true);
       const params = {
@@ -155,7 +158,9 @@ export function AnalyticsDashboardPage({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `relatorio-${format === 'csv' ? 'movimentacoes.csv' : 'movimentacoes.pdf'}`;
+      const extension =
+        format === 'pdf' ? 'pdf' : format === 'csv' ? 'csv' : 'xlsx';
+      a.download = `relatorio-movimentacoes.${extension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -345,12 +350,12 @@ export function AnalyticsDashboardPage({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleExport('csv')}
+                  onClick={() => handleExport('xlsx')}
                   disabled={exporting}
                   className="flex items-center gap-1.5 text-xs text-slate-700"
                 >
                   <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Exportar CSV</span>
+                  <span>Exportar Excel</span>
                 </Button>
 
                 <Button
@@ -617,13 +622,13 @@ export function AnalyticsDashboardPage({
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      handleExport('csv', studentReport?.student.ra)
+                      handleExport('xlsx', studentReport?.student.ra)
                     }
                     disabled={exporting || !studentReport}
                     className="flex items-center gap-1.5 text-xs text-slate-700"
                   >
                     <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-600" />
-                    <span>Exportar CSV</span>
+                    <span>Exportar Excel</span>
                   </Button>
 
                   <Button
