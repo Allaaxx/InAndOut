@@ -8,8 +8,19 @@ import { TerminalPage } from './pages/TerminalPage';
 import { api } from './services/api';
 
 export function App() {
-  const [user, setUser] = useState<UserDTO | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<UserDTO | null>(() => {
+    if (typeof localStorage === 'undefined') return null;
+    try {
+      const stored = localStorage.getItem('inandout_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [token, setToken] = useState<string | null>(() => {
+    if (typeof localStorage === 'undefined') return null;
+    return localStorage.getItem('inandout_token') || null;
+  });
   const [currentPage, setCurrentPage] = useState<'default' | 'analytics'>(
     'default',
   );
@@ -21,6 +32,7 @@ export function App() {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('inandout_token', response.token);
       localStorage.setItem('inandout_refresh_token', response.refreshToken);
+      localStorage.setItem('inandout_user', JSON.stringify(response.user));
     }
   };
 
@@ -33,6 +45,7 @@ export function App() {
     setUser(response.user);
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('inandout_token', response.unlockedToken);
+      localStorage.setItem('inandout_user', JSON.stringify(response.user));
     }
   };
 
@@ -43,6 +56,7 @@ export function App() {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('inandout_token');
       localStorage.removeItem('inandout_refresh_token');
+      localStorage.removeItem('inandout_user');
     }
   };
 

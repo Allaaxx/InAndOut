@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 describe('Prisma Lifecycle Scripts and Relational Schema (Ticket #31)', () => {
   const rootDir = path.resolve(__dirname, '../../');
@@ -33,10 +33,16 @@ describe('Prisma Lifecycle Scripts and Relational Schema (Ticket #31)', () => {
     it('contains initial migration directory with migration.sql', () => {
       expect(fs.existsSync(migrationsDir)).toBe(true);
       const entries = fs.readdirSync(migrationsDir);
-      const initMigrationDir = entries.find((e) => e.includes('init_relational_schema'));
+      const initMigrationDir = entries.find((e) =>
+        e.includes('init_relational_schema'),
+      );
       expect(initMigrationDir).toBeDefined();
 
-      const migrationSqlPath = path.join(migrationsDir, initMigrationDir!, 'migration.sql');
+      const migrationSqlPath = path.join(
+        migrationsDir,
+        initMigrationDir!,
+        'migration.sql',
+      );
       expect(fs.existsSync(migrationSqlPath)).toBe(true);
 
       const sqlContent = fs.readFileSync(migrationSqlPath, 'utf-8');
@@ -62,7 +68,9 @@ describe('Prisma Lifecycle Scripts and Relational Schema (Ticket #31)', () => {
 
     it('verifies seeded users, students, rooms, sessions, and relations in postgres', async () => {
       if (!dbUrl) {
-        console.warn('DATABASE_URL not found in .env; skipping live database verification');
+        console.warn(
+          'DATABASE_URL not found in .env; skipping live database verification',
+        );
         return;
       }
 

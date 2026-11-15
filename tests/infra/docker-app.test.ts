@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 describe('Application Containerization and Compose Profile (Ticket #32)', () => {
   const rootDir = path.resolve(__dirname, '../../');
@@ -16,7 +16,10 @@ describe('Application Containerization and Compose Profile (Ticket #32)', () => 
 
     it('ignores node_modules, dist, .git, .env, logs, and tests', () => {
       const content = fs.readFileSync(dockerignorePath, 'utf-8');
-      const lines = content.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+      const lines = content
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith('#'));
 
       expect(lines).toContain('node_modules');
       expect(lines).toContain('dist');
@@ -55,7 +58,9 @@ describe('Application Containerization and Compose Profile (Ticket #32)', () => 
 
     it('defines start CMD with node and tsx', () => {
       const content = fs.readFileSync(dockerfilePath, 'utf-8');
-      expect(content).toMatch(/CMD\s*\[.*node.*--import.*tsx.*src\/server\/main\/server\.ts.*\]/);
+      expect(content).toMatch(
+        /CMD\s*\[.*node.*--import.*tsx.*src\/server\/main\/server\.ts.*\]/,
+      );
     });
   });
 
@@ -70,12 +75,16 @@ describe('Application Containerization and Compose Profile (Ticket #32)', () => 
 
     it('configures app dependency on healthy postgres service', () => {
       const content = fs.readFileSync(composePath, 'utf-8');
-      expect(content).toMatch(/depends_on:\s*\n\s+postgres:\s*\n\s+condition:\s*service_healthy/m);
+      expect(content).toMatch(
+        /depends_on:\s*\n\s+postgres:\s*\n\s+condition:\s*service_healthy/m,
+      );
     });
 
     it('configures app environment variables for database connection, port, and host', () => {
       const content = fs.readFileSync(composePath, 'utf-8');
-      expect(content).toMatch(/DATABASE_URL:\s*postgresql:\/\/\$\{POSTGRES_USER:-inandout_user\}:\$\{POSTGRES_PASSWORD:-inandout_pass\}@postgres:5432\/\$\{POSTGRES_DB:-inandout\}\?schema=public/);
+      expect(content).toMatch(
+        /DATABASE_URL:\s*postgresql:\/\/\$\{POSTGRES_USER:-inandout_user\}:\$\{POSTGRES_PASSWORD:-inandout_pass\}@postgres:5432\/\$\{POSTGRES_DB:-inandout\}\?schema=public/,
+      );
       expect(content).toMatch(/PORT:\s*3000/);
       expect(content).toMatch(/HOST:\s*0\.0\.0\.0/);
     });
@@ -92,17 +101,26 @@ describe('Application Containerization and Compose Profile (Ticket #32)', () => 
         cwd: rootDir,
         encoding: 'utf-8',
       }).trim();
-      const services = output.split('\n').map((s) => s.trim()).filter(Boolean);
+      const services = output
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
       expect(services).toContain('postgres');
       expect(services).not.toContain('app');
     });
 
     it('lists both postgres and app when profile app is enabled', () => {
-      const output = execSync('docker compose --profile app config --services', {
-        cwd: rootDir,
-        encoding: 'utf-8',
-      }).trim();
-      const services = output.split('\n').map((s) => s.trim()).filter(Boolean);
+      const output = execSync(
+        'docker compose --profile app config --services',
+        {
+          cwd: rootDir,
+          encoding: 'utf-8',
+        },
+      ).trim();
+      const services = output
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
       expect(services).toContain('postgres');
       expect(services).toContain('app');
     });

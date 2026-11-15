@@ -71,7 +71,11 @@ export class RequestStudentExitUseCase {
   ): Promise<RequestExitResponseDTO> {
     let raObj: StudentRA;
     try {
-      raObj = StudentRA.create(input.ra ?? '');
+      const candidateRa =
+        input.ra ??
+        (input as unknown as { studentRa?: string }).studentRa ??
+        '';
+      raObj = StudentRA.create(candidateRa);
     } catch (err) {
       throw new MovementValidationError(
         err instanceof Error ? err.message : 'RA inválido.',

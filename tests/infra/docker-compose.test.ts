@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { describe, expect, it } from 'vitest';
 
 describe('Infrastructure Configuration (Ticket #30)', () => {
   const rootDir = path.resolve(__dirname, '../../');
@@ -24,8 +24,12 @@ describe('Infrastructure Configuration (Ticket #30)', () => {
 
     it('configures postgres environment variables with defaults', () => {
       const content = fs.readFileSync(composePath, 'utf-8');
-      expect(content).toMatch(/POSTGRES_USER:\s*\$\{POSTGRES_USER:-inandout_user\}/);
-      expect(content).toMatch(/POSTGRES_PASSWORD:\s*\$\{POSTGRES_PASSWORD:-inandout_pass\}/);
+      expect(content).toMatch(
+        /POSTGRES_USER:\s*\$\{POSTGRES_USER:-inandout_user\}/,
+      );
+      expect(content).toMatch(
+        /POSTGRES_PASSWORD:\s*\$\{POSTGRES_PASSWORD:-inandout_pass\}/,
+      );
       expect(content).toMatch(/POSTGRES_DB:\s*\$\{POSTGRES_DB:-inandout\}/);
     });
 
@@ -44,7 +48,9 @@ describe('Infrastructure Configuration (Ticket #30)', () => {
     it('configures postgres healthcheck', () => {
       const content = fs.readFileSync(composePath, 'utf-8');
       expect(content).toMatch(/healthcheck:/);
-      expect(content).toMatch(/pg_isready -U \$\{POSTGRES_USER:-inandout_user\} -d \$\{POSTGRES_DB:-inandout\}/);
+      expect(content).toMatch(
+        /pg_isready -U \$\{POSTGRES_USER:-inandout_user\} -d \$\{POSTGRES_DB:-inandout\}/,
+      );
       expect(content).toMatch(/interval:\s*5s/);
       expect(content).toMatch(/timeout:\s*5s/);
       expect(content).toMatch(/retries:\s*5/);
@@ -64,7 +70,9 @@ describe('Infrastructure Configuration (Ticket #30)', () => {
       expect(content).toMatch(/^POSTGRES_DB=/m);
       expect(content).toMatch(/^POSTGRES_PORT=5433/m);
       expect(content).toMatch(/^DATABASE_URL=/m);
-      expect(content).toContain('postgresql://inandout_user:inandout_pass@localhost:5433/inandout?schema=public');
+      expect(content).toContain(
+        'postgresql://inandout_user:inandout_pass@localhost:5433/inandout?schema=public',
+      );
     });
 
     it('.env exists and contains working values for local development', () => {
@@ -79,7 +87,9 @@ describe('Infrastructure Configuration (Ticket #30)', () => {
       expect(content).toMatch(/^POSTGRES_DB=/m);
       expect(content).toMatch(/^POSTGRES_PORT=5433/m);
       expect(content).toMatch(/^DATABASE_URL=/m);
-      expect(content).toContain('postgresql://inandout_user:inandout_pass@localhost:5433/inandout?schema=public');
+      expect(content).toContain(
+        'postgresql://inandout_user:inandout_pass@localhost:5433/inandout?schema=public',
+      );
     });
   });
 

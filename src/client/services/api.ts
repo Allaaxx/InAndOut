@@ -39,12 +39,13 @@ const API_BASE_URL =
   'http://localhost:3000';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const { headers: customHeaders, ...restOptions } = options;
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
+      ...((customHeaders as Record<string, string>) ?? {}),
     },
-    ...options,
   });
 
   const data = await response.json().catch(() => ({}));
