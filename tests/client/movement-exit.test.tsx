@@ -4,6 +4,7 @@ import type { MovementDTO } from '@shared/dtos';
 import {
   AlertLevel,
   MovementStatus,
+  QueueEntryStatus,
   SessionStatus,
   UserRole,
 } from '@shared/enums';
@@ -42,6 +43,10 @@ vi.mock('@client/services/api', () => ({
     startSession: vi.fn(),
     endSession: vi.fn(),
     requestExit: vi.fn(),
+    registerReturn: vi.fn(),
+    enqueueWaiting: vi.fn(),
+    cancelQueue: vi.fn(),
+    claimQueueSlot: vi.fn(),
   },
 }));
 
@@ -153,13 +158,40 @@ describe('Frontend Seam: Classroom Terminal Virtual Numeric Keypad, Public Stude
     expect(screen.getByText(/Em Trânsito/i)).toBeInTheDocument();
   });
 
-  it('displays conflict alert when a second student tries to exit while the room is occupied (409) and updates via Socket.io events', async () => {
+  it('automatically enqueues second student to waiting queue via keypad (Auto-Enfileiramento por RA) when room is occupied', async () => {
     const user = userEvent.setup();
 
     vi.mocked(api.getActiveSession).mockResolvedValueOnce({
       session: activeSessionDTO,
       activeMovements: [],
       queue: [],
+    });
+
+    vi.mocked(api.enqueueWaiting).mockResolvedValueOnce({
+      entry: {
+        id: 'queue-entry-joao',
+        sessionId: activeSessionDTO.id,
+        studentRa: '1002',
+        studentFullName: 'João Mendes',
+        studentPublicName: 'João M.',
+        abbreviatedName: 'João M.',
+        position: 1,
+        status: QueueEntryStatus.WAITING,
+        requestedAt: new Date().toISOString(),
+      },
+      queue: [
+        {
+          id: 'queue-entry-joao',
+          sessionId: activeSessionDTO.id,
+          studentRa: '1002',
+          studentFullName: 'João Mendes',
+          studentPublicName: 'João M.',
+          abbreviatedName: 'João M.',
+          position: 1,
+          status: QueueEntryStatus.WAITING,
+          requestedAt: new Date().toISOString(),
+        },
+      ],
     });
 
     render(
@@ -205,13 +237,7 @@ describe('Frontend Seam: Classroom Terminal Virtual Numeric Keypad, Public Stude
     expect(await screen.findByText('Lucas S.')).toBeInTheDocument();
     expect(screen.getByText(/Em Trânsito/i)).toBeInTheDocument();
 
-    // Second student (RA 1002) tries to exit using the keypad -> API rejects with 409 message
-    vi.mocked(api.requestExit).mockRejectedValueOnce(
-      new Error(
-        'Sala ocupada: Lucas S. já está fora da sala. Apenas 1 estudante pode sair por vez. Aguarde o retorno.',
-      ),
-    );
-
+    // Second student (RA 1002) types RA on virtual keypad while room is occupied
     await user.click(screen.getByRole('button', { name: '1' }));
     await user.click(screen.getByRole('button', { name: '0' }));
     await user.click(screen.getByRole('button', { name: '0' }));
@@ -219,9 +245,89 @@ describe('Frontend Seam: Classroom Terminal Virtual Numeric Keypad, Public Stude
 
     await user.click(screen.getByRole('button', { name: /Registrar Saída/i }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      /Sala ocupada.*Lucas S\./i,
+    // Automatically calls enqueueWaiting without requiring a secondary form
+    await waitFor(() => {
+      expect(api.enqueueWaiting).toHaveBeenCalledWith(
+        {
+          ra: '1002',
+          sessionId: 'session-101',
+        },
+        'jwt-access-token',
+      );
+    });
+
+    expect(await screen.findByTestId('queue-next-indicator')).toHaveTextContent(
+      /Próximo:.*João M\./i,
     );
     expect(screen.getByText('Lucas S.')).toBeInTheDocument();
+  });
+
+  it('registers return when student currently outside enters RA on the keypad and clicks Registrar Saída', async () => {
+    const user = userEvent.setup();
+
+    const activeLucasMovement: MovementDTO = {
+      id: 'mov-active-1',
+      sessionId: activeSessionDTO.id,
+      studentId: 'student-1',
+      studentRa: '1001',
+      studentFullName: 'Lucas Silva',
+      studentPublicName: 'Lucas S.',
+      abbreviatedName: 'Lucas S.',
+      classCode: '1A',
+      subject: 'Matemática',
+      status: MovementStatus.IN_TRANSIT,
+      alertLevel: AlertLevel.GREEN,
+      startedAt: new Date().toISOString(),
+      allowedLimitMinutes: 10,
+      isEmergency: false,
+      isGuest: false,
+    };
+
+    vi.mocked(api.getActiveSession).mockResolvedValueOnce({
+      session: activeSessionDTO,
+      activeMovements: [activeLucasMovement],
+      queue: [],
+    });
+
+    vi.mocked(api.registerReturn).mockResolvedValueOnce({
+      movement: {
+        ...activeLucasMovement,
+        status: MovementStatus.RETURNED_NORMAL,
+        endedAt: new Date().toISOString(),
+      },
+      message: 'Retorno registrado com sucesso',
+      nextCalledQueueEntry: null,
+    });
+
+    render(
+      <TerminalPage
+        user={teacherUser}
+        token="jwt-access-token"
+        onVerifyPin={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+
+    expect(await screen.findByText('Lucas S.')).toBeInTheDocument();
+
+    // Student types their RA 1001 and clicks "Registrar Saída"
+    await user.click(screen.getByRole('button', { name: '1' }));
+    await user.click(screen.getByRole('button', { name: '0' }));
+    await user.click(screen.getByRole('button', { name: '0' }));
+    await user.click(screen.getByRole('button', { name: '1' }));
+
+    await user.click(screen.getByRole('button', { name: /Registrar Saída/i }));
+
+    await waitFor(() => {
+      expect(api.registerReturn).toHaveBeenCalledWith(
+        {
+          ra: '1001',
+          sessionId: 'session-101',
+        },
+        'jwt-access-token',
+      );
+    });
+
+    expect(await screen.findByText(/Sala Livre/i)).toBeInTheDocument();
   });
 });

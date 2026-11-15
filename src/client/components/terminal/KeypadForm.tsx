@@ -17,6 +17,12 @@ export interface KeypadFormProps {
   error?: string | null;
   onSubmitRa: (ra: string) => Promise<void>;
   onReturnRa?: (ra: string) => Promise<void>;
+  queueFeedback?: {
+    ra: string;
+    position: number;
+    message: string;
+  } | null;
+  onCancelQueue?: (ra: string) => Promise<void> | void;
 }
 
 export function KeypadForm({
@@ -24,6 +30,8 @@ export function KeypadForm({
   error = null,
   onSubmitRa,
   onReturnRa,
+  queueFeedback = null,
+  onCancelQueue,
 }: KeypadFormProps) {
   const { value, setValue, appendDigit, backspace, clear, canSubmit } =
     useKeypadInput({ maxLength: 12 });
@@ -152,6 +160,37 @@ export function KeypadForm({
               </Button>
             )}
           </div>
+
+          {queueFeedback && (
+            <div
+              role="status"
+              aria-live="polite"
+              data-testid="queue-position-feedback"
+              className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-blue-950 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+            >
+              <div>
+                <p className="text-sm font-semibold text-blue-900">
+                  {queueFeedback.message}
+                </p>
+                <p className="text-xs text-blue-700">
+                  Digite seu RA novamente ou clique em Desistir para cancelar.
+                </p>
+              </div>
+              {onCancelQueue && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 font-medium self-start sm:self-auto"
+                  onClick={() => onCancelQueue(queueFeedback.ra)}
+                  disabled={loading}
+                  data-testid="numpad-cancel-queue-button"
+                >
+                  Desistir da Fila
+                </Button>
+              )}
+            </div>
+          )}
 
           {error && (
             <div
