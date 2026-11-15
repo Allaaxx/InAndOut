@@ -1,3 +1,4 @@
+import PDFDocument from 'pdfkit';
 import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 import { ExportAnalyticsQueryDTO } from '@shared/dtos';
@@ -32,71 +33,216 @@ function escapeCsvCell(value: unknown): string {
   return str;
 }
 
-function escapePdfText(text: string): string {
-  const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  return normalized
-    .replace(/\\/g, '\\\\')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)');
+interface PdfMovementRow {
+  startedAt: string;
+  studentRa: string;
+  studentFullName: string;
+  classCode: string;
+  duration: string;
+  allowedLimit: string;
+  status: string;
 }
 
-function createPdfDocument(title: string, lines: string[]): Buffer {
-  const contentStream: string[] = [
-    'BT',
-    '/F1 14 Tf',
-    '40 750 Td',
-    `(${escapePdfText(title)}) Tj`,
-    '/F1 9 Tf',
-    '0 -20 Td',
-  ];
+interface CreatePdfDocumentParams {
+  title: string;
+  subtitle: string;
+  emissionDate: string;
+  filtersSummary: string;
+  totalRecords: number;
+  movements: PdfMovementRow[];
+}
 
-  for (const line of lines.slice(0, 40)) {
-    contentStream.push(`(${escapePdfText(line)}) Tj`);
-    contentStream.push('0 -14 Td');
-  }
-  contentStream.push('ET');
+function createPdfDocument(params: CreatePdfDocumentParams): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    const doc = new PDFDocument({
+      size: 'A4',
+      margin: 40,
+      bufferPages: true,
+      info: {
+        Title: params.title,
+        Author: 'InAndOut',
+      },
+    });
 
-  const streamData = contentStream.join('\n');
-  const streamLength = Buffer.byteLength(streamData, 'utf-8');
+    const chunks: Buffer[] = [];
+    doc.on('data', (chunk) =>
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    );
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', (err) => reject(err));
 
-  let pdf = '%PDF-1.4\n';
-  const offsets: number[] = [];
+    // Header
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(15)
+      .fillColor('#0f172a')
+      .text('Escola Estadual José Lins do Rego — InAndOut', 40, 40);
 
-  // Object 1: Catalog
-  offsets.push(Buffer.byteLength(pdf, 'utf-8'));
-  pdf += '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n';
+    doc
+      .font('Helvetica')
+      .fontSize(10)
+      .fillColor('#475569')
+      .text(params.subtitle, 40, 60);
 
-  // Object 2: Pages
-  offsets.push(Buffer.byteLength(pdf, 'utf-8'));
-  pdf += '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n';
+    doc
+      .font('Helvetica')
+      .fontSize(8.5)
+      .fillColor('#64748b')
+      .text(`Emissão: ${params.emissionDate}`, 40, 75);
 
-  // Object 3: Page
-  offsets.push(Buffer.byteLength(pdf, 'utf-8'));
-  pdf +=
-    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n';
+    doc
+      .moveTo(40, 90)
+      .lineTo(555, 90)
+      .strokeColor('#cbd5e1')
+      .lineWidth(0.75)
+      .stroke();
 
-  // Object 4: Stream
-  offsets.push(Buffer.byteLength(pdf, 'utf-8'));
-  pdf += `4 0 obj\n<< /Length ${streamLength} >>\nstream\n${streamData}\nendstream\nendobj\n`;
+    // Filters summary bar
+    doc.rect(40, 98, 515, 22).fillAndStroke('#f8fafc', '#e2e8f0');
 
-  // Object 5: Font
-  offsets.push(Buffer.byteLength(pdf, 'utf-8'));
-  pdf +=
-    '5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n';
+    doc
+      .font('Helvetica')
+      .fontSize(8.5)
+      .fillColor('#334155')
+      .text(
+        `Filtros: ${params.filtersSummary}  |  Total de registros: ${params.totalRecords}`,
+        48,
+        104,
+        { width: 500, lineBreak: false, ellipsis: true }
+      );
 
-  const startxref = Buffer.byteLength(pdf, 'utf-8');
-  pdf += 'xref\n';
-  pdf += '0 6\n';
-  pdf += '0000000000 65535 f \n';
-  for (const offset of offsets) {
-    pdf += `${offset.toString().padStart(10, '0')} 00000 n \n`;
-  }
-  pdf += 'trailer\n<< /Size 6 /Root 1 0 R >>\n';
-  pdf += 'startxref\n';
-  pdf += `${startxref}\n`;
-  pdf += '%%EOF\n';
+    // Columns configuration
+    const cols = [
+      { label: 'Data/Hora', x: 40, w: 95, align: 'left' as const },
+      { label: 'RA', x: 135, w: 45, align: 'left' as const },
+      { label: 'Aluno', x: 180, w: 140, align: 'left' as const },
+      { label: 'Turma', x: 320, w: 45, align: 'center' as const },
+      { label: 'Duração', x: 365, w: 50, align: 'center' as const },
+      { label: 'Limite', x: 415, w: 45, align: 'center' as const },
+      { label: 'Status', x: 460, w: 95, align: 'left' as const },
+    ];
 
-  return Buffer.from(pdf, 'utf-8');
+    const drawTableHeader = (y: number) => {
+      doc.rect(40, y, 515, 20).fill('#f1f5f9');
+      doc.font('Helvetica-Bold').fontSize(8).fillColor('#1e293b');
+      for (const col of cols) {
+        doc.text(col.label, col.x + 4, y + 6, {
+          width: col.w - 8,
+          align: col.align,
+          lineBreak: false,
+        });
+      }
+      doc
+        .moveTo(40, y + 20)
+        .lineTo(555, y + 20)
+        .strokeColor('#cbd5e1')
+        .lineWidth(0.5)
+        .stroke();
+    };
+
+    let currentY = 128;
+    drawTableHeader(currentY);
+    currentY += 20;
+
+    if (params.movements.length === 0) {
+      doc.font('Helvetica').fontSize(8.5).fillColor('#64748b');
+      doc.text(
+        'Nenhuma movimentação encontrada para os filtros especificados.',
+        48,
+        currentY + 12,
+        { width: 500, align: 'center' }
+      );
+    } else {
+      for (let i = 0; i < params.movements.length; i++) {
+        const m = params.movements[i];
+        if (currentY + 18 > doc.page.height - 50) {
+          doc.addPage();
+          currentY = 40;
+          drawTableHeader(currentY);
+          currentY += 20;
+        }
+
+        if (i % 2 === 1) {
+          doc.rect(40, currentY, 515, 18).fill('#f8fafc');
+        }
+
+        doc.font('Helvetica').fontSize(8).fillColor('#1e293b');
+        doc.text(m.startedAt, cols[0].x + 4, currentY + 4, {
+          width: cols[0].w - 8,
+          align: cols[0].align,
+          lineBreak: false,
+        });
+        doc.text(m.studentRa, cols[1].x + 4, currentY + 4, {
+          width: cols[1].w - 8,
+          align: cols[1].align,
+          lineBreak: false,
+        });
+        doc.text(m.studentFullName, cols[2].x + 4, currentY + 4, {
+          width: cols[2].w - 8,
+          align: cols[2].align,
+          lineBreak: false,
+          ellipsis: true,
+        });
+        doc.text(m.classCode, cols[3].x + 4, currentY + 4, {
+          width: cols[3].w - 8,
+          align: cols[3].align,
+          lineBreak: false,
+        });
+        doc.text(m.duration, cols[4].x + 4, currentY + 4, {
+          width: cols[4].w - 8,
+          align: cols[4].align,
+          lineBreak: false,
+        });
+        doc.text(m.allowedLimit, cols[5].x + 4, currentY + 4, {
+          width: cols[5].w - 8,
+          align: cols[5].align,
+          lineBreak: false,
+        });
+        doc.text(m.status, cols[6].x + 4, currentY + 4, {
+          width: cols[6].w - 8,
+          align: cols[6].align,
+          lineBreak: false,
+        });
+
+        doc
+          .moveTo(40, currentY + 18)
+          .lineTo(555, currentY + 18)
+          .strokeColor('#e2e8f0')
+          .lineWidth(0.5)
+          .stroke();
+
+        currentY += 18;
+      }
+    }
+
+    // Footers across all pages
+    const range = doc.bufferedPageRange();
+    for (let p = range.start; p < range.start + range.count; p++) {
+      doc.switchToPage(p);
+      doc
+        .moveTo(40, doc.page.height - 40)
+        .lineTo(555, doc.page.height - 40)
+        .strokeColor('#e2e8f0')
+        .lineWidth(0.5)
+        .stroke();
+
+      doc.font('Helvetica').fontSize(8).fillColor('#64748b');
+      doc.text(
+        'InAndOut — Sistema de Controle de Fluxo Escolar',
+        40,
+        doc.page.height - 32,
+        { width: 300, align: 'left', lineBreak: false }
+      );
+      doc.text(
+        `Página ${p + 1} de ${range.count}`,
+        doc.page.width - 240,
+        doc.page.height - 32,
+        { width: 200, align: 'right', lineBreak: false }
+      );
+    }
+
+    doc.end();
+  });
 }
 
 export class ExportAnalyticsReportUseCase {
@@ -201,9 +347,10 @@ export class ExportAnalyticsReportUseCase {
         ].map(escapeCsvCell);
       });
 
-      const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join(
-        '\n'
-      );
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((r) => r.join(',')),
+      ].join('\n');
 
       return {
         contentType: 'text/csv; charset=utf-8',
@@ -213,36 +360,48 @@ export class ExportAnalyticsReportUseCase {
     }
 
     // PDF Format
-    const title = `InAndOut - Relatorio de Movimentacoes (${dateStamp})`;
-    const lines: string[] = [];
+    const subtitle = query.ra
+      ? `Relatório Individual de Movimentações — Aluno RA ${query.ra}`
+      : query.classCode && query.classCode !== 'TODOS'
+        ? `Relatório de Movimentações — Turma ${query.classCode}`
+        : 'Relatório Geral de Movimentações';
 
-    lines.push(
-      `Filtros: ${query.ra ? `RA ${query.ra} | ` : ''}${query.classCode ? `Turma ${query.classCode} | ` : ''}Total de Registros: ${movements.length}`
-    );
-    lines.push('--------------------------------------------------------------------------------');
-    lines.push('DATA/HORA        | RA    | ALUNO                    | TURMA | DUR | STATUS');
-    lines.push('--------------------------------------------------------------------------------');
+    const emissionDate = `${now.toISOString().replace('T', ' ').slice(0, 19)} UTC`;
 
-    for (const m of movements) {
-      const datePart = m.startedAt.toISOString().slice(0, 16).replace('T', ' ');
-      const raPart = m.studentRa.padEnd(5, ' ');
-      const namePart = (
-        m.studentFullName.length > 22
-          ? m.studentFullName.slice(0, 20) + '..'
-          : m.studentFullName
-      ).padEnd(24, ' ');
-      const turmaPart = m.classCode.padEnd(5, ' ');
-      const durPart = (
-        m.durationMinutes !== undefined ? `${m.durationMinutes}m` : '-'
-      ).padEnd(4, ' ');
-      const statusPart = m.status;
-
-      lines.push(
-        `${datePart} | ${raPart} | ${namePart} | ${turmaPart} | ${durPart} | ${statusPart}`
+    const filterParts: string[] = [];
+    if (query.ra) {
+      filterParts.push(`RA: ${query.ra}`);
+    }
+    if (query.classCode && query.classCode !== 'TODOS') {
+      filterParts.push(`Turma: ${query.classCode}`);
+    }
+    if (query.startDate || query.endDate) {
+      filterParts.push(
+        `Período: ${query.startDate ?? ''} a ${query.endDate ?? ''}`
       );
     }
+    const filtersSummary =
+      filterParts.length > 0 ? filterParts.join(' | ') : 'Todos os registros';
 
-    const pdfBuffer = createPdfDocument(title, lines);
+    const movementsRows: PdfMovementRow[] = movements.map((m) => ({
+      startedAt: m.startedAt.toISOString().slice(0, 16).replace('T', ' '),
+      studentRa: m.studentRa,
+      studentFullName: m.studentFullName,
+      classCode: m.classCode,
+      duration:
+        m.durationMinutes !== undefined ? `${m.durationMinutes} min` : '-',
+      allowedLimit: `${m.allowedLimitMinutes} min`,
+      status: m.status,
+    }));
+
+    const pdfBuffer = await createPdfDocument({
+      title: 'Escola Estadual José Lins do Rego — InAndOut',
+      subtitle,
+      emissionDate,
+      filtersSummary,
+      totalRecords: movements.length,
+      movements: movementsRows,
+    });
 
     return {
       contentType: 'application/pdf',
