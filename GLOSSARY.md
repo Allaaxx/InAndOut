@@ -1,8 +1,10 @@
 # InAndOut - Glossário do Domínio
 
-Contexto de controle de fluxo de saída de alunos da sala de aula para o banheiro e métricas de permanência na Escola Lins do Rego.
+Contexto de controle de fluxo de saída de alunos da sala de aula para o banheiro e métricas de permanência na rotina escolar do ensino médio.
 
 ## Linguagem
+
+### Sessões e Usuários
 
 **Aluno**:
 Estudante do ensino médio identificado por RA com permissão para solicitar saída de sala.
@@ -16,58 +18,76 @@ _Avoid_: Monitor, instrutor
 Setor administrativo e pedagógico da escola responsável pela gestão disciplinar e acompanhamento dos alertas escalados.
 _Avoid_: Diretoria, administração central
 
-**RA (Registro do Aluno)**:
-Código alfanumérico único atribuído a cada estudante pela instituição de ensino.
-_Avoid_: Matrícula, ID de usuário, CPF
-
 **Sessão de Aula**:
-Período delimitado de tempo em que uma turma está sob a responsabilidade de um professor em uma disciplina específica.
-_Avoid_: Período, turno, horário
+Período pedagógico ativo de aula conduzido por um professor para uma turma e disciplina específicas.
+_Avoid_: Aula, turno, período livre, horário
 
 **Terminal de Sala**:
-Dispositivo físico (computador ou tablet) na sala de aula onde a sessão é mantida aberta e os alunos registram suas saídas e retornos.
-_Avoid_: Totem, quiosque, máquina
+Interface reativa pública instalada no computador ou tablet da sala de aula, bloqueada pelo professor via PIN de 4 dígitos.
+_Avoid_: Totem, quiosque, máquina, painel do professor, tela de login
 
-**Saída de Sala**:
-Registro de afastamento temporário do aluno da sala de aula para ida ao banheiro, contendo carimbos de saída e retorno.
-_Avoid_: Ausência, falta, evasão
+**Registro Acadêmico (RA)**:
+Identificador numérico exclusivo de um estudante no sistema escolar utilizado para solicitar saída e retorno.
+_Avoid_: Matrícula, ID de aluno, ID de usuário, CPF
+
+**Nome Público LGPD**:
+Formatação restrita do nome do estudante (primeiro nome e inicial do último sobrenome, ex.: "Lucas S.") exibida no terminal público de sala.
+_Avoid_: Nome abreviado, apelido, anonimato
+
+### Fluxo de Movimentação
+
+**Registro de Saída**:
+Registro temporal que marca a saída de um aluno da sala, seu tempo decorrido, limites aplicáveis e status de retorno ou desfecho.
+_Avoid_: Ida ao banheiro, passe de saída, ocorrência inicial, ausência, falta
+
+**Concorrência Única**:
+Regra institucional estrita que permite apenas um estudante por vez fora da sala de aula em condições normais.
+_Avoid_: Limite de um, vaga única
 
 **Fila de Espera**:
-Lista ordenada (FIFO) de alunos aguardando liberação para saída de sala quando o limite de concorrência for atingido.
-_Avoid_: Lista de espera, fila virtual
+Estrutura FIFO virtual onde solicitações adicionais de saída são enfileiradas quando a sala já possui um aluno em trânsito.
+_Avoid_: Lista de espera, fila do banheiro, fila virtual
 
-**Janela de Confirmação da Fila**:
-Tempo de tolerância (2 minutos) concedido ao próximo aluno da fila para confirmar sua saída antes de passar a vez ao seguinte.
-_Avoid_: Tempo de espera, reserva
-
-**Tempo Limite**:
-Duração máxima tolerada para o retorno do aluno à sala antes do disparo de alerta de estouro.
-_Avoid_: Timeout, carência
-
-**Tempo Especial**:
-Tempo limite diferenciado associado ao cadastro de alunos com necessidades de saúde ou recomendações médicas.
-_Avoid_: Tolerância médica, exceção de saúde
+**Janela de Confirmação**:
+Intervalo de 2 minutos concedido ao primeiro aluno da fila após o retorno do aluno anterior para confirmar sua saída antes da vaga expirar.
+_Avoid_: Tempo de espera, tolerância da fila, reserva
 
 **Liberação de Emergência**:
-Autorização concedida pelo professor permitindo a saída concorrente de mais de um aluno simultaneamente ou com tempo estendido.
-_Avoid_: Exceção, override, bypass
+Ação exclusiva do professor que autoriza a saída imediata de um estudante para atendimento urgente, ignorando a concorrência única.
+_Avoid_: Saída dupla, exceção manual, override, bypass
 
 **Autorização Avulsa**:
-Liberação pontual do professor para registrar a saída de um aluno não matriculado na turma da aula em andamento.
-_Avoid_: Saída avulsa, liberação manual
+Ação do professor que permite a saída de um aluno transferido ou pertencente a outra turma não cadastrado na sessão corrente.
+_Avoid_: Aluno convidado, saída avulsa, liberação manual
+
+### Temporalidade e Alertas
+
+**Tempo Limite**:
+Duração máxima padrão em minutos (geralmente 10 minutos) permitida para ausência de um estudante durante a aula.
+_Avoid_: Tempo padrão, prazo de volta, timeout, carência
+
+**Tempo Especial**:
+Tempo limite estendido concedido individualmente a estudantes portadores de laudo ou condição médica documentada.
+_Avoid_: Tempo médico, tolerância especial, exceção de saúde
+
+**Janela de Tolerância do Professor**:
+Período de 2 minutos concedido ao professor após o estouro do tempo limite para intervir antes do acionamento do escalonamento externo.
+_Avoid_: Margem de erro, carência
 
 **Notificação de Ocorrência**:
 Alerta emitido em tempo real para a Coordenação contendo dados do aluno, tempo decorrido fora e identificação da turma/professor.
 _Avoid_: Advertência, chamado, ticket
 
 **Escalonamento Automático**:
-Envio autônomo da notificação de ocorrência para a Coordenação caso o professor não intervenha no alerta dentro da janela de carência.
-_Avoid_: Notificação automática, alarme silencioso
+Transição de status disparada pelo sistema após o esgotamento da tolerância do professor, enviando alerta crítico em tempo real para a Coordenação.
+_Avoid_: Notificação externa, transbordo, alarme silencioso
+
+### Coordenação e Resoluções
 
 **Saída em Trânsito**:
-Saída de sala que permanece em aberto no momento em que a sessão de aula é encerrada, sendo transferida para a tutela da Coordenação.
-_Avoid_: Saída órfã, pendência aberta
+Movimento de saída que permanece sem registro de retorno no momento em que a sessão de aula é encerrada pelo professor, passando para a tutela direta da Coordenação.
+_Avoid_: Saída pendente, aluno desaparecido, saída órfã, pendência aberta
 
 **Desfecho de Ocorrência**:
-Classificação final registrada pela Coordenação para dar baixa em uma saída em trânsito ou extrapolada (Retorno Confirmado, Atendimento Pedagógico, Enfermaria, Evasão).
-_Avoid_: Fechamento, encerramento de ticket
+Classificação administrativa formal atribuída pela Coordenação para encerrar uma saída escalada ou em trânsito (Retorno Confirmado / Retornou à sala, Atendimento Pedagógico / Atendido na Coordenação, Encaminhado à Enfermaria ou Evasão escolar).
+_Avoid_: Motivo, justificativa, solução, fechamento, encerramento de ticket
