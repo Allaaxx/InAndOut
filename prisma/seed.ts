@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { createHash } from 'node:crypto';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -169,7 +169,9 @@ export async function main(): Promise<void> {
     });
   }
 
-  console.log(`✅ Seeded ${students.length} students across turmas 1A, 2B, and 3C.`);
+  console.log(
+    `✅ Seeded ${students.length} students across turmas 1A, 2B, and 3C.`,
+  );
   console.log('✨ Seed completed successfully!');
 }
 

@@ -1,28 +1,28 @@
-import { FastifyInstance } from 'fastify';
-import { AppContainer } from '@server/main/container';
+import {
+  EndClassSessionUseCase,
+  SessionNotFoundError,
+} from '@server/application/use-cases/sessions/EndClassSessionUseCase';
+import { GetActiveSessionUseCase } from '@server/application/use-cases/sessions/GetActiveSessionUseCase';
 import {
   SessionConflictError,
   SessionValidationError,
   StartClassSessionUseCase,
 } from '@server/application/use-cases/sessions/StartClassSessionUseCase';
-import { GetActiveSessionUseCase } from '@server/application/use-cases/sessions/GetActiveSessionUseCase';
-import {
-  EndClassSessionUseCase,
-  SessionNotFoundError,
-} from '@server/application/use-cases/sessions/EndClassSessionUseCase';
+import type { AppContainer } from '@server/main/container';
 import { extractBearerToken } from '@server/presentation/middlewares/authMiddleware';
-import {
+import type {
   EndSessionRequestDTO,
   StartSessionRequestDTO,
 } from '@shared/dtos';
+import type { FastifyInstance } from 'fastify';
 
 export async function registerSessionRoutes(
   app: FastifyInstance,
-  container: AppContainer
+  container: AppContainer,
 ): Promise<void> {
   const startSessionUseCase = new StartClassSessionUseCase(
     container.sessionRepo,
-    { clock: container.clock }
+    { clock: container.clock },
   );
   const getActiveSessionUseCase = new GetActiveSessionUseCase(
     container.sessionRepo,
@@ -30,7 +30,7 @@ export async function registerSessionRoutes(
       movementRepo: container.movementRepo,
       queueRepo: container.queueRepo,
       clock: container.clock,
-    }
+    },
   );
   const endSessionUseCase = new EndClassSessionUseCase(container.sessionRepo, {
     clock: container.clock,
@@ -82,7 +82,7 @@ export async function registerSessionRoutes(
               : 'Erro interno ao iniciar sessão de aula.',
         });
       }
-    }
+    },
   );
 
   app.get<{ Querystring: { roomId?: string } }>(
@@ -101,7 +101,7 @@ export async function registerSessionRoutes(
               : 'Erro interno ao consultar sessão ativa.',
         });
       }
-    }
+    },
   );
 
   app.post<{ Body: EndSessionRequestDTO }>(
@@ -135,6 +135,6 @@ export async function registerSessionRoutes(
               : 'Erro interno ao encerrar sessão de aula.',
         });
       }
-    }
+    },
   );
 }

@@ -12,7 +12,7 @@ Adotamos uma infraestrutura corporativa baseada em monorepo, tooling nativo de a
 
 1. **Topologia Monorepo com `pnpm` Workspaces**:
    - Centralização e orquestração de pacotes sob `pnpm-workspace.yaml` com mapeamento `apps/*`.
-   - Isolamento estrito de dependências por hardlinks e links simbólicos através da virtual store do pnpm, eliminando dependências fantasmas (*phantom dependencies*) causadas por hoisting acidental.
+   - Isolamento estrito de dependências por hardlinks e links simbólicos através da virtual store do pnpm, eliminando dependências fantasmas (_phantom dependencies_) causadas por hoisting acidental.
    - Divisão estrutural em aplicações dedicadas:
      - `@inandout/server` (`apps/server`): Backend Node.js / Fastify / Prisma isolado com seus próprios contratos de compilação.
      - `@inandout/client` (`apps/client`): Single Page Application React / Vite / Tailwind com bundle e tipagem dedicados.
@@ -38,11 +38,13 @@ Adotamos uma infraestrutura corporativa baseada em monorepo, tooling nativo de a
 ## Consequências e Trade-offs
 
 ### Benefícios
+
 - **Isolamento e Determinismo**: Cada pacote do workspace declara explicitamente suas dependências, prevenindo vazamentos entre frontend e backend.
 - **Velocidade de Feedback**: A suíte de tooling nativo (Biome/pnpm) permite feedback sub-segundo para desenvolvedores e agentes autônomos.
 - **Foco em Domínio**: Revisões de código deixam de focar em sintaxe e estilo, priorizando regras de negócio e aderência às especificações.
 - **Build Smoke Test**: Nenhum código que quebre a geração de distribuição de produção pode ser integrado na branch principal.
 
 ### Trade-offs e Mitigações
+
 - O rigor do isolamento do pnpm requer declaração explícita de dependências e configuração de scripts de ciclo de vida (`allowBuilds` no `pnpm-workspace.yaml`).
 - Configurações de compilação (`tsconfig.json`) precisam de manutenção síncrona nos pacotes do workspace e na raiz para garantir compatibilidade.

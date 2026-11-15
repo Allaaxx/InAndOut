@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
 import { GetSchoolOverviewAnalyticsUseCase } from '@server/application/use-cases/analytics/GetSchoolOverviewAnalyticsUseCase';
-import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
 import { MovementStatus } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Domain Seam: Class Comparison Analytics (User Story 25)', () => {
   it('calculates departure frequency, total outside time, and average duration per class', async () => {

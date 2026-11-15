@@ -1,18 +1,18 @@
-import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
-import { Server as SocketIOServer } from 'socket.io';
-import { AppContainer, createContainer } from './container';
-import { setupFastifyErrorHandler } from '@server/presentation/errors/errorHandler';
 import { EvaluateOverdueMovementsUseCase } from '@server/application/use-cases/movements/EvaluateOverdueMovementsUseCase';
-import { registerAuthRoutes } from '@server/presentation/routes/authRoutes';
-import { registerSessionRoutes } from '@server/presentation/routes/sessionRoutes';
-import { registerMovementRoutes } from '@server/presentation/routes/movementRoutes';
-import { registerMovementQueueRoutes } from '@server/presentation/routes/movementQueueRoutes';
-import { registerMovementOverrideRoutes } from '@server/presentation/routes/movementOverrideRoutes';
-import { registerMovementEscalationRoutes } from '@server/presentation/routes/movementEscalationRoutes';
-import { registerCoordinationRoutes } from '@server/presentation/routes/coordinationRoutes';
+import { setupFastifyErrorHandler } from '@server/presentation/errors/errorHandler';
 import { registerAnalyticsRoutes } from '@server/presentation/routes/analyticsRoutes';
+import { registerAuthRoutes } from '@server/presentation/routes/authRoutes';
+import { registerCoordinationRoutes } from '@server/presentation/routes/coordinationRoutes';
+import { registerMovementEscalationRoutes } from '@server/presentation/routes/movementEscalationRoutes';
+import { registerMovementOverrideRoutes } from '@server/presentation/routes/movementOverrideRoutes';
+import { registerMovementQueueRoutes } from '@server/presentation/routes/movementQueueRoutes';
+import { registerMovementRoutes } from '@server/presentation/routes/movementRoutes';
+import { registerSessionRoutes } from '@server/presentation/routes/sessionRoutes';
 import { registerSocketHandlers } from '@server/presentation/socket/socketHandlers';
+import Fastify, { type FastifyInstance } from 'fastify';
+import { Server as SocketIOServer } from 'socket.io';
+import { type AppContainer, createContainer } from './container';
 
 export interface CreateAppOptions {
   enableBackgroundTimer?: boolean;
@@ -29,7 +29,7 @@ export interface CreateAppResult {
 
 export async function createApp(
   overrides: Partial<AppContainer> = {},
-  options: CreateAppOptions = {}
+  options: CreateAppOptions = {},
 ): Promise<CreateAppResult> {
   const app = Fastify({ logger: false });
   await app.register(cors, { origin: true });
@@ -87,7 +87,7 @@ export async function createApp(
       {
         sessionRepo: container.sessionRepo,
         clock: container.clock,
-      }
+      },
     );
 
     const intervalMs = options.autoEvaluateIntervalMs ?? 30_000;

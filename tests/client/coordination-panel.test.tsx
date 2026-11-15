@@ -1,12 +1,11 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import * as SonnerModule from '@client/components/ui/Sonner';
 import { CoordinationPage } from '@client/pages/CoordinationPage';
 import { api } from '@client/services/api';
+import type { MovementDTO, UserDTO } from '@shared/dtos';
 import { AlertLevel, MovementStatus, UserRole } from '@shared/enums';
-import { MovementDTO, UserDTO } from '@shared/dtos';
-import * as SonnerModule from '@client/components/ui/Sonner';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const socketListeners: Record<string, Array<(payload: unknown) => void>> = {};
 
@@ -21,7 +20,7 @@ vi.mock('socket.io-client', () => ({
     off: vi.fn((event: string, cb: (payload: unknown) => void) => {
       if (socketListeners[event]) {
         socketListeners[event] = socketListeners[event].filter(
-          (fn) => fn !== cb
+          (fn) => fn !== cb,
         );
       }
     }),
@@ -140,8 +139,13 @@ describe('Frontend Seam: CoordinationPage Real-Time Panel & Alerts (DataTable + 
     expect(screen.getByText('Pedro A.')).toBeInTheDocument();
 
     // Filter by status dropdown/select
-    const statusSelect = screen.getByRole('combobox', { name: /Filtrar por status/i });
-    await user.selectOptions(statusSelect, MovementStatus.ESCALATED_TO_COORDINATION);
+    const statusSelect = screen.getByRole('combobox', {
+      name: /Filtrar por status/i,
+    });
+    await user.selectOptions(
+      statusSelect,
+      MovementStatus.ESCALATED_TO_COORDINATION,
+    );
 
     expect(screen.queryByText('Lucas S.')).not.toBeInTheDocument();
     expect(screen.getByText('Pedro A.')).toBeInTheDocument();
@@ -160,7 +164,7 @@ describe('Frontend Seam: CoordinationPage Real-Time Panel & Alerts (DataTable + 
         user={coordUser}
         token="mock-coord-token"
         onResolveMovement={onResolveMock}
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -189,7 +193,9 @@ describe('Frontend Seam: CoordinationPage Real-Time Panel & Alerts (DataTable + 
     };
 
     act(() => {
-      socketListeners['movement:exit']?.forEach((cb) => cb(newMovement));
+      socketListeners['movement:exit']?.forEach((cb) => {
+        cb(newMovement);
+      });
     });
 
     await waitFor(() => {
@@ -206,13 +212,15 @@ describe('Frontend Seam: CoordinationPage Real-Time Panel & Alerts (DataTable + 
     };
 
     act(() => {
-      socketListeners['movement:escalated']?.forEach((cb) => cb(escalatedMovement));
+      socketListeners['movement:escalated']?.forEach((cb) => {
+        cb(escalatedMovement);
+      });
     });
 
     await waitFor(() => {
       expect(toastSpy).toHaveBeenCalledWith(
         expect.stringMatching(/Beatriz L\./),
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -222,7 +230,7 @@ describe('Frontend Seam: CoordinationPage Real-Time Panel & Alerts (DataTable + 
 
     await userEvent.click(actionButton);
     expect(onResolveMock).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 'mov-3' })
+      expect.objectContaining({ id: 'mov-3' }),
     );
 
     // 3. Student return arrives via Socket -> removed from active exits
@@ -233,7 +241,9 @@ describe('Frontend Seam: CoordinationPage Real-Time Panel & Alerts (DataTable + 
     };
 
     act(() => {
-      socketListeners['movement:return']?.forEach((cb) => cb(returnedMovement));
+      socketListeners['movement:return']?.forEach((cb) => {
+        cb(returnedMovement);
+      });
     });
 
     await waitFor(() => {

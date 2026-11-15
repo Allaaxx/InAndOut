@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { PinCode } from '@server/domain/value-objects/PinCode';
 import { User } from '@server/domain/entities/User';
+import { PinCode } from '@server/domain/value-objects/PinCode';
 import { UserRole } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Domain Seam: PinCode Value Object & User Entity', () => {
   it('creates a valid 4-digit numeric PinCode and verifies matching input', () => {

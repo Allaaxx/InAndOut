@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
 import { createApp } from '@server/main/app';
+import { describe, expect, it } from 'vitest';
 
 describe('Controller Seam: Student History & Analytics Export (GET /analytics/students/:ra and GET /analytics/export)', () => {
   async function loginAs(
     app: Awaited<ReturnType<typeof createApp>>['app'],
     email: string,
-    password: string
+    password: string,
   ): Promise<string> {
     const res = await app.inject({
       method: 'POST',
@@ -23,7 +23,7 @@ describe('Controller Seam: Student History & Analytics Export (GET /analytics/st
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
 
     // 1. Unauthenticated request -> 401
@@ -109,7 +109,7 @@ describe('Controller Seam: Student History & Analytics Export (GET /analytics/st
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
 
     // Create session and movement
@@ -157,7 +157,9 @@ describe('Controller Seam: Student History & Analytics Export (GET /analytics/st
 
     expect(csvRes.statusCode).toBe(200);
     expect(csvRes.headers['content-type']).toContain('text/csv');
-    expect(csvRes.headers['content-disposition']).toMatch(/attachment;\s*filename=.*\.csv/);
+    expect(csvRes.headers['content-disposition']).toMatch(
+      /attachment;\s*filename=.*\.csv/,
+    );
     expect(csvRes.body).toContain('Data/Hora,RA,Aluno,Turma');
     expect(csvRes.body).toContain('1001');
     expect(csvRes.body).toContain('Lucas Silva');
@@ -165,12 +167,12 @@ describe('Controller Seam: Student History & Analytics Export (GET /analytics/st
   });
 
   it('exports movement reports in PDF format with proper %PDF header and application/pdf Content-Type', async () => {
-    let currentTime = new Date('2026-03-10T08:00:00.000Z');
+    const currentTime = new Date('2026-03-10T08:00:00.000Z');
     const { app } = await createApp({ clock: () => currentTime });
     const coordToken = await loginAs(
       app,
       'coord@linsdorego.edu.br',
-      'coord123'
+      'coord123',
     );
 
     // Valid PDF export
@@ -182,7 +184,9 @@ describe('Controller Seam: Student History & Analytics Export (GET /analytics/st
 
     expect(pdfRes.statusCode).toBe(200);
     expect(pdfRes.headers['content-type']).toBe('application/pdf');
-    expect(pdfRes.headers['content-disposition']).toMatch(/attachment;\s*filename=.*\.pdf/);
+    expect(pdfRes.headers['content-disposition']).toMatch(
+      /attachment;\s*filename=.*\.pdf/,
+    );
 
     const rawBuffer = pdfRes.rawPayload;
     expect(rawBuffer.subarray(0, 5).toString('ascii')).toBe('%PDF-');

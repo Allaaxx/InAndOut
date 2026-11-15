@@ -1,5 +1,4 @@
-import { FastifyInstance } from 'fastify';
-import { AppContainer } from '@server/main/container';
+import { RegisterStudentReturnUseCase } from '@server/application/use-cases/movements/RegisterStudentReturnUseCase';
 import {
   MovementConcurrencyConflictError,
   MovementNotFoundError,
@@ -7,22 +6,23 @@ import {
   RequestStudentExitUseCase,
   StudentNotInClassError,
 } from '@server/application/use-cases/movements/RequestStudentExitUseCase';
-import { RegisterStudentReturnUseCase } from '@server/application/use-cases/movements/RegisterStudentReturnUseCase';
-import {
+import type { AppContainer } from '@server/main/container';
+import type {
   RegisterReturnRequestDTO,
   RequestExitRequestDTO,
 } from '@shared/dtos';
+import type { FastifyInstance } from 'fastify';
 
 export async function registerMovementRoutes(
   app: FastifyInstance,
-  container: AppContainer
+  container: AppContainer,
 ): Promise<void> {
   const requestExitUseCase = new RequestStudentExitUseCase(
     container.sessionRepo,
     container.studentRepo,
     container.movementRepo,
     container.notificationSender,
-    { clock: container.clock }
+    { clock: container.clock },
   );
 
   const registerReturnUseCase = new RegisterStudentReturnUseCase(
@@ -32,7 +32,7 @@ export async function registerMovementRoutes(
     {
       queueRepo: container.queueRepo,
       clock: container.clock,
-    }
+    },
   );
 
   app.post<{ Body: RequestExitRequestDTO }>(
@@ -40,7 +40,7 @@ export async function registerMovementRoutes(
     async (request, reply) => {
       try {
         const result = await requestExitUseCase.execute(
-          request.body ?? ({} as RequestExitRequestDTO)
+          request.body ?? ({} as RequestExitRequestDTO),
         );
         return reply.status(201).send(result);
       } catch (err) {
@@ -63,7 +63,7 @@ export async function registerMovementRoutes(
               : 'Erro interno ao registrar saída do aluno.',
         });
       }
-    }
+    },
   );
 
   app.post<{ Body: RegisterReturnRequestDTO }>(
@@ -71,7 +71,7 @@ export async function registerMovementRoutes(
     async (request, reply) => {
       try {
         const result = await registerReturnUseCase.execute(
-          request.body ?? ({} as RegisterReturnRequestDTO)
+          request.body ?? ({} as RegisterReturnRequestDTO),
         );
         return reply.status(200).send(result);
       } catch (err) {
@@ -88,7 +88,7 @@ export async function registerMovementRoutes(
               : 'Erro interno ao registrar retorno do aluno.',
         });
       }
-    }
+    },
   );
 }
 

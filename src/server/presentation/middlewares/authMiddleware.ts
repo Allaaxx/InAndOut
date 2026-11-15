@@ -1,9 +1,9 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
-import {
+import type {
   ITokenService,
   TokenPayload,
 } from '@server/application/contracts/ITokenService';
-import { UserRole } from '@shared/enums';
+import type { UserRole } from '@shared/enums';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -13,7 +13,7 @@ declare module 'fastify' {
 
 export function extractBearerToken(request: FastifyRequest): string | null {
   const authHeader = request.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader?.startsWith('Bearer ')) {
     return null;
   }
   return authHeader.slice('Bearer '.length).trim();
@@ -22,7 +22,7 @@ export function extractBearerToken(request: FastifyRequest): string | null {
 export function createAuthMiddleware(tokenService: ITokenService) {
   const requireAuth = async (
     request: FastifyRequest,
-    reply: FastifyReply
+    reply: FastifyReply,
   ): Promise<void> => {
     const token = extractBearerToken(request);
     if (!token) {
@@ -35,7 +35,8 @@ export function createAuthMiddleware(tokenService: ITokenService) {
       request.authUser = payload;
     } catch (err) {
       reply.status(401).send({
-        error: err instanceof Error ? err.message : 'Token inválido ou expirado.',
+        error:
+          err instanceof Error ? err.message : 'Token inválido ou expirado.',
       });
     }
   };
@@ -43,7 +44,7 @@ export function createAuthMiddleware(tokenService: ITokenService) {
   const requireRoles = (allowedRoles: UserRole[]) => {
     return async (
       request: FastifyRequest,
-      reply: FastifyReply
+      reply: FastifyReply,
     ): Promise<void> => {
       await requireAuth(request, reply);
       if (reply.sent || !request.authUser) {

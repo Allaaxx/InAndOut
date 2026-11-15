@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { DurationMinutes } from '@server/domain/value-objects/DurationMinutes';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { DurationMinutes } from '@server/domain/value-objects/DurationMinutes';
 import { MovementStatus } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Domain Seam: DurationMinutes & MovementRecord Return Calculation', () => {
   it('calculates exact outside duration, attended minutes, and attendance percentage in DurationMinutes', () => {
@@ -20,7 +20,7 @@ describe('Domain Seam: DurationMinutes & MovementRecord Return Calculation', () 
     const fractional = DurationMinutes.fromDates(
       new Date('2026-03-10T08:00:00.000Z'),
       new Date('2026-03-10T08:07:30.000Z'),
-      50
+      50,
     );
     expect(fractional.durationMinutes).toBe(7.5);
     expect(fractional.attendedMinutes).toBe(42.5);
@@ -31,7 +31,7 @@ describe('Domain Seam: DurationMinutes & MovementRecord Return Calculation', () 
     const duration = DurationMinutes.fromDates(
       new Date('2026-03-10T08:00:00.000Z'),
       new Date('2026-03-10T09:05:00.000Z'),
-      50
+      50,
     );
 
     expect(duration.durationMinutes).toBe(65);
@@ -43,8 +43,8 @@ describe('Domain Seam: DurationMinutes & MovementRecord Return Calculation', () 
       DurationMinutes.fromDates(
         new Date('2026-03-10T08:10:00.000Z'),
         new Date('2026-03-10T08:05:00.000Z'),
-        50
-      )
+        50,
+      ),
     ).toThrow(/anterior|inválid/i);
   });
 
@@ -90,7 +90,7 @@ describe('Domain Seam: DurationMinutes & MovementRecord Return Calculation', () 
 
     // Cannot register return twice on an already returned record
     expect(() => movement.registerReturn(endedAt, 50)).toThrow(
-      /já foi encerrado|ativo/i
+      /já foi encerrado|ativo/i,
     );
   });
 });

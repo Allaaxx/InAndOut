@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import type { StudentDTO } from '@shared/dtos';
 import { formatPublicStudentName } from '@shared/formatters';
-import { StudentDTO } from '@shared/dtos';
 import { StudentRA } from '../value-objects/StudentRA';
 
 export interface StudentProps {
@@ -25,7 +25,7 @@ export class Student {
     ra: StudentRA,
     fullName: string,
     classCode: string,
-    specialTimeLimitMinutes?: number
+    specialTimeLimitMinutes?: number,
   ) {
     this.id = id;
     this._ra = ra;
@@ -60,7 +60,7 @@ export class Student {
       raObj,
       fullName,
       classCode,
-      props.specialTimeLimitMinutes
+      props.specialTimeLimitMinutes,
     );
   }
 

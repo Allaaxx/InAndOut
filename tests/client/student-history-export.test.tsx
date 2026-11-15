@@ -1,15 +1,14 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { AnalyticsDashboardPage } from '@client/pages/AnalyticsDashboardPage';
 import { api } from '@client/services/api';
-import { AlertLevel, MovementStatus, UserRole } from '@shared/enums';
-import {
+import type {
   SchoolOverviewAnalyticsDTO,
   StudentHistoryReportDTO,
   UserDTO,
 } from '@shared/dtos';
+import { AlertLevel, MovementStatus, UserRole } from '@shared/enums';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@client/services/api', () => ({
   api: {
@@ -119,11 +118,13 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
     const user = userEvent.setup();
 
     render(
-      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />
+      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />,
     );
 
     // Initial Overview tab active
-    expect(await screen.findByRole('tab', { name: /Visão Geral/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('tab', { name: /Visão Geral/i }),
+    ).toBeInTheDocument();
     const studentTab = screen.getByRole('tab', { name: /Consulta por Aluno/i });
     expect(studentTab).toBeInTheDocument();
 
@@ -132,7 +133,7 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
 
     // Verify search box appears
     expect(
-      screen.getByPlaceholderText(/Digite o RA do aluno/i)
+      screen.getByPlaceholderText(/Digite o RA do aluno/i),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Buscar/i })).toBeInTheDocument();
   });
@@ -142,7 +143,7 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
     vi.mocked(api.getStudentHistory).mockResolvedValueOnce(mockStudentHistory);
 
     render(
-      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />
+      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />,
     );
 
     // Switch to Student Search tab
@@ -160,7 +161,7 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
     expect(api.getStudentHistory).toHaveBeenCalledWith(
       '1001',
       expect.anything(),
-      'test-token'
+      'test-token',
     );
 
     // Verify Student info and Summary Cards
@@ -178,11 +179,11 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
   it('displays an error alert when student is not found', async () => {
     const user = userEvent.setup();
     vi.mocked(api.getStudentHistory).mockRejectedValueOnce(
-      new Error('Aluno com RA "9999" não encontrado.')
+      new Error('Aluno com RA "9999" não encontrado.'),
     );
 
     render(
-      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />
+      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />,
     );
 
     const studentTab = await screen.findByRole('tab', {
@@ -195,7 +196,7 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
     await user.click(screen.getByRole('button', { name: /Buscar/i }));
 
     expect(
-      await screen.findByText(/Aluno com RA "9999" não encontrado/i)
+      await screen.findByText(/Aluno com RA "9999" não encontrado/i),
     ).toBeInTheDocument();
   });
 
@@ -203,7 +204,7 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
     const user = userEvent.setup();
     vi.mocked(api.getStudentHistory).mockResolvedValue(mockStudentHistory);
     vi.mocked(api.exportAnalytics).mockResolvedValue(
-      new Blob(['dummy'], { type: 'text/csv' })
+      new Blob(['dummy'], { type: 'text/csv' }),
     );
 
     // Mock URL.createObjectURL and URL.revokeObjectURL
@@ -213,14 +214,17 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
     window.URL.revokeObjectURL = revokeObjectURLSpy;
 
     render(
-      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />
+      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />,
     );
 
     // Switch to Student tab and search
     await user.click(
-      await screen.findByRole('tab', { name: /Consulta por Aluno/i })
+      await screen.findByRole('tab', { name: /Consulta por Aluno/i }),
     );
-    await user.type(screen.getByPlaceholderText(/Digite o RA do aluno/i), '1001');
+    await user.type(
+      screen.getByPlaceholderText(/Digite o RA do aluno/i),
+      '1001',
+    );
     await user.click(screen.getByRole('button', { name: /Buscar/i }));
 
     await screen.findByText('Lucas Silva');
@@ -231,7 +235,7 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
 
     expect(api.exportAnalytics).toHaveBeenCalledWith(
       expect.objectContaining({ format: 'csv' }),
-      'test-token'
+      'test-token',
     );
 
     // Click Exportar PDF
@@ -240,7 +244,7 @@ describe('Frontend Seam: Student History Report & Export (AnalyticsDashboardPage
 
     expect(api.exportAnalytics).toHaveBeenCalledWith(
       expect.objectContaining({ format: 'pdf' }),
-      'test-token'
+      'test-token',
     );
   });
 });

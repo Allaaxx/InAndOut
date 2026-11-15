@@ -1,7 +1,7 @@
-import { IUserRepository } from '@server/domain/repositories/IUserRepository';
-import { ITokenService } from '@server/application/contracts/ITokenService';
+import type { ITokenService } from '@server/application/contracts/ITokenService';
+import type { IUserRepository } from '@server/domain/repositories/IUserRepository';
+import type { VerifyPinResponseDTO } from '@shared/dtos';
 import { AuthenticationError } from './LoginUseCase';
-import { VerifyPinResponseDTO } from '@shared/dtos';
 
 export interface VerifyPinInput {
   userId: string;
@@ -11,12 +11,14 @@ export interface VerifyPinInput {
 export class VerifyPinUseCase {
   constructor(
     private readonly userRepo: IUserRepository,
-    private readonly tokenService: ITokenService
+    private readonly tokenService: ITokenService,
   ) {}
 
   public async execute(input: VerifyPinInput): Promise<VerifyPinResponseDTO> {
     if (!input.pin || !/^\d{4}$/.test(input.pin.trim())) {
-      throw new AuthenticationError('PIN inválido. Digite os 4 dígitos numéricos.');
+      throw new AuthenticationError(
+        'PIN inválido. Digite os 4 dígitos numéricos.',
+      );
     }
 
     const user = await this.userRepo.findById(input.userId);

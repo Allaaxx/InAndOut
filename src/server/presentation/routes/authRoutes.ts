@@ -1,41 +1,41 @@
-import { FastifyInstance } from 'fastify';
-import { AppContainer } from '@server/main/container';
 import {
   AuthenticationError,
   LoginUseCase,
   ValidationError,
 } from '@server/application/use-cases/auth/LoginUseCase';
-import { VerifyPinUseCase } from '@server/application/use-cases/auth/VerifyPinUseCase';
 import { RefreshTokenUseCase } from '@server/application/use-cases/auth/RefreshTokenUseCase';
+import { VerifyPinUseCase } from '@server/application/use-cases/auth/VerifyPinUseCase';
+import type { AppContainer } from '@server/main/container';
 import { createAuthMiddleware } from '@server/presentation/middlewares/authMiddleware';
-import {
+import type {
   LoginRequestDTO,
   RefreshTokenRequestDTO,
   VerifyPinRequestDTO,
 } from '@shared/dtos';
+import type { FastifyInstance } from 'fastify';
 
 export async function registerAuthRoutes(
   app: FastifyInstance,
-  container: AppContainer
+  container: AppContainer,
 ): Promise<void> {
   const loginUseCase = new LoginUseCase(
     container.userRepo,
-    container.tokenService
+    container.tokenService,
   );
   const verifyPinUseCase = new VerifyPinUseCase(
     container.userRepo,
-    container.tokenService
+    container.tokenService,
   );
   const refreshTokenUseCase = new RefreshTokenUseCase(
     container.userRepo,
-    container.tokenService
+    container.tokenService,
   );
   const { requireAuth } = createAuthMiddleware(container.tokenService);
 
   app.post<{ Body: LoginRequestDTO }>('/auth/login', async (request, reply) => {
     try {
       const result = await loginUseCase.execute(
-        request.body ?? ({} as LoginRequestDTO)
+        request.body ?? ({} as LoginRequestDTO),
       );
       return reply.status(200).send(result);
     } catch (err) {
@@ -77,7 +77,7 @@ export async function registerAuthRoutes(
               : 'Erro interno ao verificar PIN.',
         });
       }
-    }
+    },
   );
 
   app.post<{ Body: RefreshTokenRequestDTO }>(
@@ -85,7 +85,7 @@ export async function registerAuthRoutes(
     async (request, reply) => {
       try {
         const result = await refreshTokenUseCase.execute(
-          request.body ?? ({} as RefreshTokenRequestDTO)
+          request.body ?? ({} as RefreshTokenRequestDTO),
         );
         return reply.status(200).send(result);
       } catch (err) {
@@ -99,6 +99,6 @@ export async function registerAuthRoutes(
               : 'Erro interno ao renovar token.',
         });
       }
-    }
+    },
   );
 }

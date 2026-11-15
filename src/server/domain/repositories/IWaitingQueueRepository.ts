@@ -1,4 +1,4 @@
-import { WaitingQueueEntry } from '../entities/WaitingQueueEntry';
+import type { WaitingQueueEntry } from '../entities/WaitingQueueEntry';
 
 export interface IWaitingQueueRepository {
   save(entry: WaitingQueueEntry): Promise<void>;
@@ -7,7 +7,7 @@ export interface IWaitingQueueRepository {
   findActiveBySessionId(sessionId: string): Promise<WaitingQueueEntry[]>;
   findActiveByStudentRa(
     ra: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<WaitingQueueEntry | null>;
   findBySessionId(sessionId: string): Promise<WaitingQueueEntry[]>;
 }

@@ -1,10 +1,9 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { TerminalPage } from '@client/pages/TerminalPage';
 import { api } from '@client/services/api';
 import { SessionStatus, UserRole } from '@shared/enums';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@client/services/api', () => ({
   api: {
@@ -75,7 +74,7 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     // 1. Select Turma and Disciplina to start a class session
@@ -97,7 +96,7 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
           subject: 'História',
           plannedDurationMinutes: 50,
         }),
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
@@ -106,7 +105,7 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
     expect(screen.getByText(/Turma 2A/i)).toBeInTheDocument();
     expect(screen.getByText(/História/i)).toBeInTheDocument();
     expect(screen.getByTestId('session-elapsed-timer')).toHaveTextContent(
-      /02:0[56]/
+      /02:0[56]/,
     );
 
     // 3. Clicking "Encerrar Aula" opens the confirmation dialog
@@ -116,7 +115,7 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
     expect(
       await screen.findByRole('heading', {
         name: /Confirmar Encerramento de Aula/i,
-      })
+      }),
     ).toBeInTheDocument();
 
     // 4. Confirming in the dialog ends the session and shows consolidated metrics
@@ -128,12 +127,12 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
     await waitFor(() => {
       expect(api.endSession).toHaveBeenCalledWith(
         { sessionId: 'session-101' },
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
     expect(
-      await screen.findByText(/Sessão de aula encerrada/i)
+      await screen.findByText(/Sessão de aula encerrada/i),
     ).toBeInTheDocument();
     expect(screen.getByLabelText(/Turma/i)).toBeInTheDocument();
   });

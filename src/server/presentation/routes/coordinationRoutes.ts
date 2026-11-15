@@ -1,14 +1,14 @@
-import { FastifyInstance } from 'fastify';
-import { AppContainer } from '@server/main/container';
 import { GetActiveMovementsOverviewUseCase } from '@server/application/use-cases/coordination/GetActiveMovementsOverviewUseCase';
 import {
   InvalidOutcomeError,
   MovementNotFoundError,
   ResolveMovementIncidentUseCase,
 } from '@server/application/use-cases/coordination/ResolveMovementIncidentUseCase';
+import type { AppContainer } from '@server/main/container';
 import { createAuthMiddleware } from '@server/presentation/middlewares/authMiddleware';
-import { MovementStatus, UserRole } from '@shared/enums';
-import { ResolveMovementRequestDTO } from '@shared/dtos';
+import type { ResolveMovementRequestDTO } from '@shared/dtos';
+import { type MovementStatus, UserRole } from '@shared/enums';
+import type { FastifyInstance } from 'fastify';
 
 export interface ActiveMovementsQuery {
   classCode?: string;
@@ -17,7 +17,7 @@ export interface ActiveMovementsQuery {
 
 export async function registerCoordinationRoutes(
   app: FastifyInstance,
-  container: AppContainer
+  container: AppContainer,
 ): Promise<void> {
   const auth = createAuthMiddleware(container.tokenService);
   const getActiveMovementsOverviewUseCase =
@@ -29,7 +29,7 @@ export async function registerCoordinationRoutes(
     {
       notificationSender: container.notificationSender,
       clock: container.clock,
-    }
+    },
   );
 
   app.get<{
@@ -37,10 +37,7 @@ export async function registerCoordinationRoutes(
   }>(
     '/coordination/active-movements',
     {
-      preHandler: auth.requireRoles([
-        UserRole.COORDINATOR,
-        UserRole.ADMIN,
-      ]),
+      preHandler: auth.requireRoles([UserRole.COORDINATOR, UserRole.ADMIN]),
     },
     async (request, reply) => {
       try {
@@ -60,7 +57,7 @@ export async function registerCoordinationRoutes(
               : 'Erro interno ao consultar saídas ativas para a Coordenação.',
         });
       }
-    }
+    },
   );
 
   app.post<{
@@ -69,10 +66,7 @@ export async function registerCoordinationRoutes(
   }>(
     '/coordination/movements/:id/resolve',
     {
-      preHandler: auth.requireRoles([
-        UserRole.COORDINATOR,
-        UserRole.ADMIN,
-      ]),
+      preHandler: auth.requireRoles([UserRole.COORDINATOR, UserRole.ADMIN]),
     },
     async (request, reply) => {
       try {
@@ -103,6 +97,6 @@ export async function registerCoordinationRoutes(
               : 'Erro interno ao resolver ocorrência de saída.',
         });
       }
-    }
+    },
   );
 }

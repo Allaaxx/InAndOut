@@ -1,19 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
-import { InMemoryClassSessionRepository } from '@server/infrastructure/repositories/InMemoryClassSessionRepository';
-import { InMemoryStudentRepository } from '@server/infrastructure/repositories/InMemoryStudentRepository';
-import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
-import { SocketNotificationSender } from '@server/infrastructure/services/SocketNotificationSender';
-import { StartClassSessionUseCase } from '@server/application/use-cases/sessions/StartClassSessionUseCase';
-import {
-  RequestStudentExitUseCase,
-  StudentNotInClassError,
-} from '@server/application/use-cases/movements/RequestStudentExitUseCase';
 import {
   AuthorizeEmergencyExitUseCase,
   AuthorizeGuestExitUseCase,
   MovementAuthorizationError,
 } from '@server/application/use-cases/movements/EmergencyAndGuestExitUseCases';
+import {
+  RequestStudentExitUseCase,
+  StudentNotInClassError,
+} from '@server/application/use-cases/movements/RequestStudentExitUseCase';
+import { StartClassSessionUseCase } from '@server/application/use-cases/sessions/StartClassSessionUseCase';
+import { InMemoryClassSessionRepository } from '@server/infrastructure/repositories/InMemoryClassSessionRepository';
+import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
+import { InMemoryStudentRepository } from '@server/infrastructure/repositories/InMemoryStudentRepository';
+import { SocketNotificationSender } from '@server/infrastructure/services/SocketNotificationSender';
 import { MovementStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Domain & Use-Case Seam: Teacher Emergency Exit & Guest Student Authorization', () => {
   function setupUseCases(now = new Date('2026-03-10T09:00:00.000Z')) {
@@ -30,21 +30,21 @@ describe('Domain & Use-Case Seam: Teacher Emergency Exit & Guest Student Authori
       studentRepo,
       movementRepo,
       notificationSender,
-      { clock: () => now }
+      { clock: () => now },
     );
     const authorizeEmergencyExit = new AuthorizeEmergencyExitUseCase(
       sessionRepo,
       studentRepo,
       movementRepo,
       notificationSender,
-      { clock: () => now }
+      { clock: () => now },
     );
     const authorizeGuestExit = new AuthorizeGuestExitUseCase(
       sessionRepo,
       studentRepo,
       movementRepo,
       notificationSender,
-      { clock: () => now }
+      { clock: () => now },
     );
 
     return {
@@ -104,7 +104,9 @@ describe('Domain & Use-Case Seam: Teacher Emergency Exit & Guest Student Authori
       authorizedByTeacherId: 'teacher-1',
     });
 
-    const activeInSession = await movementRepo.findActiveBySessionId(session.id);
+    const activeInSession = await movementRepo.findActiveBySessionId(
+      session.id,
+    );
     expect(activeInSession).toHaveLength(2);
     expect(notifySpy).toHaveBeenCalledTimes(2);
   });
@@ -127,7 +129,7 @@ describe('Domain & Use-Case Seam: Teacher Emergency Exit & Guest Student Authori
       requestExit.execute({
         ra: '2001',
         sessionId: session.id,
-      })
+      }),
     ).rejects.toThrow(StudentNotInClassError);
 
     // With teacher guest authorization, student 2001 (Pedro Alves - 2B) is allowed
@@ -186,7 +188,7 @@ describe('Domain & Use-Case Seam: Teacher Emergency Exit & Guest Student Authori
         ra: '1001',
         sessionId: session.id,
         authorizedByTeacherId: '   ',
-      })
+      }),
     ).rejects.toThrow(MovementAuthorizationError);
 
     await expect(
@@ -194,7 +196,7 @@ describe('Domain & Use-Case Seam: Teacher Emergency Exit & Guest Student Authori
         ra: '2001',
         sessionId: session.id,
         authorizedByTeacherId: '',
-      })
+      }),
     ).rejects.toThrow(MovementAuthorizationError);
   });
 });

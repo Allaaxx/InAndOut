@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { Student } from '@server/domain/entities/Student';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { Student } from '@server/domain/entities/Student';
 import { AlertLevel, MovementStatus } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Domain Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Minute Hybrid Escalation', () => {
   it('resolves effective time limit using class default for regular students and specialTimeLimitMinutes for medical Tempo Especial students', () => {
@@ -115,7 +115,7 @@ describe('Domain Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Minute 
 
     // 1 minute 59 seconds after overdueAt -> grace window not yet expired
     expect(
-      movement.isGraceWindowExpired(new Date('2026-03-10T08:12:29.000Z'))
+      movement.isGraceWindowExpired(new Date('2026-03-10T08:12:29.000Z')),
     ).toBe(false);
 
     // Exactly 2 minutes after overdueAt -> grace window expired
@@ -144,7 +144,7 @@ describe('Domain Seam: Time Limit Monitoring, Medical Tempo Especial & 2-Minute 
     returnedMovement.registerReturn(new Date('2026-03-10T08:05:00.000Z'), 50);
 
     expect(() =>
-      returnedMovement.escalate(new Date('2026-03-10T08:06:00.000Z'), 'MANUAL')
+      returnedMovement.escalate(new Date('2026-03-10T08:06:00.000Z'), 'MANUAL'),
     ).toThrow(/encerrad|ativo/i);
   });
 });

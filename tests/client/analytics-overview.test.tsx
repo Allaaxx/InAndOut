@@ -1,12 +1,11 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { App } from '@client/App';
+import { AnalyticsDashboardPage } from '@client/pages/AnalyticsDashboardPage';
+import { api } from '@client/services/api';
+import type { SchoolOverviewAnalyticsDTO, UserDTO } from '@shared/dtos';
+import { UserRole } from '@shared/enums';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { AnalyticsDashboardPage } from '@client/pages/AnalyticsDashboardPage';
-import { App } from '@client/App';
-import { api } from '@client/services/api';
-import { UserRole } from '@shared/enums';
-import { SchoolOverviewAnalyticsDTO, UserDTO } from '@shared/dtos';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@client/services/api', () => ({
   api: {
@@ -51,15 +50,45 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
       { hour: 11, label: '11:00', count: 1 },
     ],
     outcomeDistribution: [
-      { outcome: 'RETURNED_NORMAL', label: 'Retorno normal', count: 12, percentage: 80 },
-      { outcome: 'SENT_TO_INFIRMARY', label: 'Enfermaria', count: 1, percentage: 6.7 },
-      { outcome: 'ATTENDED_AT_COORDINATION', label: 'Atendimento na Coordenação', count: 1, percentage: 6.7 },
+      {
+        outcome: 'RETURNED_NORMAL',
+        label: 'Retorno normal',
+        count: 12,
+        percentage: 80,
+      },
+      {
+        outcome: 'SENT_TO_INFIRMARY',
+        label: 'Enfermaria',
+        count: 1,
+        percentage: 6.7,
+      },
+      {
+        outcome: 'ATTENDED_AT_COORDINATION',
+        label: 'Atendimento na Coordenação',
+        count: 1,
+        percentage: 6.7,
+      },
       { outcome: 'EVASION', label: 'Evasão', count: 1, percentage: 6.7 },
     ],
     outcomesDistribution: [
-      { outcome: 'RETURNED_NORMAL', label: 'Retorno normal', count: 12, percentage: 80 },
-      { outcome: 'SENT_TO_INFIRMARY', label: 'Enfermaria', count: 1, percentage: 6.7 },
-      { outcome: 'ATTENDED_AT_COORDINATION', label: 'Atendimento na Coordenação', count: 1, percentage: 6.7 },
+      {
+        outcome: 'RETURNED_NORMAL',
+        label: 'Retorno normal',
+        count: 12,
+        percentage: 80,
+      },
+      {
+        outcome: 'SENT_TO_INFIRMARY',
+        label: 'Enfermaria',
+        count: 1,
+        percentage: 6.7,
+      },
+      {
+        outcome: 'ATTENDED_AT_COORDINATION',
+        label: 'Atendimento na Coordenação',
+        count: 1,
+        percentage: 6.7,
+      },
       { outcome: 'EVASION', label: 'Evasão', count: 1, percentage: 6.7 },
     ],
   };
@@ -70,13 +99,12 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
   });
 
   it('renders stat cards with average time, exits today, compliance rate, and active incidents', async () => {
-    vi.mocked(api.getOverviewAnalytics).mockResolvedValueOnce(mockAnalyticsData);
+    vi.mocked(api.getOverviewAnalytics).mockResolvedValueOnce(
+      mockAnalyticsData,
+    );
 
     render(
-      <AnalyticsDashboardPage
-        user={coordinatorUser}
-        token="test-token"
-      />
+      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />,
     );
 
     expect(screen.getByText(/Carregando indicadores/i)).toBeInTheDocument();
@@ -85,7 +113,9 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
     expect(await screen.findByText('8.4 min')).toBeInTheDocument();
     expect(screen.getByText('15')).toBeInTheDocument();
     expect(screen.getByText('86.7%')).toBeInTheDocument();
-    const activeCard = screen.getByText(/Ocorrências Ativas/i).closest('.shadow-xs');
+    const activeCard = screen
+      .getByText(/Ocorrências Ativas/i)
+      .closest('.shadow-xs');
     expect(activeCard).toHaveTextContent('2');
 
     // Verify card titles/descriptions
@@ -96,13 +126,12 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
   });
 
   it('renders peak hours bar chart and outcomes pie chart', async () => {
-    vi.mocked(api.getOverviewAnalytics).mockResolvedValueOnce(mockAnalyticsData);
+    vi.mocked(api.getOverviewAnalytics).mockResolvedValueOnce(
+      mockAnalyticsData,
+    );
 
     render(
-      <AnalyticsDashboardPage
-        user={coordinatorUser}
-        token="test-token"
-      />
+      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />,
     );
 
     // Wait for data load
@@ -121,10 +150,7 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
     vi.mocked(api.getOverviewAnalytics).mockResolvedValue(mockAnalyticsData);
 
     render(
-      <AnalyticsDashboardPage
-        user={coordinatorUser}
-        token="test-token"
-      />
+      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />,
     );
 
     await screen.findByText(/Tempo Médio Fora de Sala/i);
@@ -136,7 +162,7 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
     await waitFor(() => {
       expect(api.getOverviewAnalytics).toHaveBeenCalledWith(
         expect.objectContaining({ classCode: '1A' }),
-        'test-token'
+        'test-token',
       );
     });
   });
@@ -163,17 +189,25 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
     await user.type(emailInput, 'coord@linsdorego.edu.br');
     await user.clear(passwordInput);
     await user.type(passwordInput, 'coord123');
-    await user.click(screen.getByRole('button', { name: /Entrar no Terminal/i }));
+    await user.click(
+      screen.getByRole('button', { name: /Entrar no Terminal/i }),
+    );
 
     // Verify Coordination Page rendered
-    expect(await screen.findByText(/Painel da Coordenação/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Painel da Coordenação/i),
+    ).toBeInTheDocument();
 
     // Click Analytics Dashboard navigation button
-    const analyticsNavBtn = screen.getByRole('button', { name: /Dashboard Geral|Painel Analítico/i });
+    const analyticsNavBtn = screen.getByRole('button', {
+      name: /Dashboard Geral|Painel Analítico/i,
+    });
     await user.click(analyticsNavBtn);
 
     // Verify Analytics Dashboard Page is now displayed
-    expect(await screen.findByText(/Indicadores de Fluxo e Permanência/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Indicadores de Fluxo e Permanência/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Tempo Médio Fora de Sala/i)).toBeInTheDocument();
   });
 });

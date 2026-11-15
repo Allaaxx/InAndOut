@@ -7,6 +7,7 @@ A plataforma InAndOut necessita gerenciar eventos em tempo real em múltiplos te
 ## Decisão
 
 Adotamos uma Clean Architecture monolítica em TypeScript estruturada em três camadas bem isoladas:
+
 1. `src/shared/`: Contratos de DTOs, enumeradores tipados e eventos de domínio sem dependências de infraestrutura.
 2. `src/server/`: Backend organizado em domínio puro (`entities`, `value-objects`, `repositories`), casos de uso desacoplados (`application`), adaptadores de infraestrutura (`Prisma`, `Socket.io`, implementações in-memory para testes) e apresentação em `Fastify`.
 3. `src/client/`: SPA reativa em React 19, Vite, Tailwind CSS e Shadcn UI.

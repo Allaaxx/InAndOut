@@ -1,6 +1,5 @@
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IncidentOutcome, MovementStatus } from '@shared/enums';
-import {
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type {
   ClassComparisonItemDTO,
   HourlyDistributionItemDTO,
   OutcomeDistributionItemDTO,
@@ -8,6 +7,7 @@ import {
   SchoolOverviewQueryDTO,
   SchoolOverviewStatsDTO,
 } from '@shared/dtos';
+import { IncidentOutcome, MovementStatus } from '@shared/enums';
 
 export interface GetSchoolOverviewAnalyticsOptions {
   clock?: () => Date;
@@ -18,13 +18,13 @@ export class GetSchoolOverviewAnalyticsUseCase {
 
   constructor(
     private readonly movementRepo: IMovementRecordRepository,
-    options: GetSchoolOverviewAnalyticsOptions = {}
+    options: GetSchoolOverviewAnalyticsOptions = {},
   ) {
     this.clock = options.clock ?? (() => new Date());
   }
 
   public async execute(
-    query: SchoolOverviewQueryDTO = {}
+    query: SchoolOverviewQueryDTO = {},
   ): Promise<SchoolOverviewAnalyticsDTO> {
     const allMovements = await this.movementRepo.findAll();
     const now = this.clock();
@@ -76,7 +76,7 @@ export class GetSchoolOverviewAnalyticsUseCase {
 
     // 2. Stat Cards
     const completedMovements = filteredMovements.filter(
-      (m) => typeof m.durationMinutes === 'number'
+      (m) => typeof m.durationMinutes === 'number',
     );
 
     const averageOutsideMinutes =
@@ -84,25 +84,25 @@ export class GetSchoolOverviewAnalyticsUseCase {
         ? Math.round(
             (completedMovements.reduce(
               (sum, m) => sum + (m.durationMinutes ?? 0),
-              0
+              0,
             ) /
               completedMovements.length) *
-              10
+              10,
           ) / 10
         : 0;
 
     const todayStr = query.date ?? now.toISOString().slice(0, 10);
     const totalExitsToday = filteredMovements.filter(
-      (m) => m.startedAt.toISOString().slice(0, 10) === todayStr
+      (m) => m.startedAt.toISOString().slice(0, 10) === todayStr,
     ).length;
 
     const compliantMovements = completedMovements.filter(
-      (m) => (m.durationMinutes ?? 0) <= m.allowedLimitMinutes
+      (m) => (m.durationMinutes ?? 0) <= m.allowedLimitMinutes,
     );
     const complianceRate =
       completedMovements.length > 0
         ? Math.round(
-            (compliantMovements.length / completedMovements.length) * 1000
+            (compliantMovements.length / completedMovements.length) * 1000,
           ) / 10
         : 100;
 
@@ -110,7 +110,7 @@ export class GetSchoolOverviewAnalyticsUseCase {
       (m) =>
         m.status === MovementStatus.OVERDUE ||
         m.status === MovementStatus.ESCALATED_TO_COORDINATION ||
-        m.status === MovementStatus.IN_TRANSIT_UNRESOLVED
+        m.status === MovementStatus.IN_TRANSIT_UNRESOLVED,
     ).length;
 
     const stats: SchoolOverviewStatsDTO = {
@@ -139,7 +139,7 @@ export class GetSchoolOverviewAnalyticsUseCase {
         hour: h,
         label: `${String(h).padStart(2, '0')}:00`,
         count: hourCounts.get(h) ?? 0,
-      })
+      }),
     );
 
     // 4. Outcome Distribution
@@ -170,9 +170,7 @@ export class GetSchoolOverviewAnalyticsUseCase {
       returnedCount + infirmaryCount + coordinationCount + evasionCount;
 
     const calcPercentage = (count: number): number =>
-      totalOutcomes > 0
-        ? Math.round((count / totalOutcomes) * 1000) / 10
-        : 0;
+      totalOutcomes > 0 ? Math.round((count / totalOutcomes) * 1000) / 10 : 0;
 
     const outcomeDistribution: OutcomeDistributionItemDTO[] = [
       {
@@ -223,7 +221,7 @@ export class GetSchoolOverviewAnalyticsUseCase {
     }
 
     const classComparison: ClassComparisonItemDTO[] = Array.from(
-      classGroups.entries()
+      classGroups.entries(),
     )
       .map(([classCode, data]) => ({
         classCode,

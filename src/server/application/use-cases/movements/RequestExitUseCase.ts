@@ -1,3 +1,4 @@
+export type { RequestStudentExitInput } from './RequestStudentExitUseCase';
 export {
   MovementConcurrencyConflictError,
   MovementNotFoundError,
@@ -6,5 +7,3 @@ export {
   RequestStudentExitUseCase,
   StudentNotInClassError,
 } from './RequestStudentExitUseCase';
-
-export type { RequestStudentExitInput } from './RequestStudentExitUseCase';

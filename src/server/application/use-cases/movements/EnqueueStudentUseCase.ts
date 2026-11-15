@@ -1,21 +1,21 @@
-import { ClassSession } from '@server/domain/entities/ClassSession';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { ClassSession } from '@server/domain/entities/ClassSession';
 import { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
-import { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
 import { StudentRA } from '@server/domain/value-objects/StudentRA';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type {
+  EnqueueWaitingRequestDTO,
+  EnqueueWaitingResponseDTO,
+} from '@shared/dtos';
+import { QueueEntryStatus } from '@shared/enums';
 import {
   MovementNotFoundError,
   MovementValidationError,
   StudentNotInClassError,
 } from './RequestStudentExitUseCase';
-import { QueueEntryStatus } from '@shared/enums';
-import {
-  EnqueueWaitingRequestDTO,
-  EnqueueWaitingResponseDTO,
-} from '@shared/dtos';
 
 export class QueueConflictError extends Error {
   constructor(message: string) {
@@ -45,7 +45,7 @@ export class EnqueueStudentUseCase {
     movementRepo: IMovementRecordRepository,
     queueRepo: IWaitingQueueRepository,
     notificationSender: INotificationSender,
-    options: { clock?: () => Date } = {}
+    options: { clock?: () => Date } = {},
   ) {
     this.sessionRepo = sessionRepo;
     this.studentRepo = studentRepo;
@@ -56,14 +56,14 @@ export class EnqueueStudentUseCase {
   }
 
   public async execute(
-    input: EnqueueWaitingRequestDTO
+    input: EnqueueWaitingRequestDTO,
   ): Promise<EnqueueWaitingResponseDTO> {
     let raObj: StudentRA;
     try {
       raObj = StudentRA.create(input.ra ?? '');
     } catch (err) {
       throw new MovementValidationError(
-        err instanceof Error ? err.message : 'RA inválido.'
+        err instanceof Error ? err.message : 'RA inválido.',
       );
     }
 
@@ -80,30 +80,30 @@ export class EnqueueStudentUseCase {
 
     if (!session) {
       throw new MovementNotFoundError(
-        'Nenhuma sessão de aula ativa foi encontrada para entrar na fila de espera.'
+        'Nenhuma sessão de aula ativa foi encontrada para entrar na fila de espera.',
       );
     }
 
     const student = await this.studentRepo.findByRa(raObj.value);
     if (!student) {
       throw new MovementNotFoundError(
-        `Aluno com RA ${raObj.value} não encontrado.`
+        `Aluno com RA ${raObj.value} não encontrado.`,
       );
     }
 
     if (student.classCode !== session.classCode) {
       throw new StudentNotInClassError(
-        `O aluno (${student.publicName}) pertence à turma ${student.classCode} e não está matriculado na turma ativa (${session.classCode}).`
+        `O aluno (${student.publicName}) pertence à turma ${student.classCode} e não está matriculado na turma ativa (${session.classCode}).`,
       );
     }
 
     const activeMovement = await this.movementRepo.findActiveByStudentRa(
       student.ra,
-      session.id
+      session.id,
     );
     if (activeMovement) {
       throw new QueueConflictError(
-        `O estudante ${student.publicName} (RA ${student.ra}) já está fora da sala no momento.`
+        `O estudante ${student.publicName} (RA ${student.ra}) já está fora da sala no momento.`,
       );
     }
 
@@ -111,7 +111,7 @@ export class EnqueueStudentUseCase {
 
     // Expire any stale CALLED entries before checking active queue
     const currentActiveQueue = await this.queueRepo.findActiveBySessionId(
-      session.id
+      session.id,
     );
     for (const item of currentActiveQueue) {
       if (item.isExpired(now)) {
@@ -122,16 +122,16 @@ export class EnqueueStudentUseCase {
 
     const existingQueueEntry = await this.queueRepo.findActiveByStudentRa(
       student.ra,
-      session.id
+      session.id,
     );
     if (existingQueueEntry) {
       throw new QueueConflictError(
-        `O estudante ${student.publicName} (RA ${student.ra}) já está na fila de espera na posição ${existingQueueEntry.position}.`
+        `O estudante ${student.publicName} (RA ${student.ra}) já está na fila de espera na posição ${existingQueueEntry.position}.`,
       );
     }
 
     const refreshedQueue = await this.queueRepo.findActiveBySessionId(
-      session.id
+      session.id,
     );
     const nextPosition = refreshedQueue.length + 1;
 

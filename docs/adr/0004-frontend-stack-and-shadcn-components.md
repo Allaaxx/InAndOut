@@ -7,6 +7,7 @@ A interface precisa oferecer alta reatividade com baixa sobrecarga em dispositiv
 ## Decisão
 
 Adotamos:
+
 1. **React 19 com Vite e Tailwind CSS**: Proporciona carregamento instantâneo, baixo bundle size e suporte nativo a componentes modernos e transições de estado.
 2. **Componentes baseados em Shadcn UI**:
    - `InputOTP`: Utilizado para o desbloqueio rápido de tela do terminal pelo professor via PIN de 4 dígitos.

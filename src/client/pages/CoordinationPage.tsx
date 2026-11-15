@@ -1,37 +1,37 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { MovementDTO, UserDTO } from '@shared/dtos';
-import {
-  AlertLevel,
-  IncidentOutcome,
-  INCIDENT_OUTCOME_LABELS,
-  MovementStatus,
-} from '@shared/enums';
-import { api } from '@client/services/api';
-import { useSocket } from '@client/hooks/useSocket';
-import { DataTable, ColumnDef } from '@client/components/ui/DataTable';
 import { Badge } from '@client/components/ui/Badge';
 import { Button } from '@client/components/ui/Button';
 import { Card } from '@client/components/ui/Card';
+import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
 import { Input } from '@client/components/ui/Input';
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from '@client/components/ui/Sheet';
 import { Toaster, toast } from '@client/components/ui/Sonner';
+import { useSocket } from '@client/hooks/useSocket';
+import { api } from '@client/services/api';
+import type { MovementDTO, UserDTO } from '@shared/dtos';
 import {
+  AlertLevel,
+  INCIDENT_OUTCOME_LABELS,
+  IncidentOutcome,
+  MovementStatus,
+} from '@shared/enums';
+import {
+  AlertTriangle,
+  BarChart3,
   Bell,
   BellOff,
   Clock,
-  AlertTriangle,
-  School,
   LogOut,
   RefreshCw,
+  School,
   X,
-  BarChart3,
 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface CoordinationPageProps {
   user: UserDTO;
@@ -56,10 +56,11 @@ export function CoordinationPage({
   const [error, setError] = useState<string | null>(null);
 
   // Resolution Sheet State
-  const [selectedMovement, setSelectedMovement] =
-    useState<MovementDTO | null>(null);
+  const [selectedMovement, setSelectedMovement] = useState<MovementDTO | null>(
+    null,
+  );
   const [outcome, setOutcome] = useState<IncidentOutcome>(
-    IncidentOutcome.RETURNED_TO_CLASS
+    IncidentOutcome.RETURNED_TO_CLASS,
   );
   const [notes, setNotes] = useState('');
   const [resolving, setResolving] = useState(false);
@@ -101,7 +102,7 @@ export function CoordinationPage({
       setError(
         err instanceof Error
           ? err.message
-          : 'Erro ao carregar saídas ativas para a Coordenação.'
+          : 'Erro ao carregar saídas ativas para a Coordenação.',
       );
     } finally {
       setLoading(false);
@@ -122,7 +123,7 @@ export function CoordinationPage({
         onResolveMovement(movement);
       }
     },
-    [onResolveMovement]
+    [onResolveMovement],
   );
 
   const handleConfirmResolution = useCallback(async () => {
@@ -136,17 +137,17 @@ export function CoordinationPage({
           outcome,
           notes: notes.trim() ? notes.trim() : undefined,
         },
-        token
+        token,
       );
       setMovements((prev) => prev.filter((m) => m.id !== selectedMovement.id));
       const outcomeLabel = INCIDENT_OUTCOME_LABELS[outcome] || outcome;
       toast.success(
-        `Ocorrência de ${selectedMovement.studentPublicName} resolvida com sucesso: ${outcomeLabel}`
+        `Ocorrência de ${selectedMovement.studentPublicName} resolvida com sucesso: ${outcomeLabel}`,
       );
       setSelectedMovement(null);
     } catch (err) {
       setResolveError(
-        err instanceof Error ? err.message : 'Erro ao resolver ocorrência.'
+        err instanceof Error ? err.message : 'Erro ao resolver ocorrência.',
       );
     } finally {
       setResolving(false);
@@ -170,12 +171,12 @@ export function CoordinationPage({
       // Returned students are no longer active exits
       setMovements((prev) => prev.filter((m) => m.id !== movement.id));
       setSelectedMovement((current) =>
-        current?.id === movement.id ? null : current
+        current?.id === movement.id ? null : current,
       );
     },
     onMovementOverdue: (movement) => {
       setMovements((prev) =>
-        prev.map((m) => (m.id === movement.id ? movement : m))
+        prev.map((m) => (m.id === movement.id ? movement : m)),
       );
     },
     onMovementEscalated: (movement) => {
@@ -199,7 +200,7 @@ export function CoordinationPage({
             onClick: () => handleAction(movement),
           },
           duration: 8000,
-        }
+        },
       );
 
       // Sound alert if enabled
@@ -207,13 +208,13 @@ export function CoordinationPage({
     },
     onMovementInTransitUnresolved: (movement) => {
       setMovements((prev) =>
-        prev.map((m) => (m.id === movement.id ? movement : m))
+        prev.map((m) => (m.id === movement.id ? movement : m)),
       );
     },
     onMovementResolved: (movement) => {
       setMovements((prev) => prev.filter((m) => m.id !== movement.id));
       setSelectedMovement((current) =>
-        current?.id === movement.id ? null : current
+        current?.id === movement.id ? null : current,
       );
     },
   });
@@ -236,22 +237,21 @@ export function CoordinationPage({
   const escalatedCount = useMemo(
     () =>
       movements.filter(
-        (m) => m.status === MovementStatus.ESCALATED_TO_COORDINATION
+        (m) => m.status === MovementStatus.ESCALATED_TO_COORDINATION,
       ).length,
-    [movements]
+    [movements],
   );
 
   const overdueCount = useMemo(
     () => movements.filter((m) => m.status === MovementStatus.OVERDUE).length,
-    [movements]
+    [movements],
   );
 
   const inTransitCount = useMemo(
     () =>
-      movements.filter(
-        (m) => m.status === MovementStatus.IN_TRANSIT_UNRESOLVED
-      ).length,
-    [movements]
+      movements.filter((m) => m.status === MovementStatus.IN_TRANSIT_UNRESOLVED)
+        .length,
+    [movements],
   );
 
   const columns: ColumnDef<MovementDTO>[] = useMemo(
@@ -261,12 +261,18 @@ export function CoordinationPage({
         header: 'Turma / Sala',
         render: (item) => (
           <div>
-            <span className="font-semibold text-slate-900">{item.classCode}</span>
+            <span className="font-semibold text-slate-900">
+              {item.classCode}
+            </span>
             {item.roomId && (
-              <span className="block text-xs text-slate-500">{item.roomId}</span>
+              <span className="block text-xs text-slate-500">
+                {item.roomId}
+              </span>
             )}
             {item.teacherName && (
-              <span className="block text-xs text-slate-500">Prof: {item.teacherName}</span>
+              <span className="block text-xs text-slate-500">
+                Prof: {item.teacherName}
+              </span>
             )}
           </div>
         ),
@@ -280,7 +286,9 @@ export function CoordinationPage({
               data-testid="student-avatar"
               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700"
             >
-              {(item.studentPublicName || item.studentFullName || 'A').charAt(0)}
+              {(item.studentPublicName || item.studentFullName || 'A').charAt(
+                0,
+              )}
             </div>
             <div>
               <span className="font-medium text-slate-900">
@@ -300,9 +308,12 @@ export function CoordinationPage({
         header: 'Saída',
         render: (item) => {
           const date = new Date(item.startedAt);
-          const timeStr = isNaN(date.getTime())
+          const timeStr = Number.isNaN(date.getTime())
             ? item.startedAt
-            : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            : date.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
           return <span className="font-mono text-slate-700">{timeStr}</span>;
         },
       },
@@ -345,7 +356,9 @@ export function CoordinationPage({
           }
           if (item.status === MovementStatus.IN_TRANSIT_UNRESOLVED) {
             return (
-              <Badge variant="warning">Saída em Trânsito (Sessão Encerrada)</Badge>
+              <Badge variant="warning">
+                Saída em Trânsito (Sessão Encerrada)
+              </Badge>
             );
           }
           if (item.alertLevel === AlertLevel.YELLOW) {
@@ -372,15 +385,15 @@ export function CoordinationPage({
                 {isEscalated
                   ? 'Ação Imediata'
                   : isInTransitUnresolved
-                  ? 'Resolver'
-                  : 'Detalhes'}
+                    ? 'Resolver'
+                    : 'Detalhes'}
               </Button>
             </div>
           );
         },
       },
     ],
-    [handleAction]
+    [handleAction],
   );
 
   return (
@@ -456,7 +469,9 @@ export function CoordinationPage({
             {/* User Info & Logout */}
             <div className="ml-2 flex items-center gap-2 border-l border-slate-200 pl-4">
               <div className="text-right">
-                <p className="text-sm font-semibold text-slate-900">{user.name}</p>
+                <p className="text-sm font-semibold text-slate-900">
+                  {user.name}
+                </p>
                 <p className="text-xs text-slate-500 capitalize">
                   {user.role.toLowerCase()}
                 </p>
@@ -511,9 +526,7 @@ export function CoordinationPage({
 
           <Card
             className={`flex items-center justify-between p-4 border-slate-200 shadow-xs ${
-              escalatedCount > 0
-                ? 'bg-red-50 border-red-300'
-                : 'bg-white'
+              escalatedCount > 0 ? 'bg-red-50 border-red-300' : 'bg-white'
             }`}
           >
             <div>
@@ -541,9 +554,7 @@ export function CoordinationPage({
 
           <Card
             className={`flex items-center justify-between p-4 border-slate-200 shadow-xs ${
-              inTransitCount > 0
-                ? 'bg-amber-50 border-amber-300'
-                : 'bg-white'
+              inTransitCount > 0 ? 'bg-amber-50 border-amber-300' : 'bg-white'
             }`}
           >
             <div>
@@ -696,7 +707,9 @@ export function CoordinationPage({
                       </p>
                       <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600 border-t border-slate-200 pt-2">
                         <div>
-                          <span className="text-slate-400">Turma / Sala de Origem:</span>
+                          <span className="text-slate-400">
+                            Turma / Sala de Origem:
+                          </span>
                           <p className="font-medium text-slate-800">
                             {selectedMovement.classCode}{' '}
                             {selectedMovement.roomId

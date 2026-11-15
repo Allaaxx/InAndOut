@@ -1,6 +1,3 @@
-import React, { useState } from 'react';
-import { MovementDTO } from '@shared/dtos';
-import { AlertLevel, MovementStatus } from '@shared/enums';
 import { Badge } from '@client/components/ui/Badge';
 import { Button } from '@client/components/ui/Button';
 import {
@@ -11,6 +8,9 @@ import {
   CardTitle,
 } from '@client/components/ui/Card';
 import { api } from '@client/services/api';
+import type { MovementDTO } from '@shared/dtos';
+import { AlertLevel, MovementStatus } from '@shared/enums';
+import React, { useState } from 'react';
 
 export interface ActiveExitCardProps {
   activeMovements: MovementDTO[];
@@ -72,7 +72,7 @@ function ActiveMovementItem({
         {
           notes: 'Professor acionou escalonamento para Coordenação.',
         },
-        token
+        token,
       );
       if (onMovementUpdated) {
         onMovementUpdated(response.movement);
@@ -81,7 +81,7 @@ function ActiveMovementItem({
       setEscalateError(
         err instanceof Error
           ? err.message
-          : 'Erro ao escalar saída para a Coordenação.'
+          : 'Erro ao escalar saída para a Coordenação.',
       );
     } finally {
       setEscalating(false);
@@ -234,7 +234,7 @@ export function ActiveExitCard({
     }
 
     const anyEscalated = activeMovements.some(
-      (m) => m.status === MovementStatus.ESCALATED_TO_COORDINATION
+      (m) => m.status === MovementStatus.ESCALATED_TO_COORDINATION,
     );
     if (anyEscalated) {
       return (
@@ -250,7 +250,7 @@ export function ActiveExitCard({
         m.alertLevel === AlertLevel.RED ||
         (m.elapsedMinutes !== undefined &&
           m.allowedLimitMinutes > 0 &&
-          m.elapsedMinutes / m.allowedLimitMinutes > 1.0)
+          m.elapsedMinutes / m.allowedLimitMinutes > 1.0),
     );
     if (anyOverdue) {
       return (
@@ -265,7 +265,7 @@ export function ActiveExitCard({
         m.alertLevel === AlertLevel.YELLOW ||
         (m.elapsedMinutes !== undefined &&
           m.allowedLimitMinutes > 0 &&
-          m.elapsedMinutes / m.allowedLimitMinutes >= 0.8)
+          m.elapsedMinutes / m.allowedLimitMinutes >= 0.8),
     );
     if (anyWarning) {
       return (

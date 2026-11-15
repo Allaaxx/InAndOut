@@ -1,18 +1,18 @@
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
 import { StudentRA } from '@server/domain/value-objects/StudentRA';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import {
-  MovementNotFoundError,
-  MovementValidationError,
-} from './RequestStudentExitUseCase';
-import { QueueEntryStatus } from '@shared/enums';
-import {
+import type {
   RegisterReturnRequestDTO,
   RegisterReturnResponseDTO,
   WaitingQueueDTO,
 } from '@shared/dtos';
+import { QueueEntryStatus } from '@shared/enums';
+import {
+  MovementNotFoundError,
+  MovementValidationError,
+} from './RequestStudentExitUseCase';
 
 export class RegisterStudentReturnUseCase {
   private readonly sessionRepo: IClassSessionRepository;
@@ -28,7 +28,7 @@ export class RegisterStudentReturnUseCase {
     options: {
       queueRepo?: IWaitingQueueRepository;
       clock?: () => Date;
-    } = {}
+    } = {},
   ) {
     this.sessionRepo = sessionRepo;
     this.movementRepo = movementRepo;
@@ -38,21 +38,21 @@ export class RegisterStudentReturnUseCase {
   }
 
   public async execute(
-    input: RegisterReturnRequestDTO
+    input: RegisterReturnRequestDTO,
   ): Promise<RegisterReturnResponseDTO> {
     let raObj: StudentRA;
     try {
       raObj = StudentRA.create(input.ra ?? '');
     } catch (err) {
       throw new MovementValidationError(
-        err instanceof Error ? err.message : 'RA inválido.'
+        err instanceof Error ? err.message : 'RA inválido.',
       );
     }
 
     let targetSessionId = input.sessionId?.trim();
     if (!targetSessionId && input.roomId) {
       const roomSession = await this.sessionRepo.findActiveByRoomId(
-        input.roomId.trim()
+        input.roomId.trim(),
       );
       if (roomSession) {
         targetSessionId = roomSession.id;
@@ -61,12 +61,12 @@ export class RegisterStudentReturnUseCase {
 
     const activeMovement = await this.movementRepo.findActiveByStudentRa(
       raObj.value,
-      targetSessionId || undefined
+      targetSessionId || undefined,
     );
 
     if (!activeMovement) {
       throw new MovementNotFoundError(
-        `Nenhuma saída ativa encontrada para o RA ${raObj.value}.`
+        `Nenhuma saída ativa encontrada para o RA ${raObj.value}.`,
       );
     }
 
@@ -83,11 +83,11 @@ export class RegisterStudentReturnUseCase {
     let nextCalledQueueEntry: WaitingQueueDTO | null = null;
     if (this.queueRepo) {
       const remainingActive = await this.movementRepo.findActiveBySessionId(
-        activeMovement.sessionId
+        activeMovement.sessionId,
       );
       if (remainingActive.length === 0) {
         const activeQueue = await this.queueRepo.findActiveBySessionId(
-          activeMovement.sessionId
+          activeMovement.sessionId,
         );
         for (const entry of activeQueue) {
           if (entry.isExpired(now)) {
@@ -96,7 +96,7 @@ export class RegisterStudentReturnUseCase {
           }
         }
         const refreshedQueue = await this.queueRepo.findActiveBySessionId(
-          activeMovement.sessionId
+          activeMovement.sessionId,
         );
         if (refreshedQueue.length > 0) {
           const head = refreshedQueue[0];
@@ -107,11 +107,11 @@ export class RegisterStudentReturnUseCase {
           nextCalledQueueEntry = head.toDTO();
           await this.notificationSender.notifyQueueSlotCalled(
             activeMovement.sessionId,
-            nextCalledQueueEntry
+            nextCalledQueueEntry,
           );
           await this.notificationSender.notifyQueueUpdated(
             activeMovement.sessionId,
-            refreshedQueue.map((q) => q.toDTO())
+            refreshedQueue.map((q) => q.toDTO()),
           );
         }
       }
