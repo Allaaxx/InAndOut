@@ -11,14 +11,8 @@
     "postcss.config.js",
     "apps/*/src/index.ts"
   ],
-  "project": [
-    "src/**/*.{ts,tsx}",
-    "apps/**/*.{ts,tsx}"
-  ],
-  "ignore": [
-    "dist/**",
-    "build/**"
-  ],
+  "project": ["src/**/*.{ts,tsx}", "apps/**/*.{ts,tsx}"],
+  "ignore": ["dist/**", "build/**"],
   "workspaces": {
     ".": {
       "entry": [
@@ -31,30 +25,16 @@
         "tailwind.config.js",
         "postcss.config.js"
       ],
-      "project": [
-        "src/**/*.{ts,tsx}"
-      ],
-      "ignore": [
-        "dist/**",
-        "build/**"
-      ]
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["dist/**", "build/**"]
     },
     "apps/*": {
-      "entry": [
-        "src/index.ts"
-      ],
-      "project": [
-        "src/**/*.{ts,tsx}"
-      ],
-      "ignore": [
-        "dist/**"
-      ]
+      "entry": ["src/index.ts"],
+      "project": ["src/**/*.{ts,tsx}"],
+      "ignore": ["dist/**"]
     }
   },
-  "ignoreDependencies": [
-    "@radix-ui/react-slot",
-    "react-router-dom"
-  ],
+  "ignoreDependencies": ["@radix-ui/react-slot", "react-router-dom"],
   "ignoreExportsUsedInFile": true,
   "rules": {
     "types": "off"

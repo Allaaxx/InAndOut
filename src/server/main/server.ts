@@ -1,5 +1,5 @@
-import { createApp } from './app';
 import { disconnectPrisma } from '@server/infrastructure/database/prismaClient';
+import { createApp } from './app';
 
 async function bootstrap() {
   const port = Number(process.env.PORT || 3000);
