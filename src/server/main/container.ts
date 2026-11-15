@@ -1,20 +1,20 @@
-import { IUserRepository } from '@server/domain/repositories/IUserRepository';
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
-import { ITokenService } from '@server/application/contracts/ITokenService';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
-import { InMemoryUserRepository } from '@server/infrastructure/repositories/InMemoryUserRepository';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { ITokenService } from '@server/application/contracts/ITokenService';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type { IUserRepository } from '@server/domain/repositories/IUserRepository';
+import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
 import { InMemoryClassSessionRepository } from '@server/infrastructure/repositories/InMemoryClassSessionRepository';
-import { InMemoryStudentRepository } from '@server/infrastructure/repositories/InMemoryStudentRepository';
 import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
+import { InMemoryStudentRepository } from '@server/infrastructure/repositories/InMemoryStudentRepository';
+import { InMemoryUserRepository } from '@server/infrastructure/repositories/InMemoryUserRepository';
 import { InMemoryWaitingQueueRepository } from '@server/infrastructure/repositories/InMemoryWaitingQueueRepository';
 import {
-  PrismaUserRepository,
   PrismaClassSessionRepository,
-  PrismaStudentRepository,
   PrismaMovementRecordRepository,
+  PrismaStudentRepository,
+  PrismaUserRepository,
   PrismaWaitingQueueRepository,
 } from '@server/infrastructure/repositories/prisma';
 import { JwtTokenService } from '@server/infrastructure/services/JwtTokenService';
@@ -32,18 +32,16 @@ export interface AppContainer {
 }
 
 export function createContainer(
-  overrides: Partial<AppContainer> = {}
+  overrides: Partial<AppContainer> = {},
 ): AppContainer {
   const clock = overrides.clock ?? (() => new Date());
   const useDatabase = Boolean(
-    process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== ''
+    process.env.DATABASE_URL && process.env.DATABASE_URL.trim() !== '',
   );
 
   const userRepo =
     overrides.userRepo ??
-    (useDatabase
-      ? new PrismaUserRepository()
-      : new InMemoryUserRepository());
+    (useDatabase ? new PrismaUserRepository() : new InMemoryUserRepository());
 
   const sessionRepo =
     overrides.sessionRepo ??
@@ -69,8 +67,7 @@ export function createContainer(
       ? new PrismaWaitingQueueRepository()
       : new InMemoryWaitingQueueRepository());
 
-  const tokenService =
-    overrides.tokenService ?? new JwtTokenService({ clock });
+  const tokenService = overrides.tokenService ?? new JwtTokenService({ clock });
   const notificationSender =
     overrides.notificationSender ?? new SocketNotificationSender();
 

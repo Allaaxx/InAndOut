@@ -1,10 +1,9 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { App } from '@client/App';
 import { api } from '@client/services/api';
 import { UserRole } from '@shared/enums';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@client/services/api', () => ({
   api: {
@@ -38,7 +37,7 @@ describe('Frontend Seam: LoginPage & Shadcn InputOTP Classroom Terminal Unlock',
 
     // 1. Login screen is displayed initially
     expect(
-      screen.getByRole('heading', { name: /Acesso do Professor/i })
+      screen.getByRole('heading', { name: /Acesso do Professor/i }),
     ).toBeInTheDocument();
 
     const emailInput = screen.getByLabelText(/E-mail Institucional/i);
@@ -52,7 +51,9 @@ describe('Frontend Seam: LoginPage & Shadcn InputOTP Classroom Terminal Unlock',
     await user.clear(pinInput);
     await user.type(pinInput, '1234');
 
-    await user.click(screen.getByRole('button', { name: /Entrar no Terminal/i }));
+    await user.click(
+      screen.getByRole('button', { name: /Entrar no Terminal/i }),
+    );
 
     await waitFor(() => {
       expect(api.login).toHaveBeenCalledWith({
@@ -64,16 +65,14 @@ describe('Frontend Seam: LoginPage & Shadcn InputOTP Classroom Terminal Unlock',
 
     // 2. Classroom Terminal is now unlocked and displays teacher's name
     expect(
-      await screen.findByText(/Prof\. Carlos Eduardo/i)
+      await screen.findByText(/Prof\. Carlos Eduardo/i),
     ).toBeInTheDocument();
 
     // 3. Teacher locks the terminal between classes
     const lockBtn = screen.getByRole('button', { name: /Bloquear Terminal/i });
     await user.click(lockBtn);
 
-    expect(
-      await screen.findByText(/Terminal Bloqueado/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Terminal Bloqueado/i)).toBeInTheDocument();
 
     // 4. Entering an invalid PIN in InputOTP shows error feedback
     vi.mocked(api.verifyPin).mockRejectedValueOnce(new Error('PIN incorreto.'));
@@ -81,9 +80,7 @@ describe('Frontend Seam: LoginPage & Shadcn InputOTP Classroom Terminal Unlock',
     const otpInput = screen.getByLabelText(/Digite o PIN de 4 dígitos/i);
     await user.clear(otpInput);
     await user.type(otpInput, '0000');
-    await user.click(
-      screen.getByRole('button', { name: /Desbloquear Sala/i })
-    );
+    await user.click(screen.getByRole('button', { name: /Desbloquear Sala/i }));
 
     expect(await screen.findByText(/PIN incorreto/i)).toBeInTheDocument();
 
@@ -101,18 +98,14 @@ describe('Frontend Seam: LoginPage & Shadcn InputOTP Classroom Terminal Unlock',
 
     await user.clear(otpInput);
     await user.type(otpInput, '1234');
-    await user.click(
-      screen.getByRole('button', { name: /Desbloquear Sala/i })
-    );
+    await user.click(screen.getByRole('button', { name: /Desbloquear Sala/i }));
 
     await waitFor(() => {
       expect(api.verifyPin).toHaveBeenCalledWith('1234', 'jwt-access-token');
     });
 
     await waitFor(() => {
-      expect(
-        screen.queryByText(/Terminal Bloqueado/i)
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText(/Terminal Bloqueado/i)).not.toBeInTheDocument();
     });
   });
 });

@@ -1,9 +1,17 @@
-import { describe, it, expect } from 'vitest';
-import { mapErrorToResponse } from '@server/presentation/errors/errorHandler';
-import { MovementValidationError, MovementNotFoundError, StudentNotInClassError, MovementConcurrencyConflictError } from '@server/application/use-cases/movements/RequestStudentExitUseCase';
-import { AuthenticationError, ValidationError } from '@server/application/use-cases/auth/LoginUseCase';
-import { SessionConflictError } from '@server/application/use-cases/sessions/StartClassSessionUseCase';
+import {
+  AuthenticationError,
+  ValidationError,
+} from '@server/application/use-cases/auth/LoginUseCase';
 import { InvalidOutcomeError } from '@server/application/use-cases/coordination/ResolveMovementIncidentUseCase';
+import {
+  MovementConcurrencyConflictError,
+  MovementNotFoundError,
+  MovementValidationError,
+  StudentNotInClassError,
+} from '@server/application/use-cases/movements/RequestStudentExitUseCase';
+import { SessionConflictError } from '@server/application/use-cases/sessions/StartClassSessionUseCase';
+import { mapErrorToResponse } from '@server/presentation/errors/errorHandler';
+import { describe, expect, it } from 'vitest';
 
 describe('Presentation Seam: Centralized Fastify Error Handler', () => {
   it('maps validation and outcome errors to 400 Bad Request', () => {

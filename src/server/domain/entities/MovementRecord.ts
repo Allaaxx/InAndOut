@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
+import type { MovementDTO } from '@shared/dtos';
 import {
   AlertLevel,
-  IncidentOutcome,
+  type IncidentOutcome,
   MovementStatus,
 } from '@shared/enums';
 import { formatPublicStudentName } from '@shared/formatters';
-import { MovementDTO } from '@shared/dtos';
 import { DurationMinutes } from '../value-objects/DurationMinutes';
 
 export interface MovementRecordProps {
@@ -139,12 +139,16 @@ export class MovementRecord {
 
     const studentFullName = (props.studentFullName ?? '').trim();
     if (!studentFullName) {
-      throw new Error('O nome completo do aluno (studentFullName) é obrigatório.');
+      throw new Error(
+        'O nome completo do aluno (studentFullName) é obrigatório.',
+      );
     }
 
     const allowedLimitMinutes = props.allowedLimitMinutes ?? 10;
     if (allowedLimitMinutes <= 0) {
-      throw new Error('O tempo limite permitido deve ser maior que zero minutos.');
+      throw new Error(
+        'O tempo limite permitido deve ser maior que zero minutos.',
+      );
     }
 
     const studentPublicName =
@@ -221,7 +225,7 @@ export class MovementRecord {
     }
     return new Date(
       this._overdueAt.getTime() +
-        MovementRecord.TEACHER_GRACE_WINDOW_MINUTES * 60_000
+        MovementRecord.TEACHER_GRACE_WINDOW_MINUTES * 60_000,
     );
   }
 
@@ -265,7 +269,7 @@ export class MovementRecord {
     const referenceEnd = this._endedAt ?? now;
     const diffMs = Math.max(
       0,
-      referenceEnd.getTime() - this.startedAt.getTime()
+      referenceEnd.getTime() - this.startedAt.getTime(),
     );
     return Math.round((diffMs / 60000) * 100) / 100;
   }
@@ -318,18 +322,18 @@ export class MovementRecord {
 
   public registerReturn(
     endedAt: Date = new Date(),
-    plannedSessionDurationMinutes = 50
+    plannedSessionDurationMinutes = 50,
   ): void {
     if (!this.isActive()) {
       throw new Error(
-        'Este registro de saída já foi encerrado e não está mais ativo.'
+        'Este registro de saída já foi encerrado e não está mais ativo.',
       );
     }
 
     const durationCalc = DurationMinutes.fromDates(
       this.startedAt,
       endedAt,
-      plannedSessionDurationMinutes
+      plannedSessionDurationMinutes,
     );
 
     this._endedAt = endedAt;
@@ -349,11 +353,11 @@ export class MovementRecord {
   public escalate(
     escalatedAt: Date = new Date(),
     type: 'MANUAL' | 'AUTOMATIC' = 'MANUAL',
-    notes?: string
+    notes?: string,
   ): void {
     if (!this.isActive()) {
       throw new Error(
-        'Não é possível escalar uma saída que já foi encerrada e não está mais ativa.'
+        'Não é possível escalar uma saída que já foi encerrada e não está mais ativa.',
       );
     }
     this._status = MovementStatus.ESCALATED_TO_COORDINATION;
@@ -378,7 +382,7 @@ export class MovementRecord {
     resolvedByUserId: string,
     resolvedAt: Date = new Date(),
     notes?: string,
-    plannedSessionDurationMinutes = 50
+    plannedSessionDurationMinutes = 50,
   ): void {
     this._status = MovementStatus.RESOLVED;
     this._outcome = outcome;
@@ -392,7 +396,7 @@ export class MovementRecord {
       const durationCalc = DurationMinutes.fromDates(
         this.startedAt,
         resolvedAt,
-        plannedSessionDurationMinutes
+        plannedSessionDurationMinutes,
       );
       this._durationMinutes = durationCalc.durationMinutes;
       this._attendedMinutes = durationCalc.attendedMinutes;

@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '@server/main/app';
 import { IncidentOutcome, MovementStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject)', () => {
   async function loginAs(
     app: Awaited<ReturnType<typeof createApp>>['app'],
     email: string,
-    password: string
+    password: string,
   ): Promise<string> {
     const res = await app.inject({
       method: 'POST',
@@ -22,13 +22,13 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
     const { app, container } = await createApp({ clock: () => currentTime });
     const spyInTransitNotify = vi.spyOn(
       container.notificationSender,
-      'notifyMovementInTransitUnresolved'
+      'notifyMovementInTransitUnresolved',
     );
 
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
 
     // 1. Start session
@@ -88,14 +88,14 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
       expect.objectContaining({
         id: movement.id,
         status: MovementStatus.IN_TRANSIT_UNRESOLVED,
-      })
+      }),
     );
 
     // 5. Check that coordination can see this movement under active-movements
     const coordToken = await loginAs(
       app,
       'coord@linsdorego.edu.br',
-      'coord123'
+      'coord123',
     );
     const coordRes = await app.inject({
       method: 'GET',
@@ -127,7 +127,7 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
     const teacherRes = await app.inject({
       method: 'POST',
@@ -141,7 +141,7 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
     const coordToken = await loginAs(
       app,
       'coord@linsdorego.edu.br',
-      'coord123'
+      'coord123',
     );
     const notFoundRes = await app.inject({
       method: 'POST',
@@ -159,18 +159,18 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
     const { app, container } = await createApp({ clock: () => currentTime });
     const spyResolveNotify = vi.spyOn(
       container.notificationSender,
-      'notifyMovementResolved'
+      'notifyMovementResolved',
     );
 
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
     const coordToken = await loginAs(
       app,
       'coord@linsdorego.edu.br',
-      'coord123'
+      'coord123',
     );
 
     // Outcomes to verify
@@ -286,7 +286,7 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
           id: movementId,
           status: MovementStatus.RESOLVED,
           outcome,
-        })
+        }),
       );
     }
 

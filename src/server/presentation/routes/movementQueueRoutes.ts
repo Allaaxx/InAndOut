@@ -1,25 +1,25 @@
-import { FastifyInstance } from 'fastify';
-import { AppContainer } from '@server/main/container';
+import { CancelQueueEntryUseCase } from '@server/application/use-cases/movements/CancelQueueEntryUseCase';
+import { ClaimQueueSlotUseCase } from '@server/application/use-cases/movements/ClaimQueueSlotUseCase';
 import {
   EnqueueStudentUseCase,
   QueueConflictError,
   QueueWindowExpiredError,
 } from '@server/application/use-cases/movements/EnqueueStudentUseCase';
-import { CancelQueueEntryUseCase } from '@server/application/use-cases/movements/CancelQueueEntryUseCase';
-import { ClaimQueueSlotUseCase } from '@server/application/use-cases/movements/ClaimQueueSlotUseCase';
 import {
   MovementNotFoundError,
   MovementValidationError,
   StudentNotInClassError,
 } from '@server/application/use-cases/movements/RequestStudentExitUseCase';
-import {
+import type { AppContainer } from '@server/main/container';
+import type {
   ClaimQueueRequestDTO,
   EnqueueWaitingRequestDTO,
 } from '@shared/dtos';
+import type { FastifyInstance } from 'fastify';
 
 export async function registerMovementQueueRoutes(
   app: FastifyInstance,
-  container: AppContainer
+  container: AppContainer,
 ): Promise<void> {
   const enqueueUseCase = new EnqueueStudentUseCase(
     container.sessionRepo,
@@ -27,7 +27,7 @@ export async function registerMovementQueueRoutes(
     container.movementRepo,
     container.queueRepo,
     container.notificationSender,
-    { clock: container.clock }
+    { clock: container.clock },
   );
 
   const cancelUseCase = new CancelQueueEntryUseCase(
@@ -35,7 +35,7 @@ export async function registerMovementQueueRoutes(
     container.movementRepo,
     container.queueRepo,
     container.notificationSender,
-    { clock: container.clock }
+    { clock: container.clock },
   );
 
   const claimUseCase = new ClaimQueueSlotUseCase(
@@ -44,7 +44,7 @@ export async function registerMovementQueueRoutes(
     container.movementRepo,
     container.queueRepo,
     container.notificationSender,
-    { clock: container.clock }
+    { clock: container.clock },
   );
 
   app.post<{ Body: EnqueueWaitingRequestDTO }>(
@@ -52,7 +52,7 @@ export async function registerMovementQueueRoutes(
     async (request, reply) => {
       try {
         const result = await enqueueUseCase.execute(
-          request.body ?? ({} as EnqueueWaitingRequestDTO)
+          request.body ?? ({} as EnqueueWaitingRequestDTO),
         );
         return reply.status(201).send(result);
       } catch (err) {
@@ -75,7 +75,7 @@ export async function registerMovementQueueRoutes(
               : 'Erro interno ao entrar na fila de espera.',
         });
       }
-    }
+    },
   );
 
   app.delete<{
@@ -112,7 +112,7 @@ export async function registerMovementQueueRoutes(
     async (request, reply) => {
       try {
         const result = await claimUseCase.execute(
-          request.body ?? ({} as ClaimQueueRequestDTO)
+          request.body ?? ({} as ClaimQueueRequestDTO),
         );
         return reply.status(201).send(result);
       } catch (err) {
@@ -135,6 +135,6 @@ export async function registerMovementQueueRoutes(
               : 'Erro interno ao confirmar saída da fila.',
         });
       }
-    }
+    },
   );
 }

@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import {
+import { api } from '@client/services/api';
+import type {
   ClassSessionDTO,
   EndSessionResponseDTO,
   MovementDTO,
   StartSessionRequestDTO,
   WaitingQueueDTO,
 } from '@shared/dtos';
-import { api } from '@client/services/api';
+import { useCallback, useEffect, useState } from 'react';
 
 export function formatElapsedSeconds(totalSeconds: number): string {
   const safeSeconds = Math.max(0, Math.floor(totalSeconds));
@@ -25,7 +25,7 @@ export function useClassSession({
   roomId = 'SALA-01',
 }: UseClassSessionOptions) {
   const [activeSession, setActiveSession] = useState<ClassSessionDTO | null>(
-    null
+    null,
   );
   const [activeMovements, setActiveMovements] = useState<MovementDTO[]>([]);
   const [queue, setQueue] = useState<WaitingQueueDTO[]>([]);
@@ -47,7 +47,7 @@ export function useClassSession({
     }
     try {
       const response = await api.getActiveSession(roomId, token);
-      if (response && response.session) {
+      if (response?.session) {
         setActiveSession(response.session);
         setActiveMovements(response.activeMovements ?? []);
         setQueue(response.queue ?? []);
@@ -92,7 +92,7 @@ export function useClassSession({
           defaultTimeLimitMinutes: 10,
           ...payload,
         },
-        token
+        token,
       );
       setLastEndedSummary(null);
       setActiveSession(response.session);
@@ -117,7 +117,7 @@ export function useClassSession({
     try {
       const response = await api.endSession(
         { sessionId: activeSession.id },
-        token
+        token,
       );
       setActiveSession(null);
       setActiveMovements([]);
@@ -127,9 +127,7 @@ export function useClassSession({
       return response;
     } catch (err) {
       const msg =
-        err instanceof Error
-          ? err.message
-          : 'Erro ao encerrar sessão de aula.';
+        err instanceof Error ? err.message : 'Erro ao encerrar sessão de aula.';
       setError(msg);
       throw err;
     } finally {

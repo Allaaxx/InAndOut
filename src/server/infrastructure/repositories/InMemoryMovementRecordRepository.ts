@@ -1,5 +1,5 @@
-import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { MovementRecord } from '@server/domain/entities/MovementRecord';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 
 export class InMemoryMovementRecordRepository
   implements IMovementRecordRepository
@@ -19,16 +19,16 @@ export class InMemoryMovementRecordRepository
   }
 
   public async findActiveBySessionId(
-    sessionId: string
+    sessionId: string,
   ): Promise<MovementRecord[]> {
     return Array.from(this.records.values()).filter(
-      (r) => r.sessionId === sessionId && r.isActive()
+      (r) => r.sessionId === sessionId && r.isActive(),
     );
   }
 
   public async findActiveByStudentRa(
     ra: string,
-    sessionId?: string
+    sessionId?: string,
   ): Promise<MovementRecord | null> {
     const normalizedRa = ra.trim();
     for (const record of this.records.values()) {
@@ -45,14 +45,14 @@ export class InMemoryMovementRecordRepository
 
   public async findBySessionId(sessionId: string): Promise<MovementRecord[]> {
     return Array.from(this.records.values()).filter(
-      (r) => r.sessionId === sessionId
+      (r) => r.sessionId === sessionId,
     );
   }
 
   public async findByStudentRa(ra: string): Promise<MovementRecord[]> {
     const normalizedRa = ra.trim();
     return Array.from(this.records.values()).filter(
-      (r) => r.studentRa === normalizedRa
+      (r) => r.studentRa === normalizedRa,
     );
   }
 

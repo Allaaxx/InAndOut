@@ -1,9 +1,6 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { TerminalPage } from '@client/pages/TerminalPage';
 import { api } from '@client/services/api';
+import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
 import {
   AlertLevel,
   MovementStatus,
@@ -11,7 +8,9 @@ import {
   SessionStatus,
   UserRole,
 } from '@shared/enums';
-import { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const socketListeners: Record<string, Array<(payload: unknown) => void>> = {};
 
@@ -26,7 +25,7 @@ vi.mock('socket.io-client', () => ({
     off: vi.fn((event: string, cb: (payload: unknown) => void) => {
       if (socketListeners[event]) {
         socketListeners[event] = socketListeners[event].filter(
-          (fn) => fn !== cb
+          (fn) => fn !== cb,
         );
       }
     }),
@@ -129,16 +128,18 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     // Initial empty state
     expect(
-      await screen.findByText(/Nenhum aluno na fila de espera no momento/i)
+      await screen.findByText(/Nenhum aluno na fila de espera no momento/i),
     ).toBeInTheDocument();
 
     // Type RA 1002 in queue input and click "Entrar na Fila"
-    const queueInput = screen.getByPlaceholderText(/Digitar RA para entrar na fila/i);
+    const queueInput = screen.getByPlaceholderText(
+      /Digitar RA para entrar na fila/i,
+    );
     await user.type(queueInput, '1002');
 
     const joinBtn = screen.getByRole('button', { name: /Entrar na Fila/i });
@@ -150,16 +151,16 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
           ra: '1002',
           sessionId: 'session-101',
         },
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
     // Displays discreet next label
     expect(
-      await screen.findByTestId('queue-next-indicator', {}, { timeout: 4000 })
+      await screen.findByTestId('queue-next-indicator', {}, { timeout: 4000 }),
     ).toHaveTextContent(/Próximo:.*João M\./i);
     expect(screen.getByTestId('queue-item-1002')).toHaveTextContent(
-      /#1.*João M\..*Na Fila/i
+      /#1.*João M\..*Na Fila/i,
     );
   });
 
@@ -208,12 +209,12 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     // Confirmation window alert appears
     expect(
-      await screen.findByText(/Vaga liberada para João M\./i)
+      await screen.findByText(/Vaga liberada para João M\./i),
     ).toBeInTheDocument();
     expect(screen.getByText(/Janela de confirmação:/i)).toBeInTheDocument();
     expect(screen.getByText(/Aguardando Confirmação/i)).toBeInTheDocument();
@@ -230,7 +231,7 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
           ra: '1002',
           sessionId: 'session-101',
         },
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
@@ -271,11 +272,11 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     expect(await screen.findByTestId('queue-next-indicator')).toHaveTextContent(
-      /Próximo:.*Ana C\./i
+      /Próximo:.*Ana C\./i,
     );
 
     const cancelBtn = screen.getByRole('button', { name: /Desistir/i });
@@ -285,12 +286,12 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
       expect(api.cancelQueue).toHaveBeenCalledWith(
         '1003',
         'session-101',
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
     expect(
-      await screen.findByText(/Nenhum aluno na fila de espera no momento/i)
+      await screen.findByText(/Nenhum aluno na fila de espera no momento/i),
     ).toBeInTheDocument();
   });
 
@@ -307,11 +308,11 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     expect(
-      await screen.findByText(/Nenhum aluno na fila de espera no momento/i)
+      await screen.findByText(/Nenhum aluno na fila de espera no momento/i),
     ).toBeInTheDocument();
 
     // 1. Simulate Socket.io queue:updated event
@@ -326,7 +327,7 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
     });
 
     expect(
-      await screen.findByTestId('queue-next-indicator', {}, { timeout: 4000 })
+      await screen.findByTestId('queue-next-indicator', {}, { timeout: 4000 }),
     ).toHaveTextContent(/Próximo:.*João M\./i);
 
     // 2. Simulate Socket.io queue:slot-called event
@@ -343,13 +344,13 @@ describe('Frontend Seam: FIFO Waiting Queue Panel, 2-Minute Confirmation Window 
         listener({
           sessionId: activeSessionDTO.id,
           entry: calledJoaoEntry,
-          expiresAt: calledJoaoEntry.expiresAt!,
+          expiresAt: calledJoaoEntry.expiresAt ?? new Date().toISOString(),
         });
       }
     });
 
     expect(
-      await screen.findByText(/Vaga liberada para João M\./i)
+      await screen.findByText(/Vaga liberada para João M\./i),
     ).toBeInTheDocument();
   });
 });

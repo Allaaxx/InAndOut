@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
+import type { WaitingQueueDTO } from '@shared/dtos';
 import { QueueEntryStatus } from '@shared/enums';
 import { formatPublicStudentName } from '@shared/formatters';
-import { WaitingQueueDTO } from '@shared/dtos';
 
 export interface WaitingQueueEntryProps {
   id?: string;
@@ -137,7 +137,7 @@ export class WaitingQueueEntry {
   public callSlot(now: Date = new Date(), windowMinutes = 2): void {
     if (!this.isActive()) {
       throw new Error(
-        'Apenas solicitações aguardando na fila podem ser chamadas.'
+        'Apenas solicitações aguardando na fila podem ser chamadas.',
       );
     }
     this._status = QueueEntryStatus.CALLED;
@@ -148,13 +148,13 @@ export class WaitingQueueEntry {
   public claim(now?: Date): void {
     if (!this.isActive()) {
       throw new Error(
-        'Esta posição na fila não está mais ativa ou já foi encerrada.'
+        'Esta posição na fila não está mais ativa ou já foi encerrada.',
       );
     }
     if (now && this.isExpired(now)) {
       this._status = QueueEntryStatus.EXPIRED;
       throw new Error(
-        'A janela de confirmação de 2 minutos expirou e a vaga foi transferida para o próximo da fila.'
+        'A janela de confirmação de 2 minutos expirou e a vaga foi transferida para o próximo da fila.',
       );
     }
     this._status = QueueEntryStatus.CLAIMED;
@@ -167,7 +167,7 @@ export class WaitingQueueEntry {
   public cancel(): void {
     if (!this.isActive()) {
       throw new Error(
-        'Não é possível cancelar uma posição da fila que já foi encerrada.'
+        'Não é possível cancelar uma posição da fila que já foi encerrada.',
       );
     }
     this._status = QueueEntryStatus.CANCELLED;

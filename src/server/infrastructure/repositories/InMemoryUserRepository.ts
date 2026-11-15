@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { User } from '@server/domain/entities/User';
-import { IUserRepository } from '@server/domain/repositories/IUserRepository';
+import type { IUserRepository } from '@server/domain/repositories/IUserRepository';
 import { UserRole } from '@shared/enums';
 
 export function hashPassword(plain: string): string {

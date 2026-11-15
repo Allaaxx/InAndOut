@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '@server/main/app';
 import { MovementStatus, QueueEntryStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Voluntary Cancellation (app.inject)', () => {
   async function startActiveSession(
     app: Awaited<ReturnType<typeof createApp>>['app'],
     classCode = '1A',
     subject = 'Matemática',
-    roomId = 'SALA-01'
+    roomId = 'SALA-01',
   ) {
     const loginRes = await app.inject({
       method: 'POST',
@@ -38,15 +38,15 @@ describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Vo
 
     const notifyQueueUpdatedSpy = vi.spyOn(
       container.notificationSender,
-      'notifyQueueUpdated'
+      'notifyQueueUpdated',
     );
     const notifyQueueSlotCalledSpy = vi.spyOn(
       container.notificationSender,
-      'notifyQueueSlotCalled'
+      'notifyQueueSlotCalled',
     );
     const notifyExitSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementExit'
+      'notifyMovementExit',
     );
 
     const { session } = await startActiveSession(app, '1A', 'Matemática');
@@ -93,10 +93,9 @@ describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Vo
       status: QueueEntryStatus.WAITING,
     });
     expect(enqueue2Res.json().queue).toHaveLength(2);
-    expect(enqueue2Res.json().queue.map((q: { studentRa: string }) => q.studentRa)).toEqual([
-      '1002',
-      '1003',
-    ]);
+    expect(
+      enqueue2Res.json().queue.map((q: { studentRa: string }) => q.studentRa),
+    ).toEqual(['1002', '1003']);
 
     // Rejects duplicate queue entry for 1002 or enqueueing currently outside student 1001 with 409
     const duplicateEnqueueRes = await app.inject({
@@ -135,7 +134,7 @@ describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Vo
         studentRa: '1002',
         status: QueueEntryStatus.CALLED,
         expiresAt: '2026-03-10T08:17:00.000Z',
-      })
+      }),
     );
 
     // 5. Student 1003 (2nd in queue) tries to claim while 1002's 2-minute window is active -> 409 Conflict
@@ -180,7 +179,7 @@ describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Vo
 
     const notifyQueueSlotCalledSpy = vi.spyOn(
       container.notificationSender,
-      'notifyQueueSlotCalled'
+      'notifyQueueSlotCalled',
     );
 
     const { session } = await startActiveSession(app, '1A', 'História');
@@ -219,7 +218,7 @@ describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Vo
         studentRa: '1002',
         status: QueueEntryStatus.CALLED,
         expiresAt: '2026-03-10T09:07:00.000Z',
-      })
+      }),
     );
 
     // 3. Advance clock past the 2-minute confirmation window -> 09:07:05 (2m 5s elapsed)
@@ -246,7 +245,7 @@ describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Vo
         status: QueueEntryStatus.CALLED,
         calledAt: '2026-03-10T09:07:05.000Z',
         expiresAt: '2026-03-10T09:09:05.000Z',
-      })
+      }),
     );
 
     // 4. Student 1003 (Ana C.) claims her slot within her 2-minute window at 09:07:30 -> 201 Created
@@ -274,11 +273,11 @@ describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Vo
 
     const notifyQueueUpdatedSpy = vi.spyOn(
       container.notificationSender,
-      'notifyQueueUpdated'
+      'notifyQueueUpdated',
     );
     const notifyQueueSlotCalledSpy = vi.spyOn(
       container.notificationSender,
-      'notifyQueueSlotCalled'
+      'notifyQueueSlotCalled',
     );
 
     const { session } = await startActiveSession(app, '1A', 'Geografia');
@@ -335,7 +334,7 @@ describe('Controller Seam: FIFO Waiting Queue, 2-Minute Confirmation Window & Vo
       expect.objectContaining({
         studentRa: '1003',
         status: QueueEntryStatus.CALLED,
-      })
+      }),
     );
     expect(notifyQueueUpdatedSpy).toHaveBeenCalled();
 

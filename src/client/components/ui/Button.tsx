@@ -9,13 +9,23 @@ export interface ButtonProps
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant = 'default', size = 'default', type = 'button', ...props },
-    ref
+    {
+      className,
+      variant = 'default',
+      size = 'default',
+      type = 'button',
+      ...props
+    },
+    ref,
   ) => {
-    const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
+    const variantClasses: Record<
+      NonNullable<ButtonProps['variant']>,
+      string
+    > = {
       default: 'bg-slate-900 text-white hover:bg-slate-800',
       destructive: 'bg-red-600 text-white hover:bg-red-700',
-      outline: 'border border-slate-300 bg-white hover:bg-slate-100 text-slate-900',
+      outline:
+        'border border-slate-300 bg-white hover:bg-slate-100 text-slate-900',
       secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200',
       ghost: 'hover:bg-slate-100 text-slate-900',
     };
@@ -35,11 +45,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50',
           variantClasses[variant],
           sizeClasses[size],
-          className
+          className,
         )}
         {...props}
       />
     );
-  }
+  },
 );
 Button.displayName = 'Button';

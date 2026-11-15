@@ -1,6 +1,6 @@
-import * as React from 'react';
 import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
+import * as React from 'react';
 import { cn } from './utils';
 
 export type SheetProps = SheetPrimitive.DialogProps;
@@ -21,7 +21,7 @@ const SheetOverlay = React.forwardRef<
     ref={ref}
     className={cn(
       'fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-      className
+      className,
     )}
     {...props}
   />
@@ -48,14 +48,8 @@ const SheetContent = React.forwardRef<
   SheetContentProps
 >(
   (
-    {
-      side = 'right',
-      className,
-      children,
-      showCloseButton = true,
-      ...props
-    },
-    ref
+    { side = 'right', className, children, showCloseButton = true, ...props },
+    ref,
   ) => (
     <SheetPortal>
       <SheetOverlay />
@@ -64,7 +58,7 @@ const SheetContent = React.forwardRef<
         className={cn(
           'fixed z-50 gap-4 bg-white p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 overflow-y-auto',
           sheetVariants[side],
-          className
+          className,
         )}
         {...props}
       >
@@ -77,7 +71,7 @@ const SheetContent = React.forwardRef<
         )}
       </SheetPrimitive.Content>
     </SheetPortal>
-  )
+  ),
 );
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
@@ -88,7 +82,7 @@ const SheetHeader = ({
   <div
     className={cn(
       'flex flex-col space-y-2 text-center sm:text-left',
-      className
+      className,
     )}
     {...props}
   />
@@ -102,7 +96,7 @@ const SheetFooter = ({
   <div
     className={cn(
       'flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2',
-      className
+      className,
     )}
     {...props}
   />
@@ -135,13 +129,13 @@ SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
 export {
   Sheet,
-  SheetPortal,
-  SheetOverlay,
-  SheetTrigger,
   SheetClose,
   SheetContent,
-  SheetHeader,
-  SheetFooter,
-  SheetTitle,
   SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetOverlay,
+  SheetPortal,
+  SheetTitle,
+  SheetTrigger,
 };

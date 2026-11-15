@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { Button } from '@client/components/ui/Button';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,8 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from '@client/components/ui/InputOTP';
-import { Button } from '@client/components/ui/Button';
+import type React from 'react';
+import { useState } from 'react';
 
 export interface PinLockModalProps {
   open: boolean;
@@ -84,7 +85,10 @@ export function PinLockModal({
           </div>
 
           {error && (
-            <p role="alert" className="text-center text-sm font-medium text-red-600">
+            <p
+              role="alert"
+              className="text-center text-sm font-medium text-red-600"
+            >
               {error}
             </p>
           )}

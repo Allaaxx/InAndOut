@@ -1,17 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { io as ioClient, Socket as ClientSocket } from 'socket.io-client';
-import { AddressInfo } from 'net';
+import type { AddressInfo } from 'node:net';
 import { createApp } from '@server/main/app';
-import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
+import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
 import { AlertLevel, MovementStatus, QueueEntryStatus } from '@shared/enums';
-import { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
+import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
+import { type Socket as ClientSocket, io as ioClient } from 'socket.io-client';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling', () => {
   let appInstance: Awaited<ReturnType<typeof createApp>>;
   let serverUrl: string;
   const activeClients: ClientSocket[] = [];
 
-  function createTestClient(options: { autoConnect?: boolean } = {}): ClientSocket {
+  function createTestClient(
+    options: { autoConnect?: boolean } = {},
+  ): ClientSocket {
     const client = ioClient(serverUrl, {
       transports: ['websocket'],
       autoConnect: options.autoConnect ?? true,
@@ -82,7 +84,8 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
     expect(joinRes).toEqual({ ok: true, room: expectedRoom });
 
     // Verify room contains client socket in server adapter
-    const serverSocket = appInstance.io.sockets.sockets.get(client.id!);
+    const clientId = client.id ?? '';
+    const serverSocket = appInstance.io.sockets.sockets.get(clientId);
     expect(serverSocket).toBeDefined();
     expect(serverSocket?.rooms.has(expectedRoom)).toBe(true);
 
@@ -109,7 +112,8 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
       rooms: [SOCKET_ROOMS.COORDINATION, SOCKET_ROOMS.COORDINATION_ROOM],
     });
 
-    const serverSocket = appInstance.io.sockets.sockets.get(client.id!);
+    const clientId = client.id ?? '';
+    const serverSocket = appInstance.io.sockets.sockets.get(clientId);
     expect(serverSocket?.rooms.has(SOCKET_ROOMS.COORDINATION)).toBe(true);
     expect(serverSocket?.rooms.has(SOCKET_ROOMS.COORDINATION_ROOM)).toBe(true);
 
@@ -136,7 +140,8 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
     });
     expect(joinRes).toEqual({ ok: true, room: 'custom-room-xyz' });
 
-    const serverSocket = appInstance.io.sockets.sockets.get(client.id!);
+    const clientId = client.id ?? '';
+    const serverSocket = appInstance.io.sockets.sockets.get(clientId);
     expect(serverSocket?.rooms.has('custom-room-xyz')).toBe(true);
 
     // Join coordination alias via join:room
@@ -157,17 +162,23 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
     // Client A in Session 1
     const clientA = createTestClient();
     await waitForConnect(clientA);
-    await new Promise((resolve) => clientA.emit(SOCKET_EVENTS.JOIN_SESSION, 'session-1', resolve));
+    await new Promise((resolve) =>
+      clientA.emit(SOCKET_EVENTS.JOIN_SESSION, 'session-1', resolve),
+    );
 
     // Client B in Coordination
     const clientB = createTestClient();
     await waitForConnect(clientB);
-    await new Promise((resolve) => clientB.emit(SOCKET_EVENTS.JOIN_COORDINATION, {}, resolve));
+    await new Promise((resolve) =>
+      clientB.emit(SOCKET_EVENTS.JOIN_COORDINATION, {}, resolve),
+    );
 
     // Client C in Session 2
     const clientC = createTestClient();
     await waitForConnect(clientC);
-    await new Promise((resolve) => clientC.emit(SOCKET_EVENTS.JOIN_SESSION, 'session-2', resolve));
+    await new Promise((resolve) =>
+      clientC.emit(SOCKET_EVENTS.JOIN_SESSION, 'session-2', resolve),
+    );
 
     const sampleMovement: MovementDTO = {
       id: 'mov-100',
@@ -191,8 +202,12 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
 
     // 1. Notify movement exit / started
     const exitPromises = Promise.all([
-      new Promise<MovementDTO>((resolve) => clientA.once(SOCKET_EVENTS.MOVEMENT_EXIT, resolve)),
-      new Promise<MovementDTO>((resolve) => clientB.once(SOCKET_EVENTS.MOVEMENT_EXIT, resolve)),
+      new Promise<MovementDTO>((resolve) =>
+        clientA.once(SOCKET_EVENTS.MOVEMENT_EXIT, resolve),
+      ),
+      new Promise<MovementDTO>((resolve) =>
+        clientB.once(SOCKET_EVENTS.MOVEMENT_EXIT, resolve),
+      ),
     ]);
 
     let clientCReceivedExit = false;
@@ -200,7 +215,9 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
       clientCReceivedExit = true;
     });
 
-    await appInstance.container.notificationSender.notifyMovementExit(sampleMovement);
+    await appInstance.container.notificationSender.notifyMovementExit(
+      sampleMovement,
+    );
 
     const [eventA, eventB] = await exitPromises;
     expect(eventA.id).toBe('mov-100');
@@ -222,7 +239,10 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
       },
     ];
 
-    const queuePromise = new Promise<{ sessionId: string; queue: WaitingQueueDTO[] }>((resolve) => {
+    const queuePromise = new Promise<{
+      sessionId: string;
+      queue: WaitingQueueDTO[];
+    }>((resolve) => {
       clientA.once(SOCKET_EVENTS.QUEUE_UPDATED, resolve);
     });
 
@@ -231,7 +251,10 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
       clientCReceivedQueue = true;
     });
 
-    await appInstance.container.notificationSender.notifyQueueUpdated('session-1', queueData);
+    await appInstance.container.notificationSender.notifyQueueUpdated(
+      'session-1',
+      queueData,
+    );
 
     const queueEvent = await queuePromise;
     expect(queueEvent.sessionId).toBe('session-1');
@@ -246,11 +269,17 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
     };
 
     const overduePromises = Promise.all([
-      new Promise<MovementDTO>((resolve) => clientA.once(SOCKET_EVENTS.MOVEMENT_OVERDUE, resolve)),
-      new Promise<MovementDTO>((resolve) => clientB.once(SOCKET_EVENTS.MOVEMENT_OVERDUE, resolve)),
+      new Promise<MovementDTO>((resolve) =>
+        clientA.once(SOCKET_EVENTS.MOVEMENT_OVERDUE, resolve),
+      ),
+      new Promise<MovementDTO>((resolve) =>
+        clientB.once(SOCKET_EVENTS.MOVEMENT_OVERDUE, resolve),
+      ),
     ]);
 
-    await appInstance.container.notificationSender.notifyMovementOverdue(overdueMovement);
+    await appInstance.container.notificationSender.notifyMovementOverdue(
+      overdueMovement,
+    );
     const [overdueA, overdueB] = await overduePromises;
     expect(overdueA.id).toBe('mov-100');
     expect(overdueB.id).toBe('mov-100');
@@ -265,15 +294,21 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
       clientAReceivedInTransit = true;
     });
 
-    await appInstance.container.notificationSender.notifyMovementInTransitUnresolved(sampleMovement);
+    await appInstance.container.notificationSender.notifyMovementInTransitUnresolved(
+      sampleMovement,
+    );
     const inTransitEvent = await inTransitPromises;
     expect(inTransitEvent.id).toBe('mov-100');
     expect(clientAReceivedInTransit).toBe(false);
 
     // 5. Notify movement return
     const returnPromises = Promise.all([
-      new Promise<MovementDTO>((resolve) => clientA.once(SOCKET_EVENTS.MOVEMENT_RETURN, resolve)),
-      new Promise<MovementDTO>((resolve) => clientB.once(SOCKET_EVENTS.MOVEMENT_RETURN, resolve)),
+      new Promise<MovementDTO>((resolve) =>
+        clientA.once(SOCKET_EVENTS.MOVEMENT_RETURN, resolve),
+      ),
+      new Promise<MovementDTO>((resolve) =>
+        clientB.once(SOCKET_EVENTS.MOVEMENT_RETURN, resolve),
+      ),
     ]);
 
     await appInstance.container.notificationSender.notifyMovementReturn({

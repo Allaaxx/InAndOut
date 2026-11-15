@@ -1,14 +1,14 @@
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
 import { StudentRA } from '@server/domain/value-objects/StudentRA';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
+import type { CancelQueueResponseDTO } from '@shared/dtos';
+import { QueueEntryStatus } from '@shared/enums';
 import {
   MovementNotFoundError,
   MovementValidationError,
 } from './RequestStudentExitUseCase';
-import { QueueEntryStatus } from '@shared/enums';
-import { CancelQueueResponseDTO } from '@shared/dtos';
 
 export interface CancelQueueEntryInput {
   ra: string;
@@ -28,7 +28,7 @@ export class CancelQueueEntryUseCase {
     movementRepo: IMovementRecordRepository,
     queueRepo: IWaitingQueueRepository,
     notificationSender: INotificationSender,
-    options: { clock?: () => Date } = {}
+    options: { clock?: () => Date } = {},
   ) {
     this.sessionRepo = sessionRepo;
     this.movementRepo = movementRepo;
@@ -38,21 +38,21 @@ export class CancelQueueEntryUseCase {
   }
 
   public async execute(
-    input: CancelQueueEntryInput
+    input: CancelQueueEntryInput,
   ): Promise<CancelQueueResponseDTO> {
     let raObj: StudentRA;
     try {
       raObj = StudentRA.create(input.ra ?? '');
     } catch (err) {
       throw new MovementValidationError(
-        err instanceof Error ? err.message : 'RA inválido.'
+        err instanceof Error ? err.message : 'RA inválido.',
       );
     }
 
     let targetSessionId = input.sessionId?.trim();
     if (!targetSessionId && input.roomId) {
       const roomSession = await this.sessionRepo.findActiveByRoomId(
-        input.roomId.trim()
+        input.roomId.trim(),
       );
       if (roomSession) {
         targetSessionId = roomSession.id;
@@ -61,12 +61,12 @@ export class CancelQueueEntryUseCase {
 
     const entry = await this.queueRepo.findActiveByStudentRa(
       raObj.value,
-      targetSessionId || undefined
+      targetSessionId || undefined,
     );
 
     if (!entry) {
       throw new MovementNotFoundError(
-        `Nenhuma solicitação ativa na fila de espera encontrada para o RA ${raObj.value}.`
+        `Nenhuma solicitação ativa na fila de espera encontrada para o RA ${raObj.value}.`,
       );
     }
 
@@ -78,12 +78,12 @@ export class CancelQueueEntryUseCase {
     await this.queueRepo.update(entry);
 
     // Refresh remaining active queue entries
-    const remainingQueue = await this.queueRepo.findActiveBySessionId(sessionId);
+    const remainingQueue =
+      await this.queueRepo.findActiveBySessionId(sessionId);
 
     // If the cancelled entry was CALLED (or room is free) and there is a next WAITING student, promote them
-    const activeMovements = await this.movementRepo.findActiveBySessionId(
-      sessionId
-    );
+    const activeMovements =
+      await this.movementRepo.findActiveBySessionId(sessionId);
     if (
       (wasCalled || activeMovements.length === 0) &&
       remainingQueue.length > 0
@@ -94,7 +94,7 @@ export class CancelQueueEntryUseCase {
         await this.queueRepo.update(head);
         await this.notificationSender.notifyQueueSlotCalled(
           sessionId,
-          head.toDTO()
+          head.toDTO(),
         );
       }
     }

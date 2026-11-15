@@ -1,16 +1,15 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { TerminalPage } from '@client/pages/TerminalPage';
 import { api } from '@client/services/api';
+import type { MovementDTO } from '@shared/dtos';
 import {
   AlertLevel,
   MovementStatus,
   SessionStatus,
   UserRole,
 } from '@shared/enums';
-import { MovementDTO } from '@shared/dtos';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const socketListeners: Record<string, Array<(payload: unknown) => void>> = {};
 
@@ -25,7 +24,7 @@ vi.mock('socket.io-client', () => ({
     off: vi.fn((event: string, cb: (payload: unknown) => void) => {
       if (socketListeners[event]) {
         socketListeners[event] = socketListeners[event].filter(
-          (fn) => fn !== cb
+          (fn) => fn !== cb,
         );
       }
     }),
@@ -123,7 +122,7 @@ describe('Frontend Seam: Student Return by RA, Occupancy Card Clearing & Visual 
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     // Initially shows Lucas S. outside with "Em Trânsito" badge
@@ -147,22 +146,22 @@ describe('Frontend Seam: Student Return by RA, Occupancy Card Clearing & Visual 
           ra: '1001',
           sessionId: 'session-101',
         },
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
     // Occupancy card is cleared ("Sala Livre" and "Nenhum aluno fora da sala no momento.")
     expect(await screen.findByText(/Sala Livre/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Nenhum aluno fora da sala no momento/i)
+      screen.getByText(/Nenhum aluno fora da sala no momento/i),
     ).toBeInTheDocument();
     expect(
-      screen.queryByTestId('active-student-outside')
+      screen.queryByTestId('active-student-outside'),
     ).not.toBeInTheDocument();
 
     // Visual confirmation is displayed
     expect(
-      await screen.findByText(/Retorno registrado com sucesso/i)
+      await screen.findByText(/Retorno registrado com sucesso/i),
     ).toBeInTheDocument();
   });
 
@@ -181,7 +180,7 @@ describe('Frontend Seam: Student Return by RA, Occupancy Card Clearing & Visual 
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     expect(await screen.findByText('Lucas S.')).toBeInTheDocument();
@@ -209,12 +208,12 @@ describe('Frontend Seam: Student Return by RA, Occupancy Card Clearing & Visual 
 
     expect(await screen.findByText(/Sala Livre/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Retorno registrado com sucesso/i)
+      screen.getByText(/Retorno registrado com sucesso/i),
     ).toBeInTheDocument();
 
     // Now test attempting to register return for an RA with no active exit (404)
     vi.mocked(api.registerReturn).mockRejectedValueOnce(
-      new Error('Nenhuma saída ativa encontrada para o RA 1002.')
+      new Error('Nenhuma saída ativa encontrada para o RA 1002.'),
     );
 
     await user.click(screen.getByRole('button', { name: '1' }));
@@ -223,11 +222,11 @@ describe('Frontend Seam: Student Return by RA, Occupancy Card Clearing & Visual 
     await user.click(screen.getByRole('button', { name: '2' }));
 
     await user.click(
-      screen.getByRole('button', { name: /Registrar Retorno/i })
+      screen.getByRole('button', { name: /Registrar Retorno/i }),
     );
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      /Nenhuma saída ativa encontrada para o RA 1002/i
+      /Nenhuma saída ativa encontrada para o RA 1002/i,
     );
   });
 });

@@ -1,4 +1,4 @@
-import { UserRole } from '@shared/enums';
+import type { UserRole } from '@shared/enums';
 
 export interface TokenPayload {
   sub: string;

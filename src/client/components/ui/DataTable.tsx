@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
 import {
-  useReactTable,
-  getCoreRowModel,
   flexRender,
-  ColumnDef as TanStackColumnDef,
+  getCoreRowModel,
+  type ColumnDef as TanStackColumnDef,
+  useReactTable,
 } from '@tanstack/react-table';
+import type React from 'react';
+import { useMemo } from 'react';
 import { cn } from './utils';
 
 export interface ColumnDef<T> {
@@ -43,7 +44,7 @@ export function DataTable<T>({
           return val !== null && val !== undefined ? String(val) : '';
         },
       })),
-    [columns]
+    [columns],
   );
 
   const table = useReactTable({
@@ -57,7 +58,7 @@ export function DataTable<T>({
     <div
       className={cn(
         'w-full overflow-x-auto rounded-lg border border-slate-200 bg-white',
-        className
+        className,
       )}
     >
       <table className="w-full text-left text-sm">
@@ -70,7 +71,7 @@ export function DataTable<T>({
                     ? null
                     : flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                 </th>
               ))}
@@ -93,7 +94,7 @@ export function DataTable<T>({
                 key={row.id}
                 className={cn(
                   'transition-colors hover:bg-slate-50',
-                  rowClassName?.(row.original)
+                  rowClassName?.(row.original),
                 )}
               >
                 {row.getVisibleCells().map((cell) => (
@@ -110,5 +111,5 @@ export function DataTable<T>({
   );
 }
 
-export { useReactTable, getCoreRowModel, flexRender };
 export type { TanStackColumnDef };
+export { flexRender, getCoreRowModel, useReactTable };

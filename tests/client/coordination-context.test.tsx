@@ -1,11 +1,10 @@
-import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { CoordinationPage } from '@client/pages/CoordinationPage';
 import { api } from '@client/services/api';
+import type { MovementDTO, UserDTO } from '@shared/dtos';
 import { AlertLevel, MovementStatus, UserRole } from '@shared/enums';
-import { MovementDTO, UserDTO } from '@shared/dtos';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('socket.io-client', () => ({
   io: vi.fn(() => ({
@@ -59,12 +58,7 @@ describe('Frontend Seam: Coordination Context & Resolution Sheet (User Story 20)
       movements: [sampleMovement],
     });
 
-    render(
-      <CoordinationPage
-        user={coordUser}
-        token="jwt-coord-token"
-      />
-    );
+    render(<CoordinationPage user={coordUser} token="jwt-coord-token" />);
 
     // Check table display: avatar placeholder, student name and RA
     expect(await screen.findByText('Lucas S.')).toBeInTheDocument();
@@ -81,7 +75,9 @@ describe('Frontend Seam: Coordination Context & Resolution Sheet (User Story 20)
     await user.click(actionBtn);
 
     // Verify resolution sheet shows avatar placeholder, originating classroom, teacher name, and absent duration
-    expect(await screen.findByTestId('coordination-student-avatar')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId('coordination-student-avatar'),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Turma \/ Sala de Origem/i)).toBeInTheDocument();
     expect(screen.getByText(/3C \(SALA-03\)/i)).toBeInTheDocument();
     expect(screen.getByText('Prof. Roberto Silva')).toBeInTheDocument();

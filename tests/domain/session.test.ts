@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import { ClassSession } from '@server/domain/entities/ClassSession';
 import { SessionStatus } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Domain Seam: ClassSession Entity', () => {
   it('creates an ACTIVE ClassSession with default 50-minute duration and 10-minute exit limit', () => {
@@ -39,7 +39,7 @@ describe('Domain Seam: ClassSession Entity', () => {
         teacherName: 'Prof. Carlos',
         classCode: '   ',
         subject: 'Matemática',
-      })
+      }),
     ).toThrow(/turma/i);
 
     expect(() =>
@@ -48,7 +48,7 @@ describe('Domain Seam: ClassSession Entity', () => {
         teacherName: 'Prof. Carlos',
         classCode: '1A',
         subject: '',
-      })
+      }),
     ).toThrow(/disciplina/i);
   });
 
@@ -74,11 +74,13 @@ describe('Domain Seam: ClassSession Entity', () => {
     expect(session.isActive()).toBe(false);
     expect(session.endedAt).toEqual(endedAt);
     expect(session.endTime).toEqual(endedAt);
-    expect(session.getElapsedMinutes(new Date('2026-03-10T09:30:00.000Z'))).toBe(50);
+    expect(
+      session.getElapsedMinutes(new Date('2026-03-10T09:30:00.000Z')),
+    ).toBe(50);
 
     // Cannot end an already ended session
     expect(() => session.end(new Date('2026-03-10T09:00:00.000Z'))).toThrow(
-      /encerrada/i
+      /encerrada/i,
     );
   });
 });

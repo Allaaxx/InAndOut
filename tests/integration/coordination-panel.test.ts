@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '@server/main/app';
 import { AlertLevel, MovementStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', () => {
   async function loginAs(
     app: Awaited<ReturnType<typeof createApp>>['app'],
     email: string,
-    password: string
+    password: string,
   ): Promise<string> {
     const res = await app.inject({
       method: 'POST',
@@ -31,7 +31,7 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
     const teacherRes = await app.inject({
       method: 'GET',
@@ -47,7 +47,7 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
     const coordToken = await loginAs(
       app,
       'coord@linsdorego.edu.br',
-      'coord123'
+      'coord123',
     );
     const coordRes = await app.inject({
       method: 'GET',
@@ -62,7 +62,7 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
     const adminToken = await loginAs(
       app,
       'admin@linsdorego.edu.br',
-      'admin123'
+      'admin123',
     );
     const adminRes = await app.inject({
       method: 'GET',
@@ -80,12 +80,12 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
     const coordToken = await loginAs(
       app,
       'coord@linsdorego.edu.br',
-      'coord123'
+      'coord123',
     );
 
     // Start Session 1 in Room 01 (1A)
@@ -152,9 +152,11 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
     expect(escalatedListRes.statusCode).toBe(200);
     expect(escalatedListRes.json().movements).toHaveLength(1);
     expect(escalatedListRes.json().movements[0].status).toBe(
-      MovementStatus.ESCALATED_TO_COORDINATION
+      MovementStatus.ESCALATED_TO_COORDINATION,
     );
-    expect(escalatedListRes.json().movements[0].alertLevel).toBe(AlertLevel.RED);
+    expect(escalatedListRes.json().movements[0].alertLevel).toBe(
+      AlertLevel.RED,
+    );
 
     // Filter by classCode=2B should return empty
     const otherClassRes = await app.inject({
@@ -167,17 +169,26 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
   });
 
   it('broadcasts real-time events to the coordination channel when movements exit, return, and escalate', async () => {
-    let currentTime = new Date('2026-03-10T08:00:00.000Z');
+    const currentTime = new Date('2026-03-10T08:00:00.000Z');
     const { app, container } = await createApp({ clock: () => currentTime });
 
-    const exitSpy = vi.spyOn(container.notificationSender, 'notifyMovementExit');
-    const returnSpy = vi.spyOn(container.notificationSender, 'notifyMovementReturn');
-    const escalateSpy = vi.spyOn(container.notificationSender, 'notifyMovementEscalated');
+    const exitSpy = vi.spyOn(
+      container.notificationSender,
+      'notifyMovementExit',
+    );
+    const returnSpy = vi.spyOn(
+      container.notificationSender,
+      'notifyMovementReturn',
+    );
+    const escalateSpy = vi.spyOn(
+      container.notificationSender,
+      'notifyMovementEscalated',
+    );
 
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
 
     const sessionRes = await app.inject({
@@ -201,7 +212,7 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
         id: movId,
         studentPublicName: 'Lucas S.',
         status: MovementStatus.IN_TRANSIT,
-      })
+      }),
     );
 
     // Escalate
@@ -214,7 +225,7 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
       expect.objectContaining({
         id: movId,
         status: MovementStatus.ESCALATED_TO_COORDINATION,
-      })
+      }),
     );
 
     // Student returns
@@ -228,7 +239,7 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
       expect.objectContaining({
         id: movId,
         status: MovementStatus.RETURNED_NORMAL,
-      })
+      }),
     );
   });
 });

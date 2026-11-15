@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
 import { QueueEntryStatus } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Domain Seam: WaitingQueueEntry FIFO & 2-Minute Confirmation Window', () => {
   it('creates a WaitingQueueEntry in WAITING status with LGPD abbreviated name and validates required properties', () => {
@@ -33,7 +33,7 @@ describe('Domain Seam: WaitingQueueEntry FIFO & 2-Minute Confirmation Window', (
         studentRa: '1002',
         studentFullName: 'João Mendes',
         position: 1,
-      })
+      }),
     ).toThrow(/sessionId/i);
 
     expect(() =>
@@ -42,7 +42,7 @@ describe('Domain Seam: WaitingQueueEntry FIFO & 2-Minute Confirmation Window', (
         studentRa: '   ',
         studentFullName: 'João Mendes',
         position: 1,
-      })
+      }),
     ).toThrow(/studentRa|RA/i);
 
     expect(() =>
@@ -51,7 +51,7 @@ describe('Domain Seam: WaitingQueueEntry FIFO & 2-Minute Confirmation Window', (
         studentRa: '1002',
         studentFullName: '   ',
         position: 1,
-      })
+      }),
     ).toThrow(/nome/i);
   });
 
@@ -89,7 +89,9 @@ describe('Domain Seam: WaitingQueueEntry FIFO & 2-Minute Confirmation Window', (
     expect(entry.isActive()).toBe(false);
 
     // Cannot claim twice
-    expect(() => entry.claim(oneMinuteLater)).toThrow(/ativa|confirmad|encerrad/i);
+    expect(() => entry.claim(oneMinuteLater)).toThrow(
+      /ativa|confirmad|encerrad/i,
+    );
   });
 
   it('detects expiration after 2 minutes, rejects claiming an expired slot, and supports voluntary cancellation', () => {
@@ -107,7 +109,9 @@ describe('Domain Seam: WaitingQueueEntry FIFO & 2-Minute Confirmation Window', (
     // 2 minutes and 1 second later -> expired
     const afterTwoMinutes = new Date('2026-03-10T08:17:01.000Z');
     expect(expiredEntry.isExpired(afterTwoMinutes)).toBe(true);
-    expect(expiredEntry.getRemainingConfirmationSeconds(afterTwoMinutes)).toBe(0);
+    expect(expiredEntry.getRemainingConfirmationSeconds(afterTwoMinutes)).toBe(
+      0,
+    );
 
     // Attempting to claim after expiration throws and marks entry EXPIRED
     expect(() => expiredEntry.claim(afterTwoMinutes)).toThrow(/expir/i);

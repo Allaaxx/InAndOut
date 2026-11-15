@@ -1,4 +1,4 @@
-import {
+import type {
   AlertLevel,
   IncidentOutcome,
   MovementStatus,
@@ -337,5 +337,3 @@ export interface ExportAnalyticsQueryDTO {
   startDate?: string;
   endDate?: string;
 }
-
-
