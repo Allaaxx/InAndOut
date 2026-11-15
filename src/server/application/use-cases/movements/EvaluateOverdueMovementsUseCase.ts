@@ -101,5 +101,3 @@ export class EvaluateOverdueMovementsUseCase {
     };
   }
 }
-
-export { EvaluateOverdueMovementsUseCase as CheckOverdueMovementsUseCase };

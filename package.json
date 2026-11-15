@@ -15,7 +15,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "prepare": "husky",
-    "pre-commit": "lint-staged && pnpm run typecheck"
+    "pre-commit": "lint-staged && pnpm run typecheck",
+    "audit:deps": "knip"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",
@@ -52,6 +53,7 @@
     "autoprefixer": "^10.6.2",
     "husky": "^9.1.7",
     "jsdom": "^25.0.1",
+    "knip": "^6.45.1",
     "lint-staged": "^17.6.0",
     "postcss": "^8.5.33",
     "prisma": "^6.19.3",

@@ -124,5 +124,3 @@ export class RegisterStudentReturnUseCase {
     };
   }
 }
-
-export { RegisterStudentReturnUseCase as RegisterReturnUseCase };

@@ -837,5 +837,3 @@ export function CoordinationPage({
     </div>
   );
 }
-
-export default CoordinationPage;

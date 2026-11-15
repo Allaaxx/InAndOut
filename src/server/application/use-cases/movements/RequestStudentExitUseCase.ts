@@ -151,5 +151,3 @@ export class RequestStudentExitUseCase {
     };
   }
 }
-
-export { RequestStudentExitUseCase as RequestExitUseCase };

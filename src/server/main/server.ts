@@ -1,4 +1,5 @@
 import { createApp } from './app';
+import { disconnectPrisma } from '@server/infrastructure/database/prismaClient';
 
 async function bootstrap() {
   const port = Number(process.env.PORT || 3000);
@@ -11,6 +12,7 @@ async function bootstrap() {
     process.on(signal, async () => {
       console.log(`Received ${signal}, shutting down gracefully...`);
       await app.close();
+      await disconnectPrisma();
       process.exit(0);
     });
   }

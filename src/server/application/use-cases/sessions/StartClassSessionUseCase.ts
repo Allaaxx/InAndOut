@@ -90,5 +90,3 @@ export class StartClassSessionUseCase {
     };
   }
 }
-
-export { StartClassSessionUseCase as StartSessionUseCase };
