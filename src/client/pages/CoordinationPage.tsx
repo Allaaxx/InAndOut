@@ -29,7 +29,6 @@ import {
   LogOut,
   RefreshCw,
   School,
-  X,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -648,14 +647,6 @@ export function CoordinationPage({
               <SheetHeader>
                 <div className="flex items-center justify-between">
                   <SheetTitle>Resolver Ocorrência</SheetTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedMovement(null)}
-                    className="h-8 w-8 p-0 text-slate-500 hover:text-slate-900"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
                 <SheetDescription className="text-xs text-slate-500">
                   Registre o desfecho formal para a saída do estudante sob

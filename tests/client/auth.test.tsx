@@ -42,14 +42,11 @@ describe('Frontend Seam: LoginPage & Shadcn InputOTP Classroom Terminal Unlock',
 
     const emailInput = screen.getByLabelText(/E-mail Institucional/i);
     const passwordInput = screen.getByLabelText(/Senha/i);
-    const pinInput = screen.getByLabelText(/PIN de 4 Dígitos/i);
 
     await user.clear(emailInput);
     await user.type(emailInput, 'prof@linsdorego.edu.br');
     await user.clear(passwordInput);
     await user.type(passwordInput, 'senha123');
-    await user.clear(pinInput);
-    await user.type(pinInput, '1234');
 
     await user.click(
       screen.getByRole('button', { name: /Entrar no Terminal/i }),
@@ -59,7 +56,6 @@ describe('Frontend Seam: LoginPage & Shadcn InputOTP Classroom Terminal Unlock',
       expect(api.login).toHaveBeenCalledWith({
         email: 'prof@linsdorego.edu.br',
         password: 'senha123',
-        pin: '1234',
       });
     });
 

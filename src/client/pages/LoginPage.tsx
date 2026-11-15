@@ -18,7 +18,6 @@ export interface LoginPageProps {
 export function LoginPage({ onLogin }: LoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +30,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       await onLogin({
         email: email.trim(),
         password,
-        ...(pin.trim() ? { pin: pin.trim() } : {}),
       });
     } catch (err) {
       setError(
@@ -48,8 +46,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <CardHeader>
           <CardTitle>Acesso do Professor — InAndOut</CardTitle>
           <CardDescription>
-            Autentique-se com seu e-mail institucional e defina seu PIN rápido
-            de 4 dígitos para liberar o terminal de sala.
+            Autentique-se com seu e-mail institucional e senha para acessar o
+            sistema.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,23 +73,6 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="login-pin">
-                PIN de 4 Dígitos (Liberação Rápida)
-              </Label>
-              <Input
-                id="login-pin"
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                placeholder="1234"
-                value={pin}
-                onChange={(e) =>
-                  setPin(e.target.value.replace(/\D/g, '').slice(0, 4))
-                }
               />
             </div>
 
