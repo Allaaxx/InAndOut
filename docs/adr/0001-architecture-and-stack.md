@@ -6,9 +6,10 @@ A plataforma InAndOut necessita gerenciar eventos em tempo real em múltiplos te
 
 ## Decisão
 
-Adotamos uma Clean Architecture monolítica em TypeScript estruturada em três camadas bem isoladas:
+O sistema InAndOut adota Node.js com TypeScript, estruturado sob os princípios da Clean Architecture e SOLID com injeção de dependência manual (Pure Dependency Injection via Factory/Container):
+
 1. `src/shared/`: Contratos de DTOs, enumeradores tipados e eventos de domínio sem dependências de infraestrutura.
-2. `src/server/`: Backend organizado em domínio puro (`entities`, `value-objects`, `repositories`), casos de uso desacoplados (`application`), adaptadores de infraestrutura (`Prisma`, `Socket.io`, implementações in-memory para testes) e apresentação em `Fastify`.
+2. `src/server/`: Backend organizado em domínio puro (`entities`, `value-objects`, `repositories`), casos de uso desacoplados (`application`), adaptadores de infraestrutura (`Prisma` com PostgreSQL para produção, adaptadores in-memory para testes rápidos e desenvolvimento sem banco externo) e apresentação em `Fastify` com WebSocket `Socket.io` desacoplado pelo contrato `INotificationSender`.
 3. `src/client/`: SPA reativa em React 19, Vite, Tailwind CSS e Shadcn UI.
 
-Para a suíte de testes automatizados, todas as dependências de infraestrutura e comunicação (repositórios, emissores de notificação, relógio) utilizam inversão de dependência manual (Pure Dependency Injection via Factory/Container), permitindo testar ponta a ponta via `app.inject()` sem levantar portas de rede ou bancos externos.
+Para a suíte de testes automatizados, todas as dependências de infraestrutura e comunicação (repositórios, emissores de notificação, relógio) utilizam inversão de dependência manual, permitindo testar ponta a ponta via `app.inject()` sem levantar portas de rede ou bancos externos.
