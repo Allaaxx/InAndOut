@@ -1,107 +1,127 @@
-import React from 'react';
+import * as React from 'react';
+import { OTPInput, OTPInputContext } from 'input-otp';
 import { cn } from './utils';
 
-export interface InputOTPProps {
-  maxLength?: number;
-  value: string;
-  onChange: (value: string) => void;
+type OTPInputBaseProps = React.ComponentPropsWithoutRef<typeof OTPInput>;
+
+export interface InputOTPProps
+  extends Omit<OTPInputBaseProps, 'children' | 'render'> {
   ariaLabel?: string;
-  id?: string;
-  disabled?: boolean;
-  className?: string;
   children?: React.ReactNode;
 }
 
-const InputOTPContext = React.createContext<{
-  value: string;
-  maxLength: number;
-}>({
-  value: '',
-  maxLength: 4,
-});
-
-export function InputOTP({
-  maxLength = 4,
-  value,
-  onChange,
-  ariaLabel = 'Digite o PIN de 4 dígitos',
-  id = 'pin-otp-input',
-  disabled = false,
-  className,
-  children,
-}: InputOTPProps) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, maxLength);
-    onChange(digitsOnly);
-  };
-
-  return (
-    <InputOTPContext.Provider value={{ value, maxLength }}>
-      <div
-        data-slot="input-otp"
-        className={cn('relative flex flex-col items-center gap-2', className)}
-      >
-        <input
-          id={id}
-          type="text"
-          inputMode="numeric"
-          pattern="\d*"
-          maxLength={maxLength}
-          aria-label={ariaLabel}
-          value={value}
-          disabled={disabled}
-          onChange={handleChange}
-          className="sr-only"
-        />
-        {children ?? (
-          <InputOTPGroup>
-            {Array.from({ length: maxLength }).map((_, idx) => (
-              <InputOTPSlot key={idx} index={idx} />
-            ))}
-          </InputOTPGroup>
+export const InputOTP = React.forwardRef<
+  React.ElementRef<typeof OTPInput>,
+  InputOTPProps
+>(
+  (
+    {
+      className,
+      containerClassName,
+      ariaLabel = 'Digite o PIN de 4 dígitos',
+      id = 'pin-otp-input',
+      maxLength = 4,
+      pushPasswordManagerStrategy = 'none',
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    return (
+      <OTPInput
+        ref={ref}
+        id={id}
+        maxLength={maxLength}
+        pushPasswordManagerStrategy={pushPasswordManagerStrategy}
+        containerClassName={cn(
+          'relative flex flex-col items-center gap-2 has-[:disabled]:opacity-50',
+          containerClassName
         )}
-      </div>
-    </InputOTPContext.Provider>
-  );
+        className={cn('disabled:cursor-not-allowed', className)}
+        aria-label={ariaLabel ?? props['aria-label']}
+        data-slot="input-otp"
+        children={
+          children ?? (
+            <InputOTPGroup>
+              {Array.from({ length: maxLength }).map((_, idx) => (
+                <InputOTPSlot key={idx} index={idx} />
+              ))}
+            </InputOTPGroup>
+          )
+        }
+        {...props}
+      />
+    );
+  }
+);
+InputOTP.displayName = 'InputOTP';
+
+export const InputOTPGroup = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    data-slot="input-otp-group"
+    className={cn('flex items-center gap-2', className)}
+    {...props}
+  />
+));
+InputOTPGroup.displayName = 'InputOTPGroup';
+
+export interface InputOTPSlotProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  index: number;
+  mask?: boolean;
 }
 
-export function InputOTPGroup({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      data-slot="input-otp-group"
-      className={cn('flex items-center gap-2', className)}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function InputOTPSlot({
-  index,
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement> & { index: number }) {
-  const { value } = React.useContext(InputOTPContext);
-  const char = value[index] ?? '';
-  const isActive = value.length === index;
+export const InputOTPSlot = React.forwardRef<
+  HTMLDivElement,
+  InputOTPSlotProps
+>(({ index, className, mask = true, ...props }, ref) => {
+  const inputOTPContext = React.useContext(OTPInputContext);
+  const slot = inputOTPContext?.slots?.[index];
+  const char = slot?.char ?? '';
+  const isActive = slot?.isActive;
+  const hasFakeCaret = slot?.hasFakeCaret;
 
   return (
     <div
+      ref={ref}
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        'flex h-12 w-12 items-center justify-center rounded-md border border-slate-300 bg-white text-lg font-bold text-slate-900 shadow-xs transition-all',
+        'relative flex h-12 w-12 items-center justify-center rounded-md border border-slate-300 bg-white text-lg font-bold text-slate-900 shadow-xs transition-all',
         isActive && 'ring-2 ring-slate-950 border-slate-950',
         className
       )}
       {...props}
     >
-      {char ? '•' : ''}
+      {mask ? (char ? '•' : '') : char}
+      {hasFakeCaret && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="h-4 w-px animate-caret-blink bg-slate-950 duration-1000" />
+        </div>
+      )}
     </div>
   );
-}
+});
+InputOTPSlot.displayName = 'InputOTPSlot';
+
+export const InputOTPSeparator = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    role="separator"
+    data-slot="input-otp-separator"
+    className={cn('text-slate-400', className)}
+    {...props}
+  >
+    -
+  </div>
+));
+InputOTPSeparator.displayName = 'InputOTPSeparator';
+
+export { OTPInputContext };

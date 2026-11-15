@@ -1,5 +1,9 @@
 import '@testing-library/jest-dom/vitest';
 
+if (typeof document !== 'undefined' && !document.elementFromPoint) {
+  document.elementFromPoint = () => null;
+}
+
 globalThis.ResizeObserver = class ResizeObserver {
   private callback: ResizeObserverCallback;
   constructor(callback: ResizeObserverCallback) {
