@@ -69,7 +69,7 @@ export function CoordinationAnalyticsPage({
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  const handleExport = async (format: 'csv' | 'pdf') => {
+  const handleExport = async (format: 'xlsx' | 'pdf' | 'csv') => {
     try {
       setExporting(true);
       const params = {
@@ -81,10 +81,9 @@ export function CoordinationAnalyticsPage({
       };
 
       const blob = await api.exportAnalytics(params, token);
-      downloadBlob(
-        blob,
-        `relatorio-${format === 'csv' ? 'movimentacoes.csv' : 'movimentacoes.pdf'}`,
-      );
+      const extension =
+        format === 'pdf' ? 'pdf' : format === 'csv' ? 'csv' : 'xlsx';
+      downloadBlob(blob, `relatorio-movimentacoes.${extension}`);
       toast.success(
         `Relatório (${format.toUpperCase()}) exportado com sucesso.`,
       );
@@ -168,12 +167,12 @@ export function CoordinationAnalyticsPage({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => handleExport('csv')}
+            onClick={() => handleExport('xlsx')}
             disabled={exporting}
             className="flex items-center gap-1.5 text-xs text-slate-700"
           >
             <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-            <span>Exportar CSV</span>
+            <span>Exportar Excel</span>
           </Button>
 
           <Button
