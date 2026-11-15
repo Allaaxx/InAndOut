@@ -1,4 +1,4 @@
-import { Student } from '../entities/Student';
+import type { Student } from '../entities/Student';
 
 export interface IStudentRepository {
   findById(id: string): Promise<Student | null>;

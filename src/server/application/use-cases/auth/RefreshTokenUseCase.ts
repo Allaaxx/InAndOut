@@ -1,27 +1,32 @@
-import { IUserRepository } from '@server/domain/repositories/IUserRepository';
-import { ITokenService } from '@server/application/contracts/ITokenService';
+import type { ITokenService } from '@server/application/contracts/ITokenService';
+import type { IUserRepository } from '@server/domain/repositories/IUserRepository';
+import type {
+  RefreshTokenRequestDTO,
+  RefreshTokenResponseDTO,
+} from '@shared/dtos';
 import { AuthenticationError } from './LoginUseCase';
-import { RefreshTokenRequestDTO, RefreshTokenResponseDTO } from '@shared/dtos';
 
 export class RefreshTokenUseCase {
   constructor(
     private readonly userRepo: IUserRepository,
-    private readonly tokenService: ITokenService
+    private readonly tokenService: ITokenService,
   ) {}
 
   public async execute(
-    input: RefreshTokenRequestDTO
+    input: RefreshTokenRequestDTO,
   ): Promise<RefreshTokenResponseDTO> {
     if (!input.refreshToken) {
       throw new AuthenticationError('Refresh token não fornecido.');
     }
 
-    let payload;
+    let payload: ReturnType<ITokenService['verifyRefreshToken']>;
     try {
       payload = this.tokenService.verifyRefreshToken(input.refreshToken);
     } catch (err) {
       throw new AuthenticationError(
-        err instanceof Error ? err.message : 'Refresh token inválido ou expirado.'
+        err instanceof Error
+          ? err.message
+          : 'Refresh token inválido ou expirado.',
       );
     }
 

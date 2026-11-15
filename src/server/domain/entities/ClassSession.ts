@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import type { ClassSessionDTO } from '@shared/dtos';
 import { SessionStatus } from '@shared/enums';
-import { ClassSessionDTO } from '@shared/dtos';
 
 export interface ClassSessionProps {
   id?: string;
@@ -44,7 +44,7 @@ export class ClassSession {
     startedAt: Date,
     endedAt: Date | undefined,
     plannedDurationMinutes: number,
-    defaultTimeLimitMinutes: number
+    defaultTimeLimitMinutes: number,
   ) {
     this.id = id;
     this.teacherId = teacherId;
@@ -62,21 +62,28 @@ export class ClassSession {
   public static create(props: ClassSessionProps): ClassSession {
     const classCode = (props.classCode ?? props.className ?? '').trim();
     if (!classCode) {
-      throw new Error('A turma (classCode) é obrigatória para iniciar a sessão.');
+      throw new Error(
+        'A turma (classCode) é obrigatória para iniciar a sessão.',
+      );
     }
 
     const subject = (props.subject ?? '').trim();
     if (!subject) {
-      throw new Error('A disciplina (subject) é obrigatória para iniciar a sessão.');
+      throw new Error(
+        'A disciplina (subject) é obrigatória para iniciar a sessão.',
+      );
     }
 
     const teacherId = (props.teacherId ?? '').trim();
     if (!teacherId) {
-      throw new Error('O identificador do professor (teacherId) é obrigatório.');
+      throw new Error(
+        'O identificador do professor (teacherId) é obrigatório.',
+      );
     }
 
     const roomId = (props.roomId ?? 'SALA-01').trim() || 'SALA-01';
-    const teacherName = (props.teacherName ?? 'Professor').trim() || 'Professor';
+    const teacherName =
+      (props.teacherName ?? 'Professor').trim() || 'Professor';
     const startedAt = props.startedAt ?? props.startTime ?? new Date();
     const endedAt = props.endedAt ?? props.endTime;
     const status = props.status ?? SessionStatus.ACTIVE;
@@ -103,7 +110,7 @@ export class ClassSession {
       startedAt,
       endedAt,
       plannedDurationMinutes,
-      defaultTimeLimitMinutes
+      defaultTimeLimitMinutes,
     );
   }
 
@@ -145,7 +152,10 @@ export class ClassSession {
 
   public getElapsedMinutes(now: Date = new Date()): number {
     const referenceEnd = this._endedAt ?? now;
-    const diffMs = Math.max(0, referenceEnd.getTime() - this.startedAt.getTime());
+    const diffMs = Math.max(
+      0,
+      referenceEnd.getTime() - this.startedAt.getTime(),
+    );
     return Math.round((diffMs / 60000) * 100) / 100;
   }
 

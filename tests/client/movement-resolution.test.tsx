@@ -1,11 +1,15 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { CoordinationPage } from '@client/pages/CoordinationPage';
 import { api } from '@client/services/api';
-import { AlertLevel, IncidentOutcome, MovementStatus, UserRole } from '@shared/enums';
-import { MovementDTO, UserDTO } from '@shared/dtos';
+import type { MovementDTO, UserDTO } from '@shared/dtos';
+import {
+  AlertLevel,
+  IncidentOutcome,
+  MovementStatus,
+  UserRole,
+} from '@shared/enums';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const socketListeners: Record<string, Array<(payload: unknown) => void>> = {};
 
@@ -20,7 +24,7 @@ vi.mock('socket.io-client', () => ({
     off: vi.fn((event: string, cb: (payload: unknown) => void) => {
       if (socketListeners[event]) {
         socketListeners[event] = socketListeners[event].filter(
-          (fn) => fn !== cb
+          (fn) => fn !== cb,
         );
       }
     }),
@@ -109,10 +113,10 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
 
     // Status badges
     expect(
-      screen.getAllByText('Escalado para Coordenação').length
+      screen.getAllByText('Escalado para Coordenação').length,
     ).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getAllByText(/Saída em Trânsito/i).length
+      screen.getAllByText(/Saída em Trânsito/i).length,
     ).toBeGreaterThanOrEqual(1);
   });
 
@@ -149,15 +153,12 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
     const outcomeSelect = within(sheet).getByLabelText(/Desfecho/i);
     await user.selectOptions(
       outcomeSelect,
-      IncidentOutcome.ATTENDED_AT_COORDINATION
+      IncidentOutcome.ATTENDED_AT_COORDINATION,
     );
 
     // Enter notes
     const notesInput = within(sheet).getByLabelText(/Observações/i);
-    await user.type(
-      notesInput,
-      'Aluno foi orientado na sala da coordenação.'
-    );
+    await user.type(notesInput, 'Aluno foi orientado na sala da coordenação.');
 
     // Click Confirm button
     const confirmButton = within(sheet).getByRole('button', {
@@ -174,7 +175,7 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
           outcome: IncidentOutcome.ATTENDED_AT_COORDINATION,
           notes: 'Aluno foi orientado na sala da coordenação.',
         },
-        'valid-coord-jwt'
+        'valid-coord-jwt',
       );
     });
 
@@ -204,7 +205,10 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
 
     // Filter by Saídas em Trânsito
     const statusFilter = screen.getByLabelText('Filtrar por status');
-    await user.selectOptions(statusFilter, MovementStatus.IN_TRANSIT_UNRESOLVED);
+    await user.selectOptions(
+      statusFilter,
+      MovementStatus.IN_TRANSIT_UNRESOLVED,
+    );
 
     // Only João M. is visible in the filtered list
     expect(screen.getByText('João M.')).toBeInTheDocument();
@@ -227,10 +231,7 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
 
     // Enter notes
     const notesInput = within(sheet).getByLabelText(/Observações/i);
-    await user.type(
-      notesInput,
-      'Aluno não retornou após o término da aula.'
-    );
+    await user.type(notesInput, 'Aluno não retornou após o término da aula.');
 
     // Confirm
     const confirmButton = within(sheet).getByRole('button', {
@@ -245,7 +246,7 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
           outcome: IncidentOutcome.EVASION,
           notes: 'Aluno não retornou após o término da aula.',
         },
-        'valid-coord-jwt'
+        'valid-coord-jwt',
       );
     });
   });

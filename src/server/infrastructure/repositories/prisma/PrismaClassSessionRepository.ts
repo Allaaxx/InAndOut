@@ -1,8 +1,11 @@
-import { PrismaClient, ClassSession as PrismaClassSessionModel } from '@prisma/client';
+import type {
+  ClassSession as PrismaClassSessionModel,
+  PrismaClient,
+} from '@prisma/client';
 import { ClassSession } from '@server/domain/entities/ClassSession';
-import { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
-import { SessionStatus } from '@shared/enums';
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import { getPrismaClient } from '@server/infrastructure/database/prismaClient';
+import { SessionStatus } from '@shared/enums';
 
 export class PrismaClassSessionRepository implements IClassSessionRepository {
   private prisma: PrismaClient;
@@ -50,7 +53,9 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
     return row ? this.toDomain(row) : null;
   }
 
-  public async findActiveByRoomId(roomId: string): Promise<ClassSession | null> {
+  public async findActiveByRoomId(
+    roomId: string,
+  ): Promise<ClassSession | null> {
     const normalizedRoom = roomId.trim() || 'SALA-01';
     const row = await this.prisma.classSession.findFirst({
       where: {
@@ -63,7 +68,7 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
   }
 
   public async findActiveByTeacherId(
-    teacherId: string
+    teacherId: string,
   ): Promise<ClassSession | null> {
     const row = await this.prisma.classSession.findFirst({
       where: {

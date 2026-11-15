@@ -1,13 +1,13 @@
-import { describe, it, expect, vi } from 'vitest';
 import { createApp } from '@server/main/app';
 import { AlertLevel, MovementStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Controller Seam: Teacher Emergency Exit & Guest Student Override Endpoints (app.inject)', () => {
   async function loginAndStartSession(
     app: Awaited<ReturnType<typeof createApp>>['app'],
     classCode = '1A',
     subject = 'Matemática',
-    roomId = 'SALA-01'
+    roomId = 'SALA-01',
   ) {
     const loginRes = await app.inject({
       method: 'POST',
@@ -43,13 +43,13 @@ describe('Controller Seam: Teacher Emergency Exit & Guest Student Override Endpo
     const { app, container } = await createApp({ clock: () => currentTime });
     const notifyExitSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementExit'
+      'notifyMovementExit',
     );
 
     const { token, teacher, session } = await loginAndStartSession(
       app,
       '1A',
-      'Matemática'
+      'Matemática',
     );
 
     // 1st student (RA 1001 - Lucas Silva) exits normally
@@ -120,13 +120,13 @@ describe('Controller Seam: Teacher Emergency Exit & Guest Student Override Endpo
     const { app, container } = await createApp({ clock: () => currentTime });
     const notifyExitSpy = vi.spyOn(
       container.notificationSender,
-      'notifyMovementExit'
+      'notifyMovementExit',
     );
 
     const { token, teacher, session } = await loginAndStartSession(
       app,
       '1A',
-      'História'
+      'História',
     );
 
     // 1. Guest student from another class (RA 2001 - Pedro Alves, class 2B) tries standard exit without teacher permission -> 403 Forbidden
@@ -224,7 +224,7 @@ describe('Controller Seam: Teacher Emergency Exit & Guest Student Override Endpo
     const { token, teacher, session } = await loginAndStartSession(
       app,
       '1A',
-      'Química'
+      'Química',
     );
 
     // Rejects wrong teacher PIN with 401

@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { createHash } from 'node:crypto';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -169,7 +169,9 @@ export async function main(): Promise<void> {
     });
   }
 
-  console.log(`✅ Seeded ${students.length} students across turmas 1A, 2B, and 3C.`);
+  console.log(
+    `✅ Seeded ${students.length} students across turmas 1A, 2B, and 3C.`,
+  );
 
   // 3. Seed Class Sessions (Salas e Sessões Pedagógicas)
   const sessions = [
@@ -207,7 +209,9 @@ export async function main(): Promise<void> {
     });
   }
 
-  console.log(`✅ Seeded ${sessions.length} class sessions (SALA-01, SALA-02).`);
+  console.log(
+    `✅ Seeded ${sessions.length} class sessions (SALA-01, SALA-02).`,
+  );
 
   // 4. Seed Initial Movement Record and Waiting Queue Entry (Relações ativas)
   const initialMovement = {

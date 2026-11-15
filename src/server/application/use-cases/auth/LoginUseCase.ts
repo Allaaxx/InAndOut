@@ -1,7 +1,7 @@
-import { IUserRepository } from '@server/domain/repositories/IUserRepository';
-import { ITokenService } from '@server/application/contracts/ITokenService';
+import type { ITokenService } from '@server/application/contracts/ITokenService';
+import type { IUserRepository } from '@server/domain/repositories/IUserRepository';
 import { verifyPassword } from '@server/infrastructure/repositories/InMemoryUserRepository';
-import { LoginRequestDTO, LoginResponseDTO } from '@shared/dtos';
+import type { LoginRequestDTO, LoginResponseDTO } from '@shared/dtos';
 
 export class AuthenticationError extends Error {
   public readonly statusCode = 401;
@@ -22,7 +22,7 @@ export class ValidationError extends Error {
 export class LoginUseCase {
   constructor(
     private readonly userRepo: IUserRepository,
-    private readonly tokenService: ITokenService
+    private readonly tokenService: ITokenService,
   ) {}
 
   public async execute(input: LoginRequestDTO): Promise<LoginResponseDTO> {
@@ -41,7 +41,7 @@ export class LoginUseCase {
         await this.userRepo.save(user);
       } catch (err) {
         throw new ValidationError(
-          err instanceof Error ? err.message : 'PIN inválido.'
+          err instanceof Error ? err.message : 'PIN inválido.',
         );
       }
     }

@@ -1,16 +1,15 @@
-import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { TerminalPage } from '@client/pages/TerminalPage';
 import { api } from '@client/services/api';
+import type { MovementDTO } from '@shared/dtos';
 import {
   AlertLevel,
   MovementStatus,
   SessionStatus,
   UserRole,
 } from '@shared/enums';
-import { MovementDTO } from '@shared/dtos';
+import { act, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const socketListeners: Record<string, Array<(payload: unknown) => void>> = {};
 
@@ -24,7 +23,9 @@ vi.mock('socket.io-client', () => ({
     }),
     off: vi.fn((event: string, cb: (payload: unknown) => void) => {
       if (socketListeners[event]) {
-        socketListeners[event] = socketListeners[event].filter((fn) => fn !== cb);
+        socketListeners[event] = socketListeners[event].filter(
+          (fn) => fn !== cb,
+        );
       }
     }),
     emit: vi.fn(),
@@ -109,13 +110,15 @@ describe('Frontend Seam: Classroom Terminal Virtual Numeric Keypad, Public Stude
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     // Wait for active session and keypad to appear
     expect(await screen.findByText(/Sala Livre/i)).toBeInTheDocument();
 
-    const raInput = screen.getByLabelText(/RA do Estudante/i) as HTMLInputElement;
+    const raInput = screen.getByLabelText(
+      /RA do Estudante/i,
+    ) as HTMLInputElement;
     expect(raInput.value).toBe('');
 
     // Enter '10019' then backspace '9' -> '1001' using virtual keypad buttons
@@ -139,7 +142,7 @@ describe('Frontend Seam: Classroom Terminal Virtual Numeric Keypad, Public Stude
           ra: '1001',
           sessionId: 'session-101',
         },
-        'jwt-access-token'
+        'jwt-access-token',
       );
     });
 
@@ -165,7 +168,7 @@ describe('Frontend Seam: Classroom Terminal Virtual Numeric Keypad, Public Stude
         token="jwt-access-token"
         onVerifyPin={vi.fn()}
         onLogout={vi.fn()}
-      />
+      />,
     );
 
     expect(await screen.findByText(/Sala Livre/i)).toBeInTheDocument();
@@ -205,8 +208,8 @@ describe('Frontend Seam: Classroom Terminal Virtual Numeric Keypad, Public Stude
     // Second student (RA 1002) tries to exit using the keypad -> API rejects with 409 message
     vi.mocked(api.requestExit).mockRejectedValueOnce(
       new Error(
-        'Sala ocupada: Lucas S. já está fora da sala. Apenas 1 estudante pode sair por vez. Aguarde o retorno.'
-      )
+        'Sala ocupada: Lucas S. já está fora da sala. Apenas 1 estudante pode sair por vez. Aguarde o retorno.',
+      ),
     );
 
     await user.click(screen.getByRole('button', { name: '1' }));
@@ -216,9 +219,9 @@ describe('Frontend Seam: Classroom Terminal Virtual Numeric Keypad, Public Stude
 
     await user.click(screen.getByRole('button', { name: /Registrar Saída/i }));
 
-    expect(
-      await screen.findByRole('alert')
-    ).toHaveTextContent(/Sala ocupada.*Lucas S\./i);
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /Sala ocupada.*Lucas S\./i,
+    );
     expect(screen.getByText('Lucas S.')).toBeInTheDocument();
   });
 });

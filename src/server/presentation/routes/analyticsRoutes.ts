@@ -1,25 +1,25 @@
-import { FastifyInstance } from 'fastify';
-import { AppContainer } from '@server/main/container';
+import {
+  ExportAnalyticsReportUseCase,
+  InvalidExportFormatError,
+} from '@server/application/use-cases/analytics/ExportAnalyticsReportUseCase';
 import { GetSchoolOverviewAnalyticsUseCase } from '@server/application/use-cases/analytics/GetSchoolOverviewAnalyticsUseCase';
 import {
   GetStudentHistoryReportUseCase,
   StudentNotFoundError,
 } from '@server/application/use-cases/analytics/GetStudentHistoryReportUseCase';
-import {
-  ExportAnalyticsReportUseCase,
-  InvalidExportFormatError,
-} from '@server/application/use-cases/analytics/ExportAnalyticsReportUseCase';
+import type { AppContainer } from '@server/main/container';
 import { createAuthMiddleware } from '@server/presentation/middlewares/authMiddleware';
-import { UserRole } from '@shared/enums';
-import {
+import type {
   ExportAnalyticsQueryDTO,
   SchoolOverviewQueryDTO,
   StudentHistoryQueryDTO,
 } from '@shared/dtos';
+import { UserRole } from '@shared/enums';
+import type { FastifyInstance } from 'fastify';
 
 export async function registerAnalyticsRoutes(
   app: FastifyInstance,
-  container: AppContainer
+  container: AppContainer,
 ): Promise<void> {
   const auth = createAuthMiddleware(container.tokenService);
   const getSchoolOverviewAnalyticsUseCase =
@@ -29,19 +29,15 @@ export async function registerAnalyticsRoutes(
   const getStudentHistoryReportUseCase = new GetStudentHistoryReportUseCase(
     container.studentRepo,
     container.movementRepo,
-    { clock: container.clock }
+    { clock: container.clock },
   );
   const exportAnalyticsReportUseCase = new ExportAnalyticsReportUseCase(
     container.movementRepo,
     container.studentRepo,
-    { clock: container.clock }
+    { clock: container.clock },
   );
 
-  const allowedRoles = [
-    UserRole.TEACHER,
-    UserRole.COORDINATOR,
-    UserRole.ADMIN,
-  ];
+  const allowedRoles = [UserRole.TEACHER, UserRole.COORDINATOR, UserRole.ADMIN];
 
   app.get<{
     Querystring: SchoolOverviewQueryDTO;
@@ -63,7 +59,7 @@ export async function registerAnalyticsRoutes(
               : 'Erro interno ao consultar métricas e indicadores escolares.',
         });
       }
-    }
+    },
   );
 
   app.get<{
@@ -95,7 +91,7 @@ export async function registerAnalyticsRoutes(
               : 'Erro interno ao consultar histórico do aluno.',
         });
       }
-    }
+    },
   );
 
   app.get<{
@@ -113,7 +109,7 @@ export async function registerAnalyticsRoutes(
         reply.header('Content-Type', result.contentType);
         reply.header(
           'Content-Disposition',
-          `attachment; filename="${result.filename}"`
+          `attachment; filename="${result.filename}"`,
         );
         return reply.status(200).send(result.content);
       } catch (err) {
@@ -127,6 +123,6 @@ export async function registerAnalyticsRoutes(
               : 'Erro interno ao exportar relatório analítico.',
         });
       }
-    }
+    },
   );
 }

@@ -1,5 +1,5 @@
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import { MovementDTO } from '@shared/dtos';
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { MovementDTO } from '@shared/dtos';
 import { MovementStatus } from '@shared/enums';
 
 export interface GetActiveMovementsOverviewInput {
@@ -19,14 +19,14 @@ export class GetActiveMovementsOverviewUseCase {
     movementRepo: IMovementRecordRepository,
     options: {
       clock?: () => Date;
-    } = {}
+    } = {},
   ) {
     this.movementRepo = movementRepo;
     this.clock = options.clock ?? (() => new Date());
   }
 
   public async execute(
-    input: GetActiveMovementsOverviewInput = {}
+    input: GetActiveMovementsOverviewInput = {},
   ): Promise<GetActiveMovementsOverviewOutput> {
     const allRecords = await this.movementRepo.findAll();
     const now = this.clock();

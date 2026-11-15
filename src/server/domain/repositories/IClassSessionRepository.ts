@@ -1,4 +1,4 @@
-import { ClassSession } from '../entities/ClassSession';
+import type { ClassSession } from '../entities/ClassSession';
 
 export interface IClassSessionRepository {
   create(session: ClassSession): Promise<void>;

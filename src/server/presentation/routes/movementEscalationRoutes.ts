@@ -1,25 +1,25 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { AppContainer } from '@server/main/container';
 import { EscalateMovementUseCase } from '@server/application/use-cases/movements/EscalateMovementUseCase';
 import { EvaluateOverdueMovementsUseCase } from '@server/application/use-cases/movements/EvaluateOverdueMovementsUseCase';
 import {
   MovementNotFoundError,
   MovementValidationError,
 } from '@server/application/use-cases/movements/RequestStudentExitUseCase';
+import type { AppContainer } from '@server/main/container';
 import { extractBearerToken } from '@server/presentation/middlewares/authMiddleware';
-import {
+import type {
   CheckOverdueRequestDTO,
   EscalateMovementRequestDTO,
 } from '@shared/dtos';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 export async function registerMovementEscalationRoutes(
   app: FastifyInstance,
-  container: AppContainer
+  container: AppContainer,
 ): Promise<void> {
   const escalateMovementUseCase = new EscalateMovementUseCase(
     container.movementRepo,
     container.notificationSender,
-    { clock: container.clock }
+    { clock: container.clock },
   );
 
   const evaluateOverdueUseCase = new EvaluateOverdueMovementsUseCase(
@@ -28,7 +28,7 @@ export async function registerMovementEscalationRoutes(
     {
       sessionRepo: container.sessionRepo,
       clock: container.clock,
-    }
+    },
   );
 
   app.post<{
@@ -74,7 +74,7 @@ export async function registerMovementEscalationRoutes(
 
   const handleEvaluateOverdue = async (
     request: FastifyRequest<{ Body: CheckOverdueRequestDTO }>,
-    reply: FastifyReply
+    reply: FastifyReply,
   ) => {
     try {
       const result = await evaluateOverdueUseCase.execute(request.body ?? {});
@@ -91,11 +91,11 @@ export async function registerMovementEscalationRoutes(
 
   app.post<{ Body: CheckOverdueRequestDTO }>(
     '/movements/check-overdue',
-    handleEvaluateOverdue
+    handleEvaluateOverdue,
   );
 
   app.post<{ Body: CheckOverdueRequestDTO }>(
     '/movements/evaluate-overdue',
-    handleEvaluateOverdue
+    handleEvaluateOverdue,
   );
 }

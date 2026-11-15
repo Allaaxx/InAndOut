@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
 import { formatPublicStudentName } from '@shared/formatters';
+import { describe, expect, it } from 'vitest';
 
 describe('Shared Formatter: formatPublicStudentName', () => {
   it('formats full name with first name and last initial for LGPD compliance', () => {

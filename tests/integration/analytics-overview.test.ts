@@ -1,12 +1,12 @@
-import { describe, it, expect } from 'vitest';
 import { createApp } from '@server/main/app';
 import { IncidentOutcome } from '@shared/enums';
+import { describe, expect, it } from 'vitest';
 
 describe('Controller Seam: School Analytics Overview (GET /analytics/overview)', () => {
   async function loginAs(
     app: Awaited<ReturnType<typeof createApp>>['app'],
     email: string,
-    password: string
+    password: string,
   ): Promise<string> {
     const res = await app.inject({
       method: 'POST',
@@ -31,7 +31,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
     const teacherRes = await app.inject({
       method: 'GET',
@@ -45,7 +45,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     const coordToken = await loginAs(
       app,
       'coord@linsdorego.edu.br',
-      'coord123'
+      'coord123',
     );
     const coordRes = await app.inject({
       method: 'GET',
@@ -63,12 +63,12 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
     const coordToken = await loginAs(
       app,
       'coord@linsdorego.edu.br',
-      'coord123'
+      'coord123',
     );
 
     // 1. Start session for 1A
@@ -137,7 +137,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
       url: '/movements/exit',
       payload: { ra: '1001' },
     });
-    const mov3Id = exitRes3.json().movement.id;
+    const _mov3Id = exitRes3.json().movement.id;
 
     // Student 1001 is still out and becomes overdue at 08:42 (12 mins > 10 mins allowed limit)
     currentTime = new Date('2026-03-10T08:42:00.000Z');
@@ -169,7 +169,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
 
     // Verification of Hourly Distribution (Peak Hours)
     const hour8 = data.hourlyDistribution.find(
-      (h: { hour: number }) => h.hour === 8
+      (h: { hour: number }) => h.hour === 8,
     );
     expect(hour8).toBeDefined();
     // 3 departures started at 08h (08:05, 08:12, 08:30)
@@ -177,10 +177,11 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
 
     // Verification of Outcomes Distribution
     const returned = data.outcomeDistribution.find(
-      (o: { outcome: string }) => o.outcome === 'RETURNED_NORMAL'
+      (o: { outcome: string }) => o.outcome === 'RETURNED_NORMAL',
     );
     const infirmary = data.outcomeDistribution.find(
-      (o: { outcome: string }) => o.outcome === IncidentOutcome.SENT_TO_INFIRMARY
+      (o: { outcome: string }) =>
+        o.outcome === IncidentOutcome.SENT_TO_INFIRMARY,
     );
 
     expect(returned.count).toBe(1);
@@ -195,7 +196,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     const teacherToken = await loginAs(
       app,
       'prof@linsdorego.edu.br',
-      'senha123'
+      'senha123',
     );
 
     // Start session in 1A

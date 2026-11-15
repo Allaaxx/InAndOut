@@ -1,72 +1,72 @@
-import React, { useState } from 'react';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@client/components/ui/AlertDialog';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@client/components/ui/Dialog';
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSlot,
   InputOTPSeparator,
+  InputOTPSlot,
 } from '@client/components/ui/InputOTP';
 import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from '@client/components/ui/Dialog';
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogAction,
-  AlertDialogCancel,
-} from '@client/components/ui/AlertDialog';
-import {
   Sheet,
-  SheetTrigger,
   SheetClose,
   SheetContent,
-  SheetHeader,
-  SheetFooter,
-  SheetTitle,
   SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
 } from '@client/components/ui/Sheet';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
+import { describe, expect, it, vi } from 'vitest';
+
+function ControlledOTP({ mask = true }: { mask?: boolean }) {
+  const [value, setValue] = useState('');
+  return (
+    <div>
+      <InputOTP
+        maxLength={4}
+        value={value}
+        onChange={setValue}
+        ariaLabel="PIN de Verificação"
+      >
+        <InputOTPGroup>
+          <InputOTPSlot index={0} mask={mask} />
+          <InputOTPSlot index={1} mask={mask} />
+        </InputOTPGroup>
+        <InputOTPSeparator />
+        <InputOTPGroup>
+          <InputOTPSlot index={2} mask={mask} />
+          <InputOTPSlot index={3} mask={mask} />
+        </InputOTPGroup>
+      </InputOTP>
+      <span data-testid="otp-val">{value}</span>
+    </div>
+  );
+}
 
 describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
   describe('InputOTP', () => {
-    function ControlledOTP({ mask = true }: { mask?: boolean }) {
-      const [value, setValue] = useState('');
-      return (
-        <div>
-          <InputOTP
-            maxLength={4}
-            value={value}
-            onChange={setValue}
-            ariaLabel="PIN de Verificação"
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} mask={mask} />
-              <InputOTPSlot index={1} mask={mask} />
-            </InputOTPGroup>
-            <InputOTPSeparator />
-            <InputOTPGroup>
-              <InputOTPSlot index={2} mask={mask} />
-              <InputOTPSlot index={3} mask={mask} />
-            </InputOTPGroup>
-          </InputOTP>
-          <span data-testid="otp-val">{value}</span>
-        </div>
-      );
-    }
-
     it('renders accessible input and updates value on user typing', async () => {
       const user = userEvent.setup();
       render(<ControlledOTP />);
@@ -107,21 +107,23 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
       render(
         <Dialog onOpenChange={onOpenChange}>
           <DialogTrigger asChild>
-            <button>Abrir Modal</button>
+            <button type="button">Abrir Modal</button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Título do Modal</DialogTitle>
-              <DialogDescription>Descrição detalhada do modal.</DialogDescription>
+              <DialogDescription>
+                Descrição detalhada do modal.
+              </DialogDescription>
             </DialogHeader>
             <p>Conteúdo do Diálogo</p>
             <DialogFooter>
               <DialogClose asChild>
-                <button>Fechar Diálogo</button>
+                <button type="button">Fechar Diálogo</button>
               </DialogClose>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog>,
       );
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -130,8 +132,12 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
 
       const dialog = await screen.findByRole('dialog');
       expect(dialog).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Título do Modal' })).toBeInTheDocument();
-      expect(screen.getByText('Descrição detalhada do modal.')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Título do Modal' }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Descrição detalhada do modal.'),
+      ).toBeInTheDocument();
       expect(screen.getByText('Conteúdo do Diálogo')).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: 'Fechar Diálogo' }));
@@ -148,19 +154,25 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
       render(
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <button>Abrir Alerta</button>
+            <button type="button">Abrir Alerta</button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmação Crítica</AlertDialogTitle>
-              <AlertDialogDescription>Esta operação não pode ser desfeita.</AlertDialogDescription>
+              <AlertDialogDescription>
+                Esta operação não pode ser desfeita.
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancel}>Cancelar Operação</AlertDialogCancel>
-              <AlertDialogAction onClick={handleAction}>Confirmar Ação</AlertDialogAction>
+              <AlertDialogCancel onClick={handleCancel}>
+                Cancelar Operação
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleAction}>
+                Confirmar Ação
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
-        </AlertDialog>
+        </AlertDialog>,
       );
 
       expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
@@ -169,8 +181,12 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
 
       const alertdialog = await screen.findByRole('alertdialog');
       expect(alertdialog).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Confirmação Crítica' })).toBeInTheDocument();
-      expect(screen.getByText('Esta operação não pode ser desfeita.')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Confirmação Crítica' }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Esta operação não pode ser desfeita.'),
+      ).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: 'Confirmar Ação' }));
       expect(handleAction).toHaveBeenCalledTimes(1);
@@ -185,21 +201,23 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
       render(
         <Sheet onOpenChange={onOpenChange}>
           <SheetTrigger asChild>
-            <button>Abrir Gaveta</button>
+            <button type="button">Abrir Gaveta</button>
           </SheetTrigger>
           <SheetContent side="right">
             <SheetHeader>
               <SheetTitle>Título da Gaveta</SheetTitle>
-              <SheetDescription>Descrição detalhada da gaveta lateral.</SheetDescription>
+              <SheetDescription>
+                Descrição detalhada da gaveta lateral.
+              </SheetDescription>
             </SheetHeader>
             <p>Conteúdo da Gaveta</p>
             <SheetFooter>
               <SheetClose asChild>
-                <button>Fechar Gaveta</button>
+                <button type="button">Fechar Gaveta</button>
               </SheetClose>
             </SheetFooter>
           </SheetContent>
-        </Sheet>
+        </Sheet>,
       );
 
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -208,8 +226,12 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
 
       const sheet = await screen.findByRole('dialog');
       expect(sheet).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Título da Gaveta' })).toBeInTheDocument();
-      expect(screen.getByText('Descrição detalhada da gaveta lateral.')).toBeInTheDocument();
+      expect(
+        screen.getByRole('heading', { name: 'Título da Gaveta' }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Descrição detalhada da gaveta lateral.'),
+      ).toBeInTheDocument();
       expect(screen.getByText('Conteúdo da Gaveta')).toBeInTheDocument();
 
       await user.click(screen.getByRole('button', { name: 'Fechar Gaveta' }));
@@ -229,7 +251,7 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
                 <SheetDescription>Lado {side}</SheetDescription>
               </SheetHeader>
             </SheetContent>
-          </Sheet>
+          </Sheet>,
         );
 
         const sheet = screen.getByTestId(`sheet-${side}`);
@@ -259,7 +281,7 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
               <SheetDescription>Testando fechar nativo</SheetDescription>
             </SheetHeader>
           </SheetContent>
-        </Sheet>
+        </Sheet>,
       );
 
       const closeButton = screen.getByRole('button', { name: 'Fechar' });

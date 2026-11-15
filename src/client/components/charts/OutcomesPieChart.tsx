@@ -1,13 +1,12 @@
-import React from 'react';
 import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@client/components/ui/Card';
-import { OutcomeDistributionItemDTO } from '@shared/dtos';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@client/components/ui/Card';
+import type { OutcomeDistributionItemDTO } from '@shared/dtos';
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 
 export interface OutcomesPieChartProps {
   data: OutcomeDistributionItemDTO[];
@@ -40,7 +39,11 @@ export function OutcomesPieChart({ data }: OutcomesPieChartProps) {
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="h-60 w-full md:w-1/2">
             {totalCount > 0 ? (
-              <ResponsiveContainer width="100%" height="100%" initialDimension={{ width: 300, height: 240 }}>
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+                initialDimension={{ width: 300, height: 240 }}
+              >
                 <PieChart>
                   <Pie
                     data={chartData}
@@ -60,13 +63,18 @@ export function OutcomesPieChart({ data }: OutcomesPieChartProps) {
                   </Pie>
                   <Tooltip
                     content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const item = payload[0].payload as OutcomeDistributionItemDTO;
+                      if (active && payload?.length) {
+                        const item = payload[0]
+                          .payload as OutcomeDistributionItemDTO;
                         return (
                           <div className="rounded-lg border border-slate-200 bg-white p-2.5 shadow-md text-xs">
-                            <p className="font-semibold text-slate-800">{item.label}</p>
+                            <p className="font-semibold text-slate-800">
+                              {item.label}
+                            </p>
                             <p className="text-slate-600">
-                              {item.count} {item.count === 1 ? 'registro' : 'registros'} ({item.percentage}%)
+                              {item.count}{' '}
+                              {item.count === 1 ? 'registro' : 'registros'} (
+                              {item.percentage}%)
                             </p>
                           </div>
                         );

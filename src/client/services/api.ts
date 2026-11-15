@@ -1,4 +1,4 @@
-import {
+import type {
   ActiveSessionResponseDTO,
   CancelQueueResponseDTO,
   CheckOverdueRequestDTO,
@@ -11,6 +11,7 @@ import {
   EnqueueWaitingRequestDTO,
   EnqueueWaitingResponseDTO,
   EscalateMovementRequestDTO,
+  ExportAnalyticsQueryDTO,
   GuestExitRequestDTO,
   LoginRequestDTO,
   LoginResponseDTO,
@@ -28,7 +29,6 @@ import {
   StartSessionResponseDTO,
   StudentHistoryQueryDTO,
   StudentHistoryReportDTO,
-  ExportAnalyticsQueryDTO,
   VerifyPinResponseDTO,
 } from '@shared/dtos';
 
@@ -38,10 +38,7 @@ const API_BASE_URL =
       ?.VITE_API_URL) ||
   'http://localhost:3000';
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -84,7 +81,7 @@ export const api = {
 
   async getActiveSession(
     roomId = 'SALA-01',
-    token?: string
+    token?: string,
   ): Promise<ActiveSessionResponseDTO> {
     const query = roomId ? `?roomId=${encodeURIComponent(roomId)}` : '';
     return request<ActiveSessionResponseDTO>(`/sessions/active${query}`, {
@@ -95,7 +92,7 @@ export const api = {
 
   async startSession(
     payload: StartSessionRequestDTO,
-    token: string
+    token: string,
   ): Promise<StartSessionResponseDTO> {
     return request<StartSessionResponseDTO>('/sessions/start', {
       method: 'POST',
@@ -108,7 +105,7 @@ export const api = {
 
   async endSession(
     payload: EndSessionRequestDTO,
-    token: string
+    token: string,
   ): Promise<EndSessionResponseDTO> {
     return request<EndSessionResponseDTO>('/sessions/end', {
       method: 'POST',
@@ -121,7 +118,7 @@ export const api = {
 
   async requestExit(
     payload: RequestExitRequestDTO,
-    token?: string
+    token?: string,
   ): Promise<RequestExitResponseDTO> {
     return request<RequestExitResponseDTO>('/movements/exit', {
       method: 'POST',
@@ -132,7 +129,7 @@ export const api = {
 
   async registerReturn(
     payload: RegisterReturnRequestDTO,
-    token?: string
+    token?: string,
   ): Promise<RegisterReturnResponseDTO> {
     return request<RegisterReturnResponseDTO>('/movements/return', {
       method: 'POST',
@@ -143,7 +140,7 @@ export const api = {
 
   async enqueueWaiting(
     payload: EnqueueWaitingRequestDTO,
-    token?: string
+    token?: string,
   ): Promise<EnqueueWaitingResponseDTO> {
     return request<EnqueueWaitingResponseDTO>('/movements/queue', {
       method: 'POST',
@@ -155,7 +152,7 @@ export const api = {
   async cancelQueue(
     ra: string,
     sessionId?: string,
-    token?: string
+    token?: string,
   ): Promise<CancelQueueResponseDTO> {
     const query = sessionId
       ? `?sessionId=${encodeURIComponent(sessionId)}`
@@ -165,13 +162,13 @@ export const api = {
       {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }
+      },
     );
   },
 
   async claimQueueSlot(
     payload: ClaimQueueRequestDTO,
-    token?: string
+    token?: string,
   ): Promise<ClaimQueueResponseDTO> {
     return request<ClaimQueueResponseDTO>('/movements/queue/claim', {
       method: 'POST',
@@ -182,7 +179,7 @@ export const api = {
 
   async requestEmergencyExit(
     payload: EmergencyExitRequestDTO,
-    token: string
+    token: string,
   ): Promise<RequestExitResponseDTO> {
     return request<RequestExitResponseDTO>('/movements/emergency', {
       method: 'POST',
@@ -195,7 +192,7 @@ export const api = {
 
   async requestGuestExit(
     payload: GuestExitRequestDTO,
-    token: string
+    token: string,
   ): Promise<RequestExitResponseDTO> {
     return request<RequestExitResponseDTO>('/movements/guest-exit', {
       method: 'POST',
@@ -209,7 +206,7 @@ export const api = {
   async escalateMovement(
     movementId: string,
     payload: EscalateMovementRequestDTO = {},
-    token?: string
+    token?: string,
   ): Promise<{ movement: MovementDTO }> {
     return request<{ movement: MovementDTO }>(
       `/movements/${encodeURIComponent(movementId)}/escalate`,
@@ -217,13 +214,13 @@ export const api = {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: JSON.stringify(payload),
-      }
+      },
     );
   },
 
   async checkOverdueMovements(
     payload: CheckOverdueRequestDTO = {},
-    token?: string
+    token?: string,
   ): Promise<CheckOverdueResponseDTO> {
     return request<CheckOverdueResponseDTO>('/movements/check-overdue', {
       method: 'POST',
@@ -234,7 +231,7 @@ export const api = {
 
   async getCoordinationActiveMovements(
     params: { classCode?: string; status?: string } = {},
-    token: string
+    token: string,
   ): Promise<{ movements: MovementDTO[] }> {
     const searchParams = new URLSearchParams();
     if (params.classCode) searchParams.append('classCode', params.classCode);
@@ -247,14 +244,14 @@ export const api = {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
   },
 
   async resolveMovement(
     movementId: string,
     payload: ResolveMovementRequestDTO,
-    token: string
+    token: string,
   ): Promise<ResolveMovementResponseDTO> {
     return request<ResolveMovementResponseDTO>(
       `/coordination/movements/${encodeURIComponent(movementId)}/resolve`,
@@ -264,13 +261,13 @@ export const api = {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
-      }
+      },
     );
   },
 
   async getOverviewAnalytics(
     params: SchoolOverviewQueryDTO = {},
-    token?: string
+    token?: string,
   ): Promise<SchoolOverviewAnalyticsDTO> {
     const searchParams = new URLSearchParams();
     if (params.date) searchParams.append('date', params.date);
@@ -291,7 +288,7 @@ export const api = {
   async getStudentHistory(
     ra: string,
     params: StudentHistoryQueryDTO = {},
-    token?: string
+    token?: string,
   ): Promise<StudentHistoryReportDTO> {
     const searchParams = new URLSearchParams();
     if (params.startDate) searchParams.append('startDate', params.startDate);
@@ -303,13 +300,13 @@ export const api = {
       {
         method: 'GET',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
-      }
+      },
     );
   },
 
   async exportAnalytics(
     params: ExportAnalyticsQueryDTO = {},
-    token?: string
+    token?: string,
   ): Promise<Blob> {
     const searchParams = new URLSearchParams();
     if (params.format) searchParams.append('format', params.format);

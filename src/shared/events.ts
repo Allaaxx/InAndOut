@@ -24,4 +24,3 @@ export const SOCKET_ROOMS = {
   COORDINATION_ROOM: 'room:coordenacao',
   sessionRoom: (sessionId: string) => `room:session:${sessionId}`,
 } as const;
-

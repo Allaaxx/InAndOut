@@ -1,6 +1,6 @@
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
-import { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import {
+import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type {
   StudentHistoryQueryDTO,
   StudentHistoryReportDTO,
   StudentHistorySummaryDTO,
@@ -27,13 +27,13 @@ export class GetStudentHistoryReportUseCase {
   constructor(
     private readonly studentRepo: IStudentRepository,
     private readonly movementRepo: IMovementRecordRepository,
-    options: GetStudentHistoryReportOptions = {}
+    options: GetStudentHistoryReportOptions = {},
   ) {
     this.clock = options.clock ?? (() => new Date());
   }
 
   public async execute(
-    input: GetStudentHistoryReportInput
+    input: GetStudentHistoryReportInput,
   ): Promise<StudentHistoryReportDTO> {
     const ra = (input.ra ?? '').trim();
     if (!ra) {
@@ -72,11 +72,11 @@ export class GetStudentHistoryReportUseCase {
 
     // Sort newest first
     filteredMovements.sort(
-      (a, b) => b.startedAt.getTime() - a.startedAt.getTime()
+      (a, b) => b.startedAt.getTime() - a.startedAt.getTime(),
     );
 
     const completedMovements = filteredMovements.filter(
-      (m) => typeof m.durationMinutes === 'number'
+      (m) => typeof m.durationMinutes === 'number',
     );
 
     const totalExits = filteredMovements.length;
@@ -85,8 +85,8 @@ export class GetStudentHistoryReportUseCase {
         ? Math.round(
             completedMovements.reduce(
               (sum, m) => sum + (m.durationMinutes ?? 0),
-              0
-            ) * 10
+              0,
+            ) * 10,
           ) / 10
         : 0;
 
@@ -100,8 +100,8 @@ export class GetStudentHistoryReportUseCase {
         ? Math.round(
             completedMovements.reduce(
               (sum, m) => sum + (m.attendedMinutes ?? 0),
-              0
-            ) * 10
+              0,
+            ) * 10,
           ) / 10
         : 0;
 
@@ -112,7 +112,7 @@ export class GetStudentHistoryReportUseCase {
             (sum, m) =>
               sum +
               Math.max(50, (m.durationMinutes ?? 0) + (m.attendedMinutes ?? 0)),
-            0
+            0,
           )
         : 0;
 
@@ -125,7 +125,7 @@ export class GetStudentHistoryReportUseCase {
 
     const attendancePercentage = Math.max(
       0,
-      Math.min(100, rawAttendancePercentage)
+      Math.min(100, rawAttendancePercentage),
     );
 
     const summary: StudentHistorySummaryDTO = {

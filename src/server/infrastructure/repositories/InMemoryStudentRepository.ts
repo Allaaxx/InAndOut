@@ -1,5 +1,5 @@
 import { Student } from '@server/domain/entities/Student';
-import { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 
 export class InMemoryStudentRepository implements IStudentRepository {
   private students: Map<string, Student> = new Map();
@@ -61,7 +61,7 @@ export class InMemoryStudentRepository implements IStudentRepository {
   public async findByClassCode(classCode: string): Promise<Student[]> {
     const normalized = classCode.trim();
     return Array.from(this.students.values()).filter(
-      (s) => s.classCode === normalized
+      (s) => s.classCode === normalized,
     );
   }
 

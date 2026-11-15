@@ -1,5 +1,5 @@
-export * from './PrismaUserRepository';
 export * from './PrismaClassSessionRepository';
-export * from './PrismaStudentRepository';
 export * from './PrismaMovementRecordRepository';
+export * from './PrismaStudentRepository';
+export * from './PrismaUserRepository';
 export * from './PrismaWaitingQueueRepository';

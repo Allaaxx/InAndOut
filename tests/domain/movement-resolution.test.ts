@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
-import { MovementRecord } from '@server/domain/entities/MovementRecord';
-import { IncidentOutcome, MovementStatus } from '@shared/enums';
-import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
 import {
   MovementNotFoundError,
   ResolveMovementIncidentUseCase,
 } from '@server/application/use-cases/coordination/ResolveMovementIncidentUseCase';
-import { INotificationSender } from '@server/application/contracts/INotificationSender';
+import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
+import { IncidentOutcome, MovementStatus } from '@shared/enums';
+import { describe, expect, it, vi } from 'vitest';
 
 describe('Domain Seam: Movement Resolution & Saída em Trânsito (MovementRecord & ResolveMovementIncidentUseCase)', () => {
   it('converts an active movement to IN_TRANSIT_UNRESOLVED and preserves original exit information', () => {
@@ -58,14 +58,14 @@ describe('Domain Seam: Movement Resolution & Saída em Trânsito (MovementRecord
       'coord-42',
       resolvedAt,
       'Aluno foi orientado pela coordenação pedagógica.',
-      50
+      50,
     );
 
     expect(movement.status).toBe(MovementStatus.RESOLVED);
     expect(movement.outcome).toBe(IncidentOutcome.ATTENDED_AT_COORDINATION);
     expect(movement.resolvedByCoordinatorId).toBe('coord-42');
     expect(movement.resolutionNotes).toBe(
-      'Aluno foi orientado pela coordenação pedagógica.'
+      'Aluno foi orientado pela coordenação pedagógica.',
     );
     expect(movement.resolvedAt).toEqual(resolvedAt);
 
@@ -123,7 +123,7 @@ describe('Domain Seam: Movement Resolution & Saída em Trânsito (MovementRecord
     expect(result.movement.outcome).toBe(IncidentOutcome.SENT_TO_INFIRMARY);
     expect(result.movement.resolvedByCoordinatorId).toBe('coord-1');
     expect(result.movement.resolutionNotes).toBe(
-      'Encaminhada à enfermaria com queixa de cefaleia.'
+      'Encaminhada à enfermaria com queixa de cefaleia.',
     );
 
     const updated = await movementRepo.findById('mov-3');
@@ -136,7 +136,7 @@ describe('Domain Seam: Movement Resolution & Saída em Trânsito (MovementRecord
         id: 'mov-3',
         status: MovementStatus.RESOLVED,
         outcome: IncidentOutcome.SENT_TO_INFIRMARY,
-      })
+      }),
     );
   });
 
@@ -149,7 +149,7 @@ describe('Domain Seam: Movement Resolution & Saída em Trânsito (MovementRecord
         movementId: 'mov-non-existent',
         coordinatorId: 'coord-1',
         outcome: IncidentOutcome.RETURNED_TO_CLASS,
-      })
+      }),
     ).rejects.toThrow(MovementNotFoundError);
   });
 
@@ -157,7 +157,9 @@ describe('Domain Seam: Movement Resolution & Saída em Trânsito (MovementRecord
     const { InMemoryClassSessionRepository } = await import(
       '@server/infrastructure/repositories/InMemoryClassSessionRepository'
     );
-    const { ClassSession } = await import('@server/domain/entities/ClassSession');
+    const { ClassSession } = await import(
+      '@server/domain/entities/ClassSession'
+    );
     const { EndClassSessionUseCase } = await import(
       '@server/application/use-cases/sessions/EndClassSessionUseCase'
     );
@@ -249,7 +251,7 @@ describe('Domain Seam: Movement Resolution & Saída em Trânsito (MovementRecord
     expect(response.metrics.inTransitUnresolvedCount).toBe(2);
     expect(response.inTransitMovements).toHaveLength(2);
     expect(response.inTransitMovements.map((m) => m.id)).toEqual(
-      expect.arrayContaining(['mov-1', 'mov-2'])
+      expect.arrayContaining(['mov-1', 'mov-2']),
     );
 
     const updatedMov1 = await movementRepo.findById('mov-1');
@@ -260,6 +262,8 @@ describe('Domain Seam: Movement Resolution & Saída em Trânsito (MovementRecord
     expect(updatedMov2?.status).toBe(MovementStatus.IN_TRANSIT_UNRESOLVED);
     expect(updatedMov3?.status).toBe(MovementStatus.RETURNED_NORMAL);
 
-    expect(notificationSender.notifyMovementInTransitUnresolved).toHaveBeenCalledTimes(2);
+    expect(
+      notificationSender.notifyMovementInTransitUnresolved,
+    ).toHaveBeenCalledTimes(2);
   });
 });

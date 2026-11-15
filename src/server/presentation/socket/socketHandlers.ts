@@ -1,5 +1,5 @@
-import { Server as SocketIOServer, Socket } from 'socket.io';
 import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
+import type { Socket, Server as SocketIOServer } from 'socket.io';
 
 interface SessionPayload {
   sessionId?: string;
@@ -15,7 +15,11 @@ function extractSessionId(payload: unknown): string | null {
   if (typeof payload === 'string' && payload.trim().length > 0) {
     return payload.trim();
   }
-  if (typeof payload === 'object' && payload !== null && 'sessionId' in payload) {
+  if (
+    typeof payload === 'object' &&
+    payload !== null &&
+    'sessionId' in payload
+  ) {
     const rawId = (payload as SessionPayload).sessionId;
     if (typeof rawId === 'string' && rawId.trim().length > 0) {
       return rawId.trim();

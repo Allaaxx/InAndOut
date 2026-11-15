@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
+import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
 import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
+import { useEffect, useRef } from 'react';
+import { io, type Socket } from 'socket.io-client';
 
 const SOCKET_URL =
   (typeof import.meta !== 'undefined' &&
@@ -202,7 +202,7 @@ export function useSocket({
     socket.on(SOCKET_EVENTS.MOVEMENT_ESCALATED, handleEscalated);
     socket.on(
       SOCKET_EVENTS.MOVEMENT_IN_TRANSIT_UNRESOLVED,
-      handleInTransitUnresolved
+      handleInTransitUnresolved,
     );
     socket.on(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
 
@@ -227,7 +227,7 @@ export function useSocket({
       socket?.off(SOCKET_EVENTS.MOVEMENT_ESCALATED, handleEscalated);
       socket?.off(
         SOCKET_EVENTS.MOVEMENT_IN_TRANSIT_UNRESOLVED,
-        handleInTransitUnresolved
+        handleInTransitUnresolved,
       );
       socket?.off(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
       socket?.disconnect();
