@@ -7,11 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from '@client/components/ui/Card';
-import { Input } from '@client/components/ui/Input';
 import { api } from '@client/services/api';
 import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
 import { QueueEntryStatus } from '@shared/enums';
-import type React from 'react';
 import { useEffect, useState } from 'react';
 
 export interface WaitingQueuePanelProps {
@@ -20,6 +18,7 @@ export interface WaitingQueuePanelProps {
   token?: string;
   onQueueUpdated?: (queue: WaitingQueueDTO[]) => void;
   onMovementStarted?: (movement: MovementDTO) => void;
+  onCancelQueue?: (ra: string) => Promise<void> | void;
 }
 
 function formatRemainingSeconds(totalSeconds: number): string {
@@ -35,8 +34,8 @@ export function WaitingQueuePanel({
   token,
   onQueueUpdated,
   onMovementStarted,
+  onCancelQueue,
 }: WaitingQueuePanelProps) {
-  const [raInput, setRaInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [claimLoading, setClaimLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,38 +68,17 @@ export function WaitingQueuePanel({
     return () => clearInterval(interval);
   }, [calledEntry?.expiresAt]);
 
-  const handleEnqueueSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const normalizedRa = raInput.trim();
-    if (!normalizedRa || loading) return;
-
-    setError(null);
-    setLoading(true);
-    try {
-      const response = await api.enqueueWaiting(
-        { ra: normalizedRa, sessionId },
-        token,
-      );
-      setRaInput('');
-      onQueueUpdated?.(response.queue);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Erro ao entrar na fila de espera.',
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCancel = async (ra: string) => {
     if (loading) return;
     setError(null);
     setLoading(true);
     try {
-      const response = await api.cancelQueue(ra, sessionId, token);
-      onQueueUpdated?.(response.queue);
+      if (onCancelQueue) {
+        await onCancelQueue(ra);
+      } else {
+        const response = await api.cancelQueue(ra, sessionId, token);
+        onQueueUpdated?.(response.queue);
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -249,26 +227,6 @@ export function WaitingQueuePanel({
             ))}
           </ul>
         )}
-
-        {/* Join Queue Form */}
-        <form onSubmit={handleEnqueueSubmit} className="flex gap-2 pt-1">
-          <Input
-            type="text"
-            inputMode="numeric"
-            placeholder="Digitar RA para entrar na fila"
-            value={raInput}
-            onChange={(e) => setRaInput(e.target.value)}
-            disabled={loading}
-            className="flex-1 font-mono text-sm"
-          />
-          <Button
-            type="submit"
-            variant="secondary"
-            disabled={loading || !raInput.trim()}
-          >
-            {loading ? 'Entrando...' : 'Entrar na Fila'}
-          </Button>
-        </form>
 
         {error && (
           <div

@@ -53,6 +53,11 @@ export function TerminalPage({
   const [selectedSubject, setSelectedSubject] = useState<string>('Matemática');
   const [movementLoading, setMovementLoading] = useState(false);
   const [movementError, setMovementError] = useState<string | null>(null);
+  const [queueFeedback, setQueueFeedback] = useState<{
+    ra: string;
+    position: number;
+    message: string;
+  } | null>(null);
   const [returnConfirmationMessage, setReturnConfirmationMessage] = useState<
     string | null
   >(null);
@@ -204,17 +209,45 @@ export function TerminalPage({
     }
   };
 
-  const handleRequestExit = async (ra: string) => {
+  const handleCancelQueue = useCallback(
+    async (ra: string) => {
+      if (!activeSession) return;
+      setMovementLoading(true);
+      setMovementError(null);
+      try {
+        const response = await api.cancelQueue(ra, activeSession.id, token);
+        setQueue(response.queue);
+        setQueueFeedback((prev) => (prev?.ra === ra ? null : prev));
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Erro ao cancelar vaga na fila de espera.';
+        setMovementError(msg);
+        throw err;
+      } finally {
+        setMovementLoading(false);
+      }
+    },
+    [activeSession, token, setQueue],
+  );
+
+  const handleKeypadSubmit = async (ra: string) => {
     if (!activeSession) return;
     const normalizedRa = ra.trim();
+    if (!normalizedRa) return;
+
+    // 1. If student is currently outside -> register return
     const isCurrentlyOut = activeMovements.some(
       (m) => m.studentRa === normalizedRa,
     );
     if (isCurrentlyOut && typeof api.registerReturn === 'function') {
       await handleRegisterReturn(normalizedRa);
+      setQueueFeedback(null);
       return;
     }
 
+    // 2. If student is CALLED in the queue -> confirm exit (claim slot)
     const isCalled = queue.some(
       (q) =>
         q.studentRa === normalizedRa && q.status === QueueEntryStatus.CALLED,
@@ -232,6 +265,7 @@ export function TerminalPage({
         );
         handleMovementStarted(response.movement);
         setQueue(response.queue);
+        setQueueFeedback(null);
         return;
       } catch (err) {
         const msg =
@@ -245,6 +279,58 @@ export function TerminalPage({
       }
     }
 
+    // 3. If student is already WAITING in the queue -> display position feedback / allow cancel
+    const waitingEntry = queue.find(
+      (q) =>
+        q.studentRa === normalizedRa && q.status === QueueEntryStatus.WAITING,
+    );
+    if (waitingEntry) {
+      setMovementError(null);
+      setReturnConfirmationMessage(null);
+
+      // If student already saw their position feedback and enters RA again, cancel queue (ADR 0006 & User Story 4)
+      if (queueFeedback?.ra === normalizedRa) {
+        await handleCancelQueue(normalizedRa);
+        return;
+      }
+
+      setQueueFeedback({
+        ra: normalizedRa,
+        position: waitingEntry.position,
+        message: `Você já está na posição #${waitingEntry.position} da fila`,
+      });
+      return;
+    }
+
+    // 4. If room is already occupied (activeMovements.length > 0) -> Auto-Enfileiramento por RA
+    if (activeMovements.length > 0) {
+      if (typeof api.enqueueWaiting !== 'function') return;
+      setMovementError(null);
+      setMovementLoading(true);
+      try {
+        const response = await api.enqueueWaiting(
+          {
+            ra: normalizedRa,
+            sessionId: activeSession.id,
+          },
+          token,
+        );
+        setQueue(response.queue);
+        setQueueFeedback(null);
+        return;
+      } catch (err) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Erro ao entrar na fila de espera.';
+        setMovementError(msg);
+        throw err;
+      } finally {
+        setMovementLoading(false);
+      }
+    }
+
+    // 5. If room is free -> request normal exit
     if (typeof api.requestExit !== 'function') return;
     setMovementError(null);
     setMovementLoading(true);
@@ -257,6 +343,7 @@ export function TerminalPage({
         token,
       );
       handleMovementStarted(response.movement);
+      setQueueFeedback(null);
     } catch (err) {
       const msg =
         err instanceof Error
@@ -331,8 +418,10 @@ export function TerminalPage({
               <KeypadForm
                 loading={movementLoading}
                 error={movementError}
-                onSubmitRa={handleRequestExit}
+                onSubmitRa={handleKeypadSubmit}
                 onReturnRa={handleRegisterReturn}
+                queueFeedback={queueFeedback}
+                onCancelQueue={handleCancelQueue}
               />
 
               <div className="space-y-6">
@@ -351,6 +440,7 @@ export function TerminalPage({
                   token={token}
                   onQueueUpdated={setQueue}
                   onMovementStarted={handleMovementStarted}
+                  onCancelQueue={handleCancelQueue}
                 />
               </div>
             </div>
