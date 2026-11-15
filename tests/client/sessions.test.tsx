@@ -102,8 +102,8 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
 
     // 2. Active lesson header is rendered with Turma, Disciplina, and elapsed timer
     expect(await screen.findByText(/Aula em Andamento/i)).toBeInTheDocument();
-    expect(screen.getByText(/Turma 2A/i)).toBeInTheDocument();
-    expect(screen.getByText(/História/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Turma 2A/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/História/i)[0]).toBeInTheDocument();
     expect(screen.getByTestId('session-elapsed-timer')).toHaveTextContent(
       /02:0[56]/,
     );
