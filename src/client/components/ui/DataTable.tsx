@@ -1,4 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  ColumnDef as TanStackColumnDef,
+} from '@tanstack/react-table';
 import { cn } from './utils';
 
 export interface ColumnDef<T> {
@@ -24,6 +30,29 @@ export function DataTable<T>({
   rowClassName,
   className,
 }: DataTableProps<T>) {
+  const tanstackColumns = useMemo<TanStackColumnDef<T, unknown>[]>(
+    () =>
+      columns.map((col) => ({
+        id: col.key,
+        header: () => col.header,
+        cell: ({ row }) => {
+          if (col.render) {
+            return col.render(row.original);
+          }
+          const val = (row.original as Record<string, unknown>)[col.key];
+          return val !== null && val !== undefined ? String(val) : '';
+        },
+      })),
+    [columns]
+  );
+
+  const table = useReactTable({
+    data,
+    columns: tanstackColumns,
+    getCoreRowModel: getCoreRowModel(),
+    getRowId: (row) => rowKey(row),
+  });
+
   return (
     <div
       className={cn(
@@ -33,16 +62,23 @@ export function DataTable<T>({
     >
       <table className="w-full text-left text-sm">
         <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-600">
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key} className="px-4 py-3">
-                {col.header}
-              </th>
-            ))}
-          </tr>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <th key={header.id} className="px-4 py-3">
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                </th>
+              ))}
+            </tr>
+          ))}
         </thead>
         <tbody className="divide-y divide-slate-200">
-          {data.length === 0 ? (
+          {table.getRowModel().rows.length === 0 ? (
             <tr>
               <td
                 colSpan={columns.length}
@@ -52,21 +88,17 @@ export function DataTable<T>({
               </td>
             </tr>
           ) : (
-            data.map((item) => (
+            table.getRowModel().rows.map((row) => (
               <tr
-                key={rowKey(item)}
+                key={row.id}
                 className={cn(
                   'transition-colors hover:bg-slate-50',
-                  rowClassName?.(item)
+                  rowClassName?.(row.original)
                 )}
               >
-                {columns.map((col) => (
-                  <td key={col.key} className="px-4 py-3">
-                    {col.render
-                      ? col.render(item)
-                      : String(
-                          (item as Record<string, unknown>)[col.key] ?? ''
-                        )}
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="px-4 py-3">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
               </tr>
@@ -77,3 +109,6 @@ export function DataTable<T>({
     </div>
   );
 }
+
+export { useReactTable, getCoreRowModel, flexRender };
+export type { TanStackColumnDef };

@@ -29,6 +29,16 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '@client/components/ui/AlertDialog';
+import {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+} from '@client/components/ui/Sheet';
 
 describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
   describe('InputOTP', () => {
@@ -164,6 +174,98 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
 
       await user.click(screen.getByRole('button', { name: 'Confirmar Ação' }));
       expect(handleAction).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Sheet (Radix Dialog Drawer)', () => {
+    it('supports controlled and trigger-based opening, with accessible structure and close action', async () => {
+      const user = userEvent.setup();
+      const onOpenChange = vi.fn();
+
+      render(
+        <Sheet onOpenChange={onOpenChange}>
+          <SheetTrigger asChild>
+            <button>Abrir Gaveta</button>
+          </SheetTrigger>
+          <SheetContent side="right">
+            <SheetHeader>
+              <SheetTitle>Título da Gaveta</SheetTitle>
+              <SheetDescription>Descrição detalhada da gaveta lateral.</SheetDescription>
+            </SheetHeader>
+            <p>Conteúdo da Gaveta</p>
+            <SheetFooter>
+              <SheetClose asChild>
+                <button>Fechar Gaveta</button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      );
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+      await user.click(screen.getByText('Abrir Gaveta'));
+
+      const sheet = await screen.findByRole('dialog');
+      expect(sheet).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Título da Gaveta' })).toBeInTheDocument();
+      expect(screen.getByText('Descrição detalhada da gaveta lateral.')).toBeInTheDocument();
+      expect(screen.getByText('Conteúdo da Gaveta')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Fechar Gaveta' }));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+
+    it('supports rendering on all sides (left, right, top, bottom)', async () => {
+      const sides = ['left', 'right', 'top', 'bottom'] as const;
+
+      for (const side of sides) {
+        const { unmount } = render(
+          <Sheet open={true}>
+            <SheetContent side={side} data-testid={`sheet-${side}`}>
+              <SheetHeader>
+                <SheetTitle>Gaveta {side}</SheetTitle>
+                <SheetDescription>Lado {side}</SheetDescription>
+              </SheetHeader>
+            </SheetContent>
+          </Sheet>
+        );
+
+        const sheet = screen.getByTestId(`sheet-${side}`);
+        expect(sheet).toBeInTheDocument();
+        if (side === 'left') {
+          expect(sheet.className).toContain('inset-y-0 left-0');
+        } else if (side === 'right') {
+          expect(sheet.className).toContain('inset-y-0 right-0');
+        } else if (side === 'top') {
+          expect(sheet.className).toContain('inset-x-0 top-0');
+        } else if (side === 'bottom') {
+          expect(sheet.className).toContain('inset-x-0 bottom-0');
+        }
+        unmount();
+      }
+    });
+
+    it('can be closed using the built-in close button', async () => {
+      const user = userEvent.setup();
+      const onOpenChange = vi.fn();
+
+      render(
+        <Sheet open={true} onOpenChange={onOpenChange}>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Gaveta com Botão Fechar</SheetTitle>
+              <SheetDescription>Testando fechar nativo</SheetDescription>
+            </SheetHeader>
+          </SheetContent>
+        </Sheet>
+      );
+
+      const closeButton = screen.getByRole('button', { name: 'Fechar' });
+      expect(closeButton).toBeInTheDocument();
+      await user.click(closeButton);
+      expect(onOpenChange).toHaveBeenCalledWith(false);
     });
   });
 });
