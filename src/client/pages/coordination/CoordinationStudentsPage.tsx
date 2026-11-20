@@ -7,14 +7,24 @@ import {
   CardTitle,
 } from '@client/components/ui/Card';
 import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
+import {
+  DatePickerWithRange,
+  type DateRange,
+  formatIsoDate,
+} from '@client/components/ui/DatePicker';
 import { Input } from '@client/components/ui/Input';
+import { Label } from '@client/components/ui/Label';
 import { toast } from '@client/components/ui/Sonner';
 import { api } from '@client/services/api';
 import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type { MovementDTO, StudentHistoryReportDTO } from '@shared/dtos';
-import { MovementStatus } from '@shared/enums';
 import {
-  Calendar,
+  getIncidentOutcomeLabel,
+  getMovementStatusLabel,
+  MovementStatus,
+} from '@shared/enums';
+import { formatDateTimeInAppTimezone } from '@shared/timezone';
+import {
   CheckCircle2,
   Clock,
   FileSpreadsheet,
@@ -34,8 +44,7 @@ export function CoordinationStudentsPage({
   token,
 }: CoordinationStudentsPageProps) {
   const [searchRa, setSearchRa] = useState<string>('');
-  const [studentStartDate, setStudentStartDate] = useState<string>('');
-  const [studentEndDate, setStudentEndDate] = useState<string>('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [studentReport, setStudentReport] =
     useState<StudentHistoryReportDTO | null>(null);
   const [studentLoading, setStudentLoading] = useState(false);
@@ -55,8 +64,8 @@ export function CoordinationStudentsPage({
       const report = await api.getStudentHistory(
         trimmedRa,
         {
-          startDate: studentStartDate || undefined,
-          endDate: studentEndDate || undefined,
+          startDate: formatIsoDate(dateRange?.from) || undefined,
+          endDate: formatIsoDate(dateRange?.to) || undefined,
         },
         token,
       );
@@ -84,8 +93,8 @@ export function CoordinationStudentsPage({
       const params = {
         format,
         ra: studentRa,
-        startDate: studentStartDate || undefined,
-        endDate: studentEndDate || undefined,
+        startDate: formatIsoDate(dateRange?.from) || undefined,
+        endDate: formatIsoDate(dateRange?.to) || undefined,
       };
 
       const blob = await api.exportAnalytics(params, token);
@@ -109,7 +118,7 @@ export function CoordinationStudentsPage({
     {
       key: 'startedAt',
       header: 'Data / Hora',
-      render: (m) => new Date(m.startedAt).toLocaleString('pt-BR'),
+      render: (m) => formatDateTimeInAppTimezone(m.startedAt),
     },
     {
       key: 'subject',
@@ -145,13 +154,15 @@ export function CoordinationStudentsPage({
           variant = 'destructive';
         else if (m.status === MovementStatus.IN_TRANSIT) variant = 'warning';
 
-        return <Badge variant={variant}>{m.status}</Badge>;
+        return (
+          <Badge variant={variant}>{getMovementStatusLabel(m.status)}</Badge>
+        );
       },
     },
     {
       key: 'outcome',
       header: 'Desfecho',
-      render: (m) => m.outcome ?? '-',
+      render: (m) => getIncidentOutcomeLabel(m.outcome),
     },
     {
       key: 'attendancePercentage',
@@ -197,43 +208,32 @@ export function CoordinationStudentsPage({
             </div>
 
             <div className="space-y-1.5">
-              <label
-                htmlFor="student-start-date"
-                className="text-xs font-semibold uppercase tracking-wider text-slate-500"
-              >
-                Data Início
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  id="student-start-date"
-                  aria-label="Data Início"
-                  type="date"
-                  value={studentStartDate}
-                  onChange={(e) => setStudentStartDate(e.target.value)}
-                  className="h-9 rounded-md border border-slate-200 bg-white pl-9 pr-3 py-1 text-sm font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-                />
+              <div className="flex items-center justify-between gap-2">
+                <Label
+                  htmlFor="student-date-range"
+                  className="text-xs font-semibold uppercase tracking-wider text-slate-500"
+                >
+                  Período
+                </Label>
+                {dateRange?.from && (
+                  <button
+                    type="button"
+                    onClick={() => setDateRange(undefined)}
+                    className="text-xs text-slate-400 hover:text-slate-600 underline"
+                  >
+                    Limpar
+                  </button>
+                )}
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label
-                htmlFor="student-end-date"
-                className="text-xs font-semibold uppercase tracking-wider text-slate-500"
-              >
-                Data Fim
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  id="student-end-date"
-                  aria-label="Data Fim"
-                  type="date"
-                  value={studentEndDate}
-                  onChange={(e) => setStudentEndDate(e.target.value)}
-                  className="h-9 rounded-md border border-slate-200 bg-white pl-9 pr-3 py-1 text-sm font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-                />
-              </div>
+              <DatePickerWithRange
+                id="student-date-range"
+                aria-label="Período"
+                value={dateRange}
+                onChange={setDateRange}
+                placeholder="Selecionar período"
+                align="end"
+                className="h-10 w-full sm:w-[260px] font-medium text-slate-700"
+              />
             </div>
 
             <Button

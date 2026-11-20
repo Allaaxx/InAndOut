@@ -99,7 +99,7 @@ describe('Prisma Lifecycle Scripts and Relational Schema (Ticket #31)', () => {
         const classes = new Set(students.map((s) => s.classCode));
         expect(classes.has('1A')).toBe(true);
         expect(classes.has('2B')).toBe(true);
-        expect(classes.has('3C')).toBe(true);
+        expect(classes.has('3A')).toBe(true);
 
         // 3. Verify Class Sessions & Rooms
         const sessions = await prisma.classSession.findMany({

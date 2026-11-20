@@ -144,8 +144,10 @@ describe('Frontend Seam: Dashboard Shell & Specialized Coordination Routes (Tick
       'aria-label',
       'Expandir barra lateral',
     );
-    expect(screen.getByTestId('coordination-sidebar')).toHaveClass('w-20');
-    expect(screen.queryByTestId('sidebar-school-icon')).not.toBeInTheDocument();
+    expect(screen.getByTestId('coordination-sidebar')).toHaveClass('w-16');
+    expect(
+      screen.getByTestId('sidebar-school-icon').closest('[aria-hidden="true"]'),
+    ).not.toBeNull();
 
     // Expand sidebar back
     await user.click(collapseToggle);

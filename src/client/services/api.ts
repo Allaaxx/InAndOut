@@ -43,7 +43,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...restOptions,
     headers: {
-      'Content-Type': 'application/json',
+      ...(restOptions.body !== undefined
+        ? { 'Content-Type': 'application/json' }
+        : {}),
       ...((customHeaders as Record<string, string>) ?? {}),
     },
   });

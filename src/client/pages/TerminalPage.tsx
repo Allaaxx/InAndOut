@@ -14,6 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from '@client/components/ui/Card';
+import { Label } from '@client/components/ui/Label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@client/components/ui/Select';
 import { useClassSession } from '@client/hooks/useClassSession';
 import { useSocket } from '@client/hooks/useSocket';
 import { api } from '@client/services/api';
@@ -458,45 +466,51 @@ export function TerminalPage({
                   className="grid gap-4 sm:grid-cols-3 sm:items-end"
                 >
                   <div className="flex flex-col space-y-1.5">
-                    <label
+                    <Label
                       htmlFor="session-class-select"
                       className="text-sm font-medium text-slate-700"
                     >
                       Turma
-                    </label>
-                    <select
-                      id="session-class-select"
+                    </Label>
+                    <Select
                       value={selectedClassCode}
-                      onChange={(e) => setSelectedClassCode(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+                      onValueChange={setSelectedClassCode}
                     >
-                      {CLASS_OPTIONS.map((cls) => (
-                        <option key={cls} value={cls}>
-                          {cls}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="session-class-select">
+                        <SelectValue placeholder="Selecione a turma" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CLASS_OPTIONS.map((cls) => (
+                          <SelectItem key={cls} value={cls}>
+                            {cls}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="flex flex-col space-y-1.5">
-                    <label
+                    <Label
                       htmlFor="session-subject-select"
                       className="text-sm font-medium text-slate-700"
                     >
                       Disciplina
-                    </label>
-                    <select
-                      id="session-subject-select"
+                    </Label>
+                    <Select
                       value={selectedSubject}
-                      onChange={(e) => setSelectedSubject(e.target.value)}
-                      className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+                      onValueChange={setSelectedSubject}
                     >
-                      {SUBJECT_OPTIONS.map((subj) => (
-                        <option key={subj} value={subj}>
-                          {subj}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="session-subject-select">
+                        <SelectValue placeholder="Selecione a disciplina" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUBJECT_OPTIONS.map((subj) => (
+                          <SelectItem key={subj} value={subj}>
+                            {subj}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>

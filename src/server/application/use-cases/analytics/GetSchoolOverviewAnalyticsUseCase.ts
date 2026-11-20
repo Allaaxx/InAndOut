@@ -8,6 +8,12 @@ import type {
   SchoolOverviewStatsDTO,
 } from '@shared/dtos';
 import { IncidentOutcome, MovementStatus } from '@shared/enums';
+import {
+  formatDateIsoInAppTimezone,
+  getEndOfDayInAppTimezone,
+  getHourInAppTimezone,
+  getStartOfDayInAppTimezone,
+} from '@shared/timezone';
 
 export interface GetSchoolOverviewAnalyticsOptions {
   clock?: () => Date;
@@ -33,25 +39,21 @@ export class GetSchoolOverviewAnalyticsUseCase {
     const filteredMovements = allMovements.filter((m) => {
       // Date filter
       if (query.date) {
-        const isoDate = m.startedAt.toISOString().slice(0, 10);
+        const isoDate = formatDateIsoInAppTimezone(m.startedAt);
         if (isoDate !== query.date) {
           return false;
         }
       }
 
       if (query.startDate) {
-        const start = new Date(query.startDate);
+        const start = getStartOfDayInAppTimezone(query.startDate);
         if (m.startedAt.getTime() < start.getTime()) {
           return false;
         }
       }
 
       if (query.endDate) {
-        const endDateStr =
-          query.endDate.length === 10
-            ? `${query.endDate}T23:59:59.999Z`
-            : query.endDate;
-        const end = new Date(endDateStr);
+        const end = getEndOfDayInAppTimezone(query.endDate);
         if (m.startedAt.getTime() > end.getTime()) {
           return false;
         }
@@ -91,9 +93,9 @@ export class GetSchoolOverviewAnalyticsUseCase {
           ) / 10
         : 0;
 
-    const todayStr = query.date ?? now.toISOString().slice(0, 10);
+    const todayStr = query.date ?? formatDateIsoInAppTimezone(now);
     const totalExitsToday = filteredMovements.filter(
-      (m) => m.startedAt.toISOString().slice(0, 10) === todayStr,
+      (m) => formatDateIsoInAppTimezone(m.startedAt) === todayStr,
     ).length;
 
     const compliantMovements = completedMovements.filter(
@@ -129,8 +131,8 @@ export class GetSchoolOverviewAnalyticsUseCase {
     }
 
     for (const m of filteredMovements) {
-      const isoHour = parseInt(m.startedAt.toISOString().slice(11, 13), 10);
-      hourCounts.set(isoHour, (hourCounts.get(isoHour) ?? 0) + 1);
+      const localHour = getHourInAppTimezone(m.startedAt);
+      hourCounts.set(localHour, (hourCounts.get(localHour) ?? 0) + 1);
     }
 
     const sortedHours = Array.from(hourCounts.keys()).sort((a, b) => a - b);
@@ -175,7 +177,7 @@ export class GetSchoolOverviewAnalyticsUseCase {
     const outcomeDistribution: OutcomeDistributionItemDTO[] = [
       {
         outcome: 'RETURNED_NORMAL',
-        label: 'Retorno normal',
+        label: 'Retornos',
         count: returnedCount,
         percentage: calcPercentage(returnedCount),
       },
@@ -187,7 +189,7 @@ export class GetSchoolOverviewAnalyticsUseCase {
       },
       {
         outcome: IncidentOutcome.ATTENDED_AT_COORDINATION,
-        label: 'Atendimento na Coordenação',
+        label: 'Coordenação',
         count: coordinationCount,
         percentage: calcPercentage(coordinationCount),
       },

@@ -81,8 +81,11 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
     const classSelect = await screen.findByLabelText(/Turma/i);
     const subjectSelect = screen.getByLabelText(/Disciplina/i);
 
-    await user.selectOptions(classSelect, '2A');
-    await user.selectOptions(subjectSelect, 'História');
+    await user.click(classSelect);
+    await user.click(await screen.findByRole('option', { name: '2A' }));
+
+    await user.click(subjectSelect);
+    await user.click(await screen.findByRole('option', { name: 'História' }));
 
     const startBtn = screen.getByRole('button', {
       name: /Iniciar Sessão de Aula/i,

@@ -10,7 +10,28 @@ import {
   CardTitle,
 } from '@client/components/ui/Card';
 import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
+import {
+  DatePicker,
+  formatIsoDate,
+  parseIsoDate,
+} from '@client/components/ui/DatePicker';
 import { Input } from '@client/components/ui/Input';
+import { Label } from '@client/components/ui/Label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@client/components/ui/Select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@client/components/ui/Table';
 import {
   Tabs,
   TabsContent,
@@ -25,11 +46,15 @@ import type {
   StudentHistoryReportDTO,
   UserDTO,
 } from '@shared/dtos';
-import { MovementStatus } from '@shared/enums';
+import {
+  getIncidentOutcomeLabel,
+  getMovementStatusLabel,
+  MovementStatus,
+} from '@shared/enums';
+import { formatDateTimeInAppTimezone } from '@shared/timezone';
 import {
   AlertTriangle,
   ArrowLeft,
-  Calendar,
   CheckCircle2,
   Clock,
   FileSpreadsheet,
@@ -175,7 +200,7 @@ export function AnalyticsDashboardPage({
     {
       key: 'startedAt',
       header: 'Data / Hora',
-      render: (m) => new Date(m.startedAt).toLocaleString('pt-BR'),
+      render: (m) => formatDateTimeInAppTimezone(m.startedAt),
     },
     {
       key: 'subject',
@@ -211,13 +236,15 @@ export function AnalyticsDashboardPage({
           variant = 'destructive';
         else if (m.status === MovementStatus.IN_TRANSIT) variant = 'warning';
 
-        return <Badge variant={variant}>{m.status}</Badge>;
+        return (
+          <Badge variant={variant}>{getMovementStatusLabel(m.status)}</Badge>
+        );
       },
     },
     {
       key: 'outcome',
       header: 'Desfecho',
-      render: (m) => m.outcome ?? '-',
+      render: (m) => getIncidentOutcomeLabel(m.outcome),
     },
     {
       key: 'attendancePercentage',
@@ -243,7 +270,7 @@ export function AnalyticsDashboardPage({
                 Dashboard Geral da Escola
               </h1>
               <p className="text-xs text-slate-500">
-                Indicadores de Fluxo e Permanência — Escola Lins do Rego
+                Indicadores de Fluxo e Permanência
               </p>
             </div>
           </div>
@@ -291,43 +318,38 @@ export function AnalyticsDashboardPage({
             {/* Filters Toolbar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
               <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-slate-400" />
-                  <label
-                    htmlFor="class-select"
-                    className="text-xs font-semibold uppercase tracking-wider text-slate-500"
-                  >
-                    Filtrar por Turma
-                  </label>
-                  <select
-                    id="class-select"
-                    aria-label="Filtrar por Turma"
+                <div className="flex items-center gap-2 w-full sm:w-fit">
+                  <Select
                     value={selectedClassCode}
-                    onChange={(e) => setSelectedClassCode(e.target.value)}
-                    className="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                    onValueChange={setSelectedClassCode}
                   >
-                    <option value="TODOS">Todas as Turmas</option>
-                    <option value="1A">Turma 1A</option>
-                    <option value="2B">Turma 2B</option>
-                    <option value="3C">Turma 3C</option>
-                  </select>
+                    <SelectTrigger
+                      id="class-select"
+                      aria-label="Filtrar por Turma"
+                      className="h-9 font-medium text-slate-700 w-full sm:w-fit"
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <Filter className="h-4 w-4 shrink-0 text-slate-400" />
+                        <SelectValue placeholder="Filtrar por Turma" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TODOS">Todas as Turmas</SelectItem>
+                      <SelectItem value="1A">Turma 1A</SelectItem>
+                      <SelectItem value="2B">Turma 2B</SelectItem>
+                      <SelectItem value="3C">Turma 3C</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-slate-400" />
-                  <label
-                    htmlFor="date-input"
-                    className="text-xs font-semibold uppercase tracking-wider text-slate-500"
-                  >
-                    Data
-                  </label>
-                  <input
+                <div className="flex items-center gap-2 w-full sm:w-fit">
+                  <DatePicker
                     id="date-input"
                     aria-label="Data de Referência"
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                    value={parseIsoDate(selectedDate)}
+                    onChange={(date) => setSelectedDate(formatIsoDate(date))}
+                    placeholder="Selecionar data"
+                    className="h-9 w-[170px] font-medium text-slate-700"
                   />
                   {selectedDate && (
                     <button
@@ -493,41 +515,32 @@ export function AnalyticsDashboardPage({
                         data-testid="class-comparison-table"
                         className="overflow-x-auto rounded-lg border border-slate-200"
                       >
-                        <table className="w-full text-left text-sm text-slate-700">
-                          <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 border-b border-slate-200">
-                            <tr>
-                              <th className="px-4 py-3 font-semibold">Turma</th>
-                              <th className="px-4 py-3 font-semibold">
-                                Total de Saídas
-                              </th>
-                              <th className="px-4 py-3 font-semibold">
-                                Tempo Total Fora
-                              </th>
-                              <th className="px-4 py-3 font-semibold">
-                                Média por Saída
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Turma</TableHead>
+                              <TableHead>Total de Saídas</TableHead>
+                              <TableHead>Tempo Total Fora</TableHead>
+                              <TableHead>Média por Saída</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
                             {data.classComparison.map((item) => (
-                              <tr
-                                key={item.classCode}
-                                className="hover:bg-slate-50/50"
-                              >
-                                <td className="px-4 py-3 font-semibold text-slate-900">
+                              <TableRow key={item.classCode}>
+                                <TableCell className="font-semibold text-slate-900">
                                   {item.classCode}
-                                </td>
-                                <td className="px-4 py-3">{item.totalExits}</td>
-                                <td className="px-4 py-3">
+                                </TableCell>
+                                <TableCell>{item.totalExits}</TableCell>
+                                <TableCell>
                                   {item.totalOutsideMinutes} min
-                                </td>
-                                <td className="px-4 py-3">
+                                </TableCell>
+                                <TableCell>
                                   {item.averageOutsideMinutes} min
-                                </td>
-                              </tr>
+                                </TableCell>
+                              </TableRow>
                             ))}
-                          </tbody>
-                        </table>
+                          </TableBody>
+                        </Table>
                       </div>
                     </CardContent>
                   </Card>
@@ -546,12 +559,12 @@ export function AnalyticsDashboardPage({
               >
                 <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-end gap-3">
                   <div className="flex-1 space-y-1.5">
-                    <label
+                    <Label
                       htmlFor="ra-search"
                       className="text-xs font-semibold uppercase tracking-wider text-slate-600"
                     >
                       Buscar Histórico por RA
-                    </label>
+                    </Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                       <Input
@@ -564,37 +577,41 @@ export function AnalyticsDashboardPage({
                     </div>
                   </div>
 
-                  <div className="w-full sm:w-40 space-y-1.5">
-                    <label
+                  <div className="w-full sm:w-44 space-y-1.5">
+                    <Label
                       htmlFor="student-start-date"
                       className="text-xs font-semibold uppercase tracking-wider text-slate-600"
                     >
                       Data Inicial
-                    </label>
-                    <input
+                    </Label>
+                    <DatePicker
                       id="student-start-date"
                       aria-label="Data Inicial"
-                      type="date"
-                      value={studentStartDate}
-                      onChange={(e) => setStudentStartDate(e.target.value)}
-                      className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                      value={parseIsoDate(studentStartDate)}
+                      onChange={(date) =>
+                        setStudentStartDate(formatIsoDate(date))
+                      }
+                      placeholder="Data inicial"
+                      className="h-10 w-full"
                     />
                   </div>
 
-                  <div className="w-full sm:w-40 space-y-1.5">
-                    <label
+                  <div className="w-full sm:w-44 space-y-1.5">
+                    <Label
                       htmlFor="student-end-date"
                       className="text-xs font-semibold uppercase tracking-wider text-slate-600"
                     >
                       Data Final
-                    </label>
-                    <input
+                    </Label>
+                    <DatePicker
                       id="student-end-date"
                       aria-label="Data Final"
-                      type="date"
-                      value={studentEndDate}
-                      onChange={(e) => setStudentEndDate(e.target.value)}
-                      className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+                      value={parseIsoDate(studentEndDate)}
+                      onChange={(date) =>
+                        setStudentEndDate(formatIsoDate(date))
+                      }
+                      placeholder="Data final"
+                      className="h-10 w-full"
                     />
                   </div>
 

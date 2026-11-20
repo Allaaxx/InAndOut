@@ -157,7 +157,8 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
 
     // Select classCode filter
     const classSelect = screen.getByLabelText(/Filtrar por Turma/i);
-    await user.selectOptions(classSelect, '1A');
+    await user.click(classSelect);
+    await user.click(await screen.findByRole('option', { name: 'Turma 1A' }));
 
     await waitFor(() => {
       expect(api.getOverviewAnalytics).toHaveBeenCalledWith(

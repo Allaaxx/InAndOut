@@ -32,7 +32,7 @@ export function CoordinationSettingsPage({
   loading = false,
 }: CoordinationSettingsPageProps) {
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="w-full space-y-6">
       {/* Page Description */}
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
         <div className="flex items-center gap-3">

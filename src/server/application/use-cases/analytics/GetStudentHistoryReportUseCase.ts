@@ -5,6 +5,10 @@ import type {
   StudentHistoryReportDTO,
   StudentHistorySummaryDTO,
 } from '@shared/dtos';
+import {
+  getEndOfDayInAppTimezone,
+  getStartOfDayInAppTimezone,
+} from '@shared/timezone';
 
 export class StudentNotFoundError extends Error {
   constructor(ra: string) {
@@ -54,18 +58,14 @@ export class GetStudentHistoryReportUseCase {
     // Filter by startDate and endDate if provided
     const filteredMovements = allMovements.filter((m) => {
       if (input.startDate) {
-        const start = new Date(input.startDate);
+        const start = getStartOfDayInAppTimezone(input.startDate);
         if (m.startedAt.getTime() < start.getTime()) {
           return false;
         }
       }
 
       if (input.endDate) {
-        const endDateStr =
-          input.endDate.length === 10
-            ? `${input.endDate}T23:59:59.999Z`
-            : input.endDate;
-        const end = new Date(endDateStr);
+        const end = getEndOfDayInAppTimezone(input.endDate);
         if (m.startedAt.getTime() > end.getTime()) {
           return false;
         }

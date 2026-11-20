@@ -8,13 +8,24 @@ import {
   CardHeader,
   CardTitle,
 } from '@client/components/ui/Card';
+import {
+  DatePicker,
+  formatIsoDate,
+  parseIsoDate,
+} from '@client/components/ui/DatePicker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@client/components/ui/Select';
 import { toast } from '@client/components/ui/Sonner';
 import { api } from '@client/services/api';
 import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type { SchoolOverviewAnalyticsDTO } from '@shared/dtos';
 import {
   AlertTriangle,
-  Calendar,
   CheckCircle2,
   Clock,
   FileSpreadsheet,
@@ -105,50 +116,45 @@ export function CoordinationAnalyticsPage({
           Dashboard Geral da Escola
         </h2>
         <p className="text-sm text-slate-500 mt-1">
-          Indicadores de Fluxo e Permanência — Escola Lins do Rego
+          Indicadores de Fluxo e Permanência
         </p>
       </div>
 
       {/* Filters Toolbar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-400" />
-            <label
-              htmlFor="class-select"
-              className="text-xs font-semibold uppercase tracking-wider text-slate-500"
-            >
-              Filtrar por Turma
-            </label>
-            <select
-              id="class-select"
-              aria-label="Filtrar por Turma"
+          <div className="flex items-center gap-2 w-full sm:w-fit">
+            <Select
               value={selectedClassCode}
-              onChange={(e) => setSelectedClassCode(e.target.value)}
-              className="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+              onValueChange={setSelectedClassCode}
             >
-              <option value="TODOS">Todas as Turmas</option>
-              <option value="1A">Turma 1A</option>
-              <option value="2B">Turma 2B</option>
-              <option value="3C">Turma 3C</option>
-            </select>
+              <SelectTrigger
+                id="class-select"
+                aria-label="Filtrar por Turma"
+                className="h-9 w-full sm:w-fit font-medium text-slate-700"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <Filter className="h-4 w-4 shrink-0 text-slate-400" />
+                  <SelectValue placeholder="Filtrar por Turma" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODOS">Todas as Turmas</SelectItem>
+                <SelectItem value="1A">Turma 1A</SelectItem>
+                <SelectItem value="2B">Turma 2B</SelectItem>
+                <SelectItem value="3C">Turma 3C</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-slate-400" />
-            <label
-              htmlFor="date-input"
-              className="text-xs font-semibold uppercase tracking-wider text-slate-500"
-            >
-              Data
-            </label>
-            <input
+          <div className="flex items-center gap-2 w-full sm:w-fit">
+            <DatePicker
               id="date-input"
               aria-label="Data de Referência"
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
+              value={parseIsoDate(selectedDate)}
+              onChange={(date) => setSelectedDate(formatIsoDate(date))}
+              placeholder="Selecionar data"
+              className="h-9 w-full sm:w-fit  font-medium text-slate-700"
             />
             {selectedDate && (
               <button
@@ -190,13 +196,13 @@ export function CoordinationAnalyticsPage({
             size="sm"
             onClick={fetchAnalytics}
             disabled={loading}
-            className="flex items-center gap-1.5 text-xs"
+            className="flex items-center w-full sm:w-fit gap-1.5 text-xs"
             title="Atualizar dados analíticos"
           >
             <RefreshCw
               className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`}
             />
-            <span className="hidden sm:inline">Atualizar</span>
+            <span className="sm:hidden inline">Atualizar</span>
           </Button>
         </div>
       </div>

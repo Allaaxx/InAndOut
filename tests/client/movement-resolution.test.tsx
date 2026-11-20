@@ -151,9 +151,9 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
 
     // Select typed outcome (Atendido na Coordenação)
     const outcomeSelect = within(sheet).getByLabelText(/Desfecho/i);
-    await user.selectOptions(
-      outcomeSelect,
-      IncidentOutcome.ATTENDED_AT_COORDINATION,
+    await user.click(outcomeSelect);
+    await user.click(
+      await screen.findByRole('option', { name: /Atendido na Coordenação/i }),
     );
 
     // Enter notes
@@ -205,9 +205,9 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
 
     // Filter by Saídas em Trânsito
     const statusFilter = screen.getByLabelText('Filtrar por status');
-    await user.selectOptions(
-      statusFilter,
-      MovementStatus.IN_TRANSIT_UNRESOLVED,
+    await user.click(statusFilter);
+    await user.click(
+      await screen.findByRole('option', { name: /Pendente de Resolução/i }),
     );
 
     // Only João M. is visible in the filtered list
@@ -227,7 +227,8 @@ describe('Frontend Seam: Incident Resolution Drawer (Shadcn Sheet) & Saídas em 
 
     // Select Evasão
     const outcomeSelect = within(sheet).getByLabelText(/Desfecho/i);
-    await user.selectOptions(outcomeSelect, IncidentOutcome.EVASION);
+    await user.click(outcomeSelect);
+    await user.click(await screen.findByRole('option', { name: /Evasão/i }));
 
     // Enter notes
     const notesInput = within(sheet).getByLabelText(/Observações/i);

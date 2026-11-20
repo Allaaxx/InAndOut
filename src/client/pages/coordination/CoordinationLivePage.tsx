@@ -2,7 +2,14 @@ import { Badge } from '@client/components/ui/Badge';
 import { Button } from '@client/components/ui/Button';
 import { Card } from '@client/components/ui/Card';
 import { type ColumnDef, DataTable } from '@client/components/ui/DataTable';
-import { Input } from '@client/components/ui/Input';
+import { Label } from '@client/components/ui/Label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@client/components/ui/Select';
 import {
   Sheet,
   SheetContent,
@@ -10,6 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@client/components/ui/Sheet';
+import { Textarea } from '@client/components/ui/Textarea';
 import type { MovementDTO } from '@shared/dtos';
 import {
   AlertLevel,
@@ -17,6 +25,7 @@ import {
   IncidentOutcome,
   MovementStatus,
 } from '@shared/enums';
+import { formatTimeInAppTimezone } from '@shared/timezone';
 import {
   AlertTriangle,
   Clock,
@@ -59,23 +68,21 @@ export function CoordinationLivePage({
   onCloseSheet,
   onConfirmResolution,
 }: CoordinationLivePageProps) {
-  const [filterClassCode, setFilterClassCode] = useState('');
+  const [selectedClassCode, setSelectedClassCode] = useState<string>('TODOS');
+
   const [filterStatus, setFilterStatus] = useState<string>('TODOS');
 
   const filteredMovements = useMemo(() => {
     return movements.filter((m) => {
-      if (filterClassCode.trim()) {
-        const matchesClass = m.classCode
-          .toLowerCase()
-          .includes(filterClassCode.trim().toLowerCase());
-        if (!matchesClass) return false;
+      if (selectedClassCode !== 'TODOS' && m.classCode !== selectedClassCode) {
+        return false;
       }
       if (filterStatus !== 'TODOS') {
         if (m.status !== filterStatus) return false;
       }
       return true;
     });
-  }, [movements, filterClassCode, filterStatus]);
+  }, [movements, selectedClassCode, filterStatus]);
 
   const escalatedCount = useMemo(
     () =>
@@ -318,32 +325,53 @@ export function CoordinationLivePage({
       <Card className="bg-white p-4 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1 max-w-sm">
-              <Input
-                placeholder="Filtrar por turma (ex: 1A, 2B)..."
-                value={filterClassCode}
-                onChange={(e) => setFilterClassCode(e.target.value)}
-                className="pl-9 text-sm"
-              />
-              <Filter className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <div className="flex items-center gap-2 w-full sm:w-fit">
+              <Select
+                value={selectedClassCode}
+                onValueChange={setSelectedClassCode}
+              >
+                <SelectTrigger
+                  id="class-select"
+                  aria-label="Filtrar por Turma"
+                  className="h-9 w-full sm:w-fit font-medium text-slate-700"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <Filter className="h-4 w-4 shrink-0 text-slate-400" />
+                    <SelectValue placeholder="Filtrar por Turma" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODOS">Todas as Turmas</SelectItem>
+                  <SelectItem value="1A">Turma 1A</SelectItem>
+                  <SelectItem value="2B">Turma 2B</SelectItem>
+                  <SelectItem value="3C">Turma 3C</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              aria-label="Filtrar por status"
-              className="h-9 rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-700 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
-            >
-              <option value="TODOS">Todos os Status</option>
-              <option value={MovementStatus.IN_TRANSIT}>Em Trânsito</option>
-              <option value={MovementStatus.OVERDUE}>Atrasadas</option>
-              <option value={MovementStatus.ESCALATED_TO_COORDINATION}>
-                Crítico / Escaladas
-              </option>
-              <option value={MovementStatus.IN_TRANSIT_UNRESOLVED}>
-                Pendente de Resolução
-              </option>
-            </select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger
+                aria-label="Filtrar por status"
+                className="h-9 w-[210px] text-slate-700"
+              >
+                <SelectValue placeholder="Todos os Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODOS">Todos os Status</SelectItem>
+                <SelectItem value={MovementStatus.IN_TRANSIT}>
+                  Em Trânsito
+                </SelectItem>
+                <SelectItem value={MovementStatus.OVERDUE}>
+                  Atrasadas
+                </SelectItem>
+                <SelectItem value={MovementStatus.ESCALATED_TO_COORDINATION}>
+                  Crítico / Escaladas
+                </SelectItem>
+                <SelectItem value={MovementStatus.IN_TRANSIT_UNRESOLVED}>
+                  Pendente de Resolução
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </Card>
@@ -480,25 +508,14 @@ export function CoordinationLivePage({
                 <div className="flex justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-500">Horário de Saída:</span>
                   <span className="font-medium text-slate-800">
-                    {new Date(selectedMovement.startedAt).toLocaleTimeString(
-                      'pt-BR',
-                      {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      },
-                    )}
+                    {formatTimeInAppTimezone(selectedMovement.startedAt)}
                   </span>
                 </div>
                 {selectedMovement.escalatedAt && (
                   <div className="flex justify-between py-1">
                     <span className="text-slate-500">Escalado em:</span>
                     <span className="font-medium text-rose-600">
-                      {new Date(
-                        selectedMovement.escalatedAt,
-                      ).toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatTimeInAppTimezone(selectedMovement.escalatedAt)}
                     </span>
                   </div>
                 )}
@@ -507,56 +524,60 @@ export function CoordinationLivePage({
               {/* Resolution Form */}
               <div className="space-y-4">
                 <div>
-                  <label
+                  <Label
                     htmlFor="coordination-outcome-select"
                     className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
                   >
                     Desfecho / Encaminhamento
-                  </label>
-                  <select
-                    id="coordination-outcome-select"
+                  </Label>
+                  <Select
                     value={outcome}
-                    onChange={(e) =>
-                      setOutcome(e.target.value as IncidentOutcome)
+                    onValueChange={(value) =>
+                      setOutcome(value as IncidentOutcome)
                     }
-                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
                   >
-                    <option value={IncidentOutcome.RETURNED_TO_CLASS}>
-                      {INCIDENT_OUTCOME_LABELS[
-                        IncidentOutcome.RETURNED_TO_CLASS
-                      ] || 'Retornou à Sala de Aula'}
-                    </option>
-                    <option value={IncidentOutcome.SENT_TO_INFIRMARY}>
-                      {INCIDENT_OUTCOME_LABELS[
-                        IncidentOutcome.SENT_TO_INFIRMARY
-                      ] || 'Encaminhado à Enfermaria'}
-                    </option>
-                    <option value={IncidentOutcome.ATTENDED_AT_COORDINATION}>
-                      {INCIDENT_OUTCOME_LABELS[
-                        IncidentOutcome.ATTENDED_AT_COORDINATION
-                      ] || 'Atendido na Coordenação'}
-                    </option>
-                    <option value={IncidentOutcome.EVASION}>
-                      {INCIDENT_OUTCOME_LABELS[IncidentOutcome.EVASION] ||
-                        'Evasão'}
-                    </option>
-                  </select>
+                    <SelectTrigger id="coordination-outcome-select">
+                      <SelectValue placeholder="Selecione o desfecho" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={IncidentOutcome.RETURNED_TO_CLASS}>
+                        {INCIDENT_OUTCOME_LABELS[
+                          IncidentOutcome.RETURNED_TO_CLASS
+                        ] || 'Retornou à Sala de Aula'}
+                      </SelectItem>
+                      <SelectItem value={IncidentOutcome.SENT_TO_INFIRMARY}>
+                        {INCIDENT_OUTCOME_LABELS[
+                          IncidentOutcome.SENT_TO_INFIRMARY
+                        ] || 'Encaminhado à Enfermaria'}
+                      </SelectItem>
+                      <SelectItem
+                        value={IncidentOutcome.ATTENDED_AT_COORDINATION}
+                      >
+                        {INCIDENT_OUTCOME_LABELS[
+                          IncidentOutcome.ATTENDED_AT_COORDINATION
+                        ] || 'Atendido na Coordenação'}
+                      </SelectItem>
+                      <SelectItem value={IncidentOutcome.EVASION}>
+                        {INCIDENT_OUTCOME_LABELS[IncidentOutcome.EVASION] ||
+                          'Evasão'}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <label
+                  <Label
                     htmlFor="coordination-resolution-notes"
                     className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
                   >
                     Observações / Parecer da Coordenação
-                  </label>
-                  <textarea
+                  </Label>
+                  <Textarea
                     id="coordination-resolution-notes"
                     rows={4}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Descreva as medidas tomadas, contato com responsáveis ou orientações ao aluno..."
-                    className="w-full rounded-md border border-slate-300 p-2.5 text-sm text-slate-800 shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
                   />
                 </div>
 
