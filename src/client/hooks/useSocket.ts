@@ -15,6 +15,23 @@ const SOCKET_URL =
       ?.VITE_API_URL) ||
   'http://localhost:3000';
 
+interface SocketTarget {
+  origin: string;
+  path: string;
+}
+
+/**
+ * socket.io-client treats a URL pathname as a namespace, so an API mounted
+ * under a prefix (e.g. `/api` behind the web reverse proxy) must be expressed
+ * as the transport `path` instead.
+ */
+export function resolveSocketTarget(apiUrl: string): SocketTarget {
+  const fallbackOrigin = globalThis.location?.origin ?? 'http://localhost';
+  const parsed = new URL(apiUrl, fallbackOrigin);
+  const basePath = parsed.pathname.replace(/\/+$/, '');
+  return { origin: parsed.origin, path: `${basePath}/socket.io` };
+}
+
 export interface UseSocketOptions {
   sessionId?: string | null;
   roomCode?: string | null;
@@ -130,12 +147,13 @@ export function useSocket({
     const isTestEnv =
       typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
 
-    const socketUrl = url ?? SOCKET_URL;
+    const socketTarget = resolveSocketTarget(url ?? SOCKET_URL);
     const shouldAutoConnect = autoConnect ?? !isTestEnv;
 
     let socket: Socket | null = null;
     try {
-      socket = io(socketUrl, {
+      socket = io(socketTarget.origin, {
+        path: socketTarget.path,
         autoConnect: shouldAutoConnect,
         transports: ['websocket', 'polling'],
       });
