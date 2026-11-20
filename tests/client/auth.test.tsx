@@ -64,8 +64,14 @@ describe('Frontend Seam: LoginPage & Shadcn InputOTP Classroom Terminal Unlock',
       await screen.findByText(/Prof\. Carlos Eduardo/i),
     ).toBeInTheDocument();
 
-    // 3. Teacher locks the terminal between classes
-    const lockBtn = screen.getByRole('button', { name: /Bloquear Terminal/i });
+    // 3. Teacher locks the terminal between classes via dropdown menu
+    const menuTrigger = screen.getByRole('button', {
+      name: /Ações do Professor/i,
+    });
+    await user.click(menuTrigger);
+    const lockBtn = await screen.findByRole('menuitem', {
+      name: /Bloquear Terminal/i,
+    });
     await user.click(lockBtn);
 
     expect(await screen.findByText(/Terminal Bloqueado/i)).toBeInTheDocument();

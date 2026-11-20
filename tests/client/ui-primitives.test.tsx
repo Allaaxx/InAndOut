@@ -1,3 +1,4 @@
+import { UserMenuDropdown } from '@client/components/shared/UserMenuDropdown';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@client/components/ui/Dialog';
+import { DropdownMenuItem } from '@client/components/ui/DropdownMenu';
 import {
   InputOTP,
   InputOTPGroup,
@@ -61,6 +63,7 @@ import {
   TableRow,
 } from '@client/components/ui/Table';
 import { Textarea } from '@client/components/ui/Textarea';
+import { UserRole } from '@shared/enums';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -544,6 +547,50 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
       expect(scrollArea).toBeInTheDocument();
       expect(scrollArea.className).toContain('h-40');
       expect(screen.getByText('Conteúdo rolável')).toBeInTheDocument();
+    });
+  });
+
+  describe('DropdownMenu & UserMenuDropdown', () => {
+    it('opens user dropdown menu, renders custom items, and triggers logout', async () => {
+      const user = userEvent.setup();
+      const handleCustomAction = vi.fn();
+      const handleLogout = vi.fn();
+
+      render(
+        <UserMenuDropdown
+          user={{
+            id: 'teacher-1',
+            name: 'Prof. Carlos Eduardo',
+            email: 'prof@linsdorego.edu.br',
+            role: UserRole.TEACHER,
+          }}
+          triggerAriaLabel="Ações do Professor"
+          onLogout={handleLogout}
+          logoutLabel="Sair"
+        >
+          <DropdownMenuItem onSelect={handleCustomAction}>
+            Bloquear Terminal
+          </DropdownMenuItem>
+        </UserMenuDropdown>,
+      );
+
+      const trigger = screen.getByRole('button', {
+        name: /Ações do Professor/i,
+      });
+      await user.click(trigger);
+
+      expect(
+        await screen.findByText('prof@linsdorego.edu.br'),
+      ).toBeInTheDocument();
+
+      await user.click(
+        screen.getByRole('menuitem', { name: /Bloquear Terminal/i }),
+      );
+      expect(handleCustomAction).toHaveBeenCalledTimes(1);
+
+      await user.click(trigger);
+      await user.click(await screen.findByRole('menuitem', { name: /Sair/i }));
+      expect(handleLogout).toHaveBeenCalledTimes(1);
     });
   });
 });

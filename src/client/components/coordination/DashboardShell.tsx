@@ -1,3 +1,8 @@
+import { UserMenuDropdown } from '@client/components/shared/UserMenuDropdown';
+import {
+  DropdownMenuGroup,
+  DropdownMenuItem,
+} from '@client/components/ui/DropdownMenu';
 import { ScrollArea } from '@client/components/ui/ScrollArea';
 import type { UserDTO } from '@shared/dtos';
 import {
@@ -5,9 +10,7 @@ import {
   BarChart3,
   Bell,
   BellOff,
-  ChevronDown,
   GraduationCap,
-  LogOut,
   Menu,
   PanelLeftClose,
   PanelRightClose,
@@ -16,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export interface DashboardShellProps {
@@ -48,36 +51,6 @@ export function DashboardShell({
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
-
-  // Close profile dropdown on outside click or Escape
-  useEffect(() => {
-    if (!isProfileOpen) return;
-
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(event.target as Node)
-      ) {
-        setIsProfileOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsProfileOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isProfileOpen]);
 
   const navItems: NavItem[] = useMemo(
     () => [
@@ -167,17 +140,6 @@ export function DashboardShell({
       subtitle: 'Monitoramento de saídas em tempo real de toda a escola',
     };
   }, [currentPath]);
-
-  const userInitials = useMemo(() => {
-    if (!user.name) return 'CO';
-    const cleaned = user.name.replace(
-      /^(Coord\.|Prof\.|Dr\.|Dra\.|Sr\.|Sra\.)\s+/i,
-      '',
-    );
-    const parts = cleaned.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }, [user.name]);
 
   const handleNavigate = (path: string) => {
     if (path === '/coordination/analytics' && onNavigateToAnalytics) {
@@ -391,116 +353,57 @@ export function DashboardShell({
             </div>
           </div>
 
-          {/* Right section: profile dropdown menu grouping user info, sound toggle and logout */}
-          <div className="relative" ref={profileRef}>
-            <button
-              type="button"
-              onClick={() => setIsProfileOpen((prev) => !prev)}
-              data-testid="coordinator-profile-dropdown-trigger"
-              aria-expanded={isProfileOpen}
-              aria-haspopup="menu"
-              aria-label="Menu do Usuário"
-              className="flex items-center gap-2.5 rounded-lg p-1.5 hover:bg-slate-100 transition-colors focus:outline-hidden"
-            >
-              <div
-                data-testid="coordinator-avatar"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 ring-2 ring-indigo-50"
-                title={user.name}
-              >
-                {userInitials}
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-xs font-semibold text-slate-900 leading-none truncate max-w-[140px]">
-                  {user.name}
-                </p>
-                <p className="text-[10px] text-slate-500 leading-tight">
-                  Coordenação
-                </p>
-              </div>
-              <ChevronDown className="h-4 w-4 text-slate-400" />
-            </button>
-
-            {isProfileOpen && (
-              <div
-                data-testid="coordinator-profile-dropdown"
-                role="menu"
-                className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-lg z-50 text-slate-900 animate-in fade-in-0 zoom-in-95"
-              >
-                <div className="px-3 py-2 border-b border-slate-100">
-                  <p className="text-sm font-semibold text-slate-900 truncate">
-                    {user.name}
-                  </p>
-                  <p className="text-xs text-slate-500 truncate">
-                    {user.email}
-                  </p>
-                </div>
-
-                <div className="py-1">
-                  {onToggleSound && (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        onToggleSound();
-                      }}
-                      className="flex w-full items-center justify-between gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
-                      title="Configurar Alerta Sonoro"
-                      aria-label="Alerta Sonoro"
-                    >
-                      <div className="flex items-center gap-2">
-                        {soundEnabled ? (
-                          <Bell className="h-4 w-4 text-emerald-600" />
-                        ) : (
-                          <BellOff className="h-4 w-4 text-slate-400" />
-                        )}
-                        <span>Alerta Sonoro</span>
-                      </div>
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          soundEnabled
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        {soundEnabled ? 'Ativado' : 'Silenciado'}
-                      </span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      handleNavigate('/coordination/settings');
-                      setIsProfileOpen(false);
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 transition-colors"
-                  >
-                    <Settings className="h-4 w-4 text-slate-400" />
-                    <span>Configurações</span>
-                  </button>
-                </div>
-
-                {onLogout && (
-                  <div className="pt-1 border-t border-slate-100">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        onLogout();
-                      }}
-                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
-                      aria-label="Sair"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sair</span>
-                    </button>
+          {/* Right section: reusable profile dropdown menu */}
+          <UserMenuDropdown
+            user={user}
+            roleLabel="Coordenação"
+            triggerAriaLabel="Menu do Usuário"
+            triggerTestId="coordinator-profile-dropdown-trigger"
+            avatarTestId="coordinator-avatar"
+            contentTestId="coordinator-profile-dropdown"
+            onLogout={onLogout}
+            logoutLabel="Sair"
+          >
+            <DropdownMenuGroup>
+              {onToggleSound && (
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    onToggleSound();
+                  }}
+                  title="Configurar Alerta Sonoro"
+                  aria-label="Alerta Sonoro"
+                  className="justify-between text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    {soundEnabled ? (
+                      <Bell className="h-4 w-4 text-emerald-600" />
+                    ) : (
+                      <BellOff className="h-4 w-4 text-slate-400" />
+                    )}
+                    <span>Alerta Sonoro</span>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      soundEnabled
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
+                    {soundEnabled ? 'Ativado' : 'Silenciado'}
+                  </span>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem
+                onSelect={() => handleNavigate('/coordination/settings')}
+                className="text-xs"
+              >
+                <Settings className="h-4 w-4 text-slate-400" />
+                <span>Configurações</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </UserMenuDropdown>
         </header>
 
         {/* Page Content Body */}

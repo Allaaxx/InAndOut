@@ -1,3 +1,4 @@
+import { UserMenuDropdown } from '@client/components/shared/UserMenuDropdown';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -8,10 +9,14 @@ import {
 } from '@client/components/ui/AlertDialog';
 import { Badge } from '@client/components/ui/Badge';
 import { Button } from '@client/components/ui/Button';
+import {
+  DropdownMenuGroup,
+  DropdownMenuItem,
+} from '@client/components/ui/DropdownMenu';
 import { cn } from '@client/components/ui/utils';
 import type { ClassSessionDTO, UserDTO } from '@shared/dtos';
-import { Lock, LogOut, MoreVertical, PowerOff, School } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Lock, PowerOff, RefreshCwIcon } from 'lucide-react';
+import { useState } from 'react';
 
 export interface TerminalNavbarProps {
   user: UserDTO;
@@ -36,34 +41,7 @@ export function TerminalNavbar({
   onLogout,
   className,
 }: TerminalNavbarProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [confirmEndOpen, setConfirmEndOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown menu on click outside or Escape
-  useEffect(() => {
-    if (!isMenuOpen) return;
-
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isMenuOpen]);
 
   const handleConfirmEndSession = async () => {
     if (onEndSession) {
@@ -82,26 +60,29 @@ export function TerminalNavbar({
           className,
         )}
       >
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+        <div className="mx-auto flex flex-col sm:flex-row max-w-5xl items-center justify-between gap-4">
           {/* Brand & Room/Class Info */}
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-2xs">
-                <School className="h-5 w-5" />
+          <div className="flex justify-start flex-col sm:flex-row gap-4 min-w-0">
+            <div className="flex items-center gap-3">
+              <div
+                data-testid="sidebar-school-icon"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs"
+              >
+                <RefreshCwIcon className="h-4 w-4" />
               </div>
               <div>
-                <span className="text-lg font-bold tracking-tight text-slate-900 block leading-tight">
+                <span className="text-sm font-bold tracking-tight text-slate-900 block">
                   InAndOut
                 </span>
-                <span className="text-2xs text-slate-500 font-medium block">
-                  Terminal de Sala
+                <span className="text-xs text-slate-500 block">
+                  Terminal de sala
                 </span>
               </div>
             </div>
 
             <div className="hidden sm:block h-8 w-px bg-slate-200" />
 
-            <div className="min-w-0">
+            <div className="min-w-0 flex items-center">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-slate-900 text-sm">
                   {displayRoomId}
@@ -126,16 +107,11 @@ export function TerminalNavbar({
                   </>
                 )}
               </div>
-              <p className="text-xs text-slate-500 truncate">
-                Docente:{' '}
-                <span className="font-medium text-slate-700">{user.name}</span>
-              </p>
             </div>
           </div>
 
-          {/* Status Badge, Lock Button & Teacher Dropdown */}
+          {/* Status Badge & Teacher User Dropdown */}
           <div className="flex items-center gap-3 shrink-0">
-            {/* Single concurrency badge */}
             <Badge
               variant={isOccupied ? 'warning' : 'success'}
               data-testid="concurrency-badge"
@@ -144,76 +120,31 @@ export function TerminalNavbar({
               {isOccupied ? 'Em Atendimento' : 'Sala Liberada'}
             </Badge>
 
-            {/* Quick 1-touch screen lock */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onLock}
-              disabled={isLocked}
-              className="flex items-center gap-1.5"
+            <UserMenuDropdown
+              user={user}
+              roleLabel="Docente"
+              triggerAriaLabel="Ações do Professor"
+              triggerTestId="teacher-profile-dropdown-trigger"
+              onLogout={onLogout}
+              logoutLabel="Sair / Logout"
             >
-              <Lock className="h-4 w-4" />
-              <span>Bloquear Terminal</span>
-            </Button>
+              <DropdownMenuGroup>
+                <DropdownMenuItem onSelect={onLock} disabled={isLocked}>
+                  <Lock className="h-4 w-4 shrink-0 text-slate-500" />
+                  <span>Bloquear Terminal</span>
+                </DropdownMenuItem>
 
-            {/* Discreet dropdown menu for teacher actions */}
-            <div className="relative" ref={menuRef}>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label="Ações do Professor"
-                aria-haspopup="menu"
-                aria-expanded={isMenuOpen}
-                onClick={() => setIsMenuOpen((prev) => !prev)}
-                className="h-9 w-9 p-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
-              >
-                <MoreVertical className="h-5 w-5" />
-              </Button>
-
-              {isMenuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg z-50 animate-in fade-in-0 zoom-in-95"
-                >
-                  <div className="px-3 py-2 border-b border-slate-100 text-xs">
-                    <p className="font-semibold text-slate-800 truncate">
-                      {user.name}
-                    </p>
-                    <p className="text-slate-500 truncate">{user.email}</p>
-                  </div>
-
-                  <div className="pt-1 space-y-1">
-                    {activeSession && onEndSession && (
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          setConfirmEndOpen(true);
-                        }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50 rounded-lg text-left font-medium transition-colors"
-                      >
-                        <PowerOff className="h-4 w-4 shrink-0" />
-                        <span>Encerrar Sessão de Aula</span>
-                      </button>
-                    )}
-
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        onLogout();
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg text-left font-medium transition-colors"
-                    >
-                      <LogOut className="h-4 w-4 shrink-0" />
-                      <span>Sair / Logout</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                {activeSession && onEndSession && (
+                  <DropdownMenuItem
+                    onSelect={() => setConfirmEndOpen(true)}
+                    className="text-amber-700 focus:bg-amber-50 focus:text-amber-800"
+                  >
+                    <PowerOff className="h-4 w-4 shrink-0" />
+                    <span>Encerrar Sessão de Aula</span>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuGroup>
+            </UserMenuDropdown>
           </div>
         </div>
       </header>

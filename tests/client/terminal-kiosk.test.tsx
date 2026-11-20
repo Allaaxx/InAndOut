@@ -140,7 +140,12 @@ describe('Kiosk Terminal: Minimalist Navbar & Footer Components (Ticket #37)', (
         />,
       );
 
-      const lockBtn = screen.getByRole('button', {
+      const menuTrigger = screen.getByRole('button', {
+        name: /Ações do Professor/i,
+      });
+      await user.click(menuTrigger);
+
+      const lockBtn = await screen.findByRole('menuitem', {
         name: /Bloquear Terminal/i,
       });
       await user.click(lockBtn);
