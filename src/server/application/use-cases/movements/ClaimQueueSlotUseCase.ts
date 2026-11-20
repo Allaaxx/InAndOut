@@ -14,6 +14,7 @@ import {
   QueueWindowExpiredError,
 } from './EnqueueStudentUseCase';
 import {
+  InactiveStudentError,
   MovementNotFoundError,
   MovementValidationError,
 } from './RequestStudentExitUseCase';
@@ -79,6 +80,12 @@ export class ClaimQueueSlotUseCase {
     if (!student) {
       throw new MovementNotFoundError(
         `Aluno com RA ${raObj.value} não encontrado.`,
+      );
+    }
+
+    if (!student.isActive) {
+      throw new InactiveStudentError(
+        `O aluno ${student.publicName} (RA ${student.ra}) está inativo e não pode confirmar saída pela Fila de Espera.`,
       );
     }
 

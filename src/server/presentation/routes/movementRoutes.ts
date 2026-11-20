@@ -1,5 +1,6 @@
 import { RegisterStudentReturnUseCase } from '@server/application/use-cases/movements/RegisterStudentReturnUseCase';
 import {
+  InactiveStudentError,
   MovementConcurrencyConflictError,
   MovementNotFoundError,
   MovementValidationError,
@@ -50,7 +51,10 @@ export async function registerMovementRoutes(
         if (err instanceof MovementNotFoundError) {
           return reply.status(404).send({ error: err.message });
         }
-        if (err instanceof StudentNotInClassError) {
+        if (
+          err instanceof StudentNotInClassError ||
+          err instanceof InactiveStudentError
+        ) {
           return reply.status(403).send({ error: err.message });
         }
         if (err instanceof MovementConcurrencyConflictError) {

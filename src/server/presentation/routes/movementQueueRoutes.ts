@@ -6,6 +6,7 @@ import {
   QueueWindowExpiredError,
 } from '@server/application/use-cases/movements/EnqueueStudentUseCase';
 import {
+  InactiveStudentError,
   MovementNotFoundError,
   MovementValidationError,
   StudentNotInClassError,
@@ -62,7 +63,10 @@ export async function registerMovementQueueRoutes(
         if (err instanceof MovementNotFoundError) {
           return reply.status(404).send({ error: err.message });
         }
-        if (err instanceof StudentNotInClassError) {
+        if (
+          err instanceof StudentNotInClassError ||
+          err instanceof InactiveStudentError
+        ) {
           return reply.status(403).send({ error: err.message });
         }
         if (err instanceof QueueConflictError) {
@@ -121,6 +125,9 @@ export async function registerMovementQueueRoutes(
         }
         if (err instanceof MovementNotFoundError) {
           return reply.status(404).send({ error: err.message });
+        }
+        if (err instanceof InactiveStudentError) {
+          return reply.status(403).send({ error: err.message });
         }
         if (
           err instanceof QueueConflictError ||
