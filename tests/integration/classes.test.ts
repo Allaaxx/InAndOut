@@ -350,4 +350,76 @@ describe('Controller Seam: Classes Catalog Management (app.inject)', () => {
 
     await app.close();
   });
+
+  it('rejects deactivating a Turma with an ACTIVE ClassSession (HTTP 409) and allows deactivation once ended even with enrolled students', async () => {
+    const { app, container } = await createApp(
+      {},
+      { enableBackgroundTimer: false },
+    );
+    const teacherToken = await loginAs(
+      app,
+      'prof@linsdorego.edu.br',
+      'senha123',
+    );
+    const coordToken = await loginAs(
+      app,
+      'coord@linsdorego.edu.br',
+      'coord123',
+    );
+
+    // Verify 1A has enrolled students in seed
+    const enrolledIn1A = await container.studentRepo.findByClassCode('1A');
+    expect(enrolledIn1A.length).toBeGreaterThan(0);
+
+    // Start an active session for Turma 1A
+    const startRes = await app.inject({
+      method: 'POST',
+      url: '/sessions/start',
+      headers: { authorization: `Bearer ${teacherToken}` },
+      payload: {
+        classGroupId: 'class-2026-1a',
+        subject: 'Matemática',
+        roomId: 'SALA-01',
+      },
+    });
+    expect(startRes.statusCode).toBe(201);
+    const sessionId = startRes.json().session.id as string;
+
+    // Attempt to deactivate 1A while session is ACTIVE -> 409 Conflict
+    const blockedDeactivateRes = await app.inject({
+      method: 'PATCH',
+      url: '/classes/class-2026-1a/status',
+      headers: { authorization: `Bearer ${coordToken}` },
+      payload: { isActive: false },
+    });
+    expect(blockedDeactivateRes.statusCode).toBe(409);
+    expect(blockedDeactivateRes.json()).toMatchObject({
+      error: expect.stringMatching(/sessão.*ativa/i),
+    });
+
+    // End the active session
+    const endRes = await app.inject({
+      method: 'POST',
+      url: '/sessions/end',
+      headers: { authorization: `Bearer ${teacherToken}` },
+      payload: { sessionId },
+    });
+    expect(endRes.statusCode).toBe(200);
+
+    // Now deactivating 1A succeeds -> 200 (even though students remain enrolled in 1A)
+    const allowedDeactivateRes = await app.inject({
+      method: 'PATCH',
+      url: '/classes/class-2026-1a/status',
+      headers: { authorization: `Bearer ${coordToken}` },
+      payload: { isActive: false },
+    });
+    expect(allowedDeactivateRes.statusCode).toBe(200);
+    expect(allowedDeactivateRes.json().classGroup).toMatchObject({
+      id: 'class-2026-1a',
+      code: '1A',
+      isActive: false,
+    });
+
+    await app.close();
+  });
 });

@@ -47,8 +47,33 @@ export function CoordinationAnalyticsPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedClassCode, setSelectedClassCode] = useState<string>('TODOS');
+  const [classCodes, setClassCodes] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    if (typeof api.listClasses !== 'function') {
+      return;
+    }
+
+    let cancelled = false;
+    api
+      .listClasses(token)
+      .then((res) => {
+        if (cancelled) return;
+        const uniqueCodes = Array.from(
+          new Set((res.classes ?? []).map((item) => item.code)),
+        ).sort((a, b) => a.localeCompare(b));
+        setClassCodes(uniqueCodes);
+      })
+      .catch(() => {
+        // Keep existing options if class catalog fails to load
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -140,9 +165,11 @@ export function CoordinationAnalyticsPage({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="TODOS">Todas as Turmas</SelectItem>
-                <SelectItem value="1A">Turma 1A</SelectItem>
-                <SelectItem value="2B">Turma 2B</SelectItem>
-                <SelectItem value="3C">Turma 3C</SelectItem>
+                {classCodes.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    Turma {code}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
