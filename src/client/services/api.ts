@@ -6,6 +6,8 @@ import type {
   ClaimQueueRequestDTO,
   ClaimQueueResponseDTO,
   CoordinationActiveMovementsResponseDTO,
+  CreateClassGroupRequestDTO,
+  CreateClassGroupResponseDTO,
   CreateRoomRequestDTO,
   CreateRoomResponseDTO,
   EmergencyExitRequestDTO,
@@ -16,6 +18,7 @@ import type {
   EscalateMovementRequestDTO,
   ExportAnalyticsQueryDTO,
   GuestExitRequestDTO,
+  ListClassGroupsResponseDTO,
   ListRoomsResponseDTO,
   LoginRequestDTO,
   LoginResponseDTO,
@@ -33,6 +36,10 @@ import type {
   StartSessionResponseDTO,
   StudentHistoryQueryDTO,
   StudentHistoryReportDTO,
+  UpdateClassGroupRequestDTO,
+  UpdateClassGroupResponseDTO,
+  UpdateClassGroupStatusRequestDTO,
+  UpdateClassGroupStatusResponseDTO,
   UpdateRoomStatusRequestDTO,
   UpdateRoomStatusResponseDTO,
   VerifyPinResponseDTO,
@@ -376,6 +383,71 @@ export const api = {
   ): Promise<UpdateRoomStatusResponseDTO> {
     return request<UpdateRoomStatusResponseDTO>(
       `/rooms/${encodeURIComponent(roomId)}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+  },
+
+  async listClasses(
+    token: string,
+    params: { onlyActive?: boolean; academicYear?: number } = {},
+  ): Promise<ListClassGroupsResponseDTO> {
+    const searchParams = new URLSearchParams();
+    if (params.onlyActive) searchParams.append('onlyActive', 'true');
+    if (params.academicYear !== undefined) {
+      searchParams.append('academicYear', String(params.academicYear));
+    }
+    const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return request<ListClassGroupsResponseDTO>(`/classes${query}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  async createClass(
+    payload: CreateClassGroupRequestDTO,
+    token: string,
+  ): Promise<CreateClassGroupResponseDTO> {
+    return request<CreateClassGroupResponseDTO>('/classes', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async updateClass(
+    classId: string,
+    payload: UpdateClassGroupRequestDTO,
+    token: string,
+  ): Promise<UpdateClassGroupResponseDTO> {
+    return request<UpdateClassGroupResponseDTO>(
+      `/classes/${encodeURIComponent(classId)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+  },
+
+  async updateClassStatus(
+    classId: string,
+    payload: UpdateClassGroupStatusRequestDTO,
+    token: string,
+  ): Promise<UpdateClassGroupStatusResponseDTO> {
+    return request<UpdateClassGroupStatusResponseDTO>(
+      `/classes/${encodeURIComponent(classId)}/status`,
       {
         method: 'PATCH',
         headers: {

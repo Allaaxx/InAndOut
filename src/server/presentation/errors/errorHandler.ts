@@ -5,6 +5,11 @@ import {
   ValidationError,
 } from '@server/application/use-cases/auth/LoginUseCase';
 import {
+  ClassGroupConflictError,
+  ClassGroupValidationError,
+} from '@server/application/use-cases/classes/CreateClassGroupUseCase';
+import { ClassGroupNotFoundError } from '@server/application/use-cases/classes/UpdateClassGroupUseCase';
+import {
   MovementNotFoundError as CoordinationMovementNotFoundError,
   InvalidOutcomeError,
 } from '@server/application/use-cases/coordination/ResolveMovementIncidentUseCase';
@@ -44,6 +49,7 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     err instanceof MovementValidationError ||
     err instanceof SessionValidationError ||
     err instanceof RoomValidationError ||
+    err instanceof ClassGroupValidationError ||
     err instanceof InvalidOutcomeError ||
     err instanceof InvalidExportFormatError ||
     err instanceof MovementAuthorizationError ||
@@ -74,7 +80,8 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     err instanceof CoordinationMovementNotFoundError ||
     err instanceof SessionNotFoundError ||
     err instanceof StudentNotFoundError ||
-    err instanceof RoomNotFoundError
+    err instanceof RoomNotFoundError ||
+    err instanceof ClassGroupNotFoundError
   ) {
     return {
       statusCode: 404,
@@ -86,7 +93,8 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     err instanceof MovementConcurrencyConflictError ||
     err instanceof QueueConflictError ||
     err instanceof SessionConflictError ||
-    err instanceof RoomConflictError
+    err instanceof RoomConflictError ||
+    err instanceof ClassGroupConflictError
   ) {
     return {
       statusCode: 409,

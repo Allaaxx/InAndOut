@@ -382,3 +382,44 @@ export interface UpdateRoomStatusRequestDTO {
 export interface UpdateRoomStatusResponseDTO {
   room: RoomDTO;
 }
+
+export interface ClassGroupDTO {
+  id: string;
+  code: string;
+  name: string;
+  academicYear: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListClassGroupsResponseDTO {
+  classes: ClassGroupDTO[];
+}
+
+export interface CreateClassGroupRequestDTO {
+  code: string;
+  name: string;
+  academicYear: number;
+}
+
+export interface CreateClassGroupResponseDTO {
+  classGroup: ClassGroupDTO;
+}
+
+export interface UpdateClassGroupRequestDTO {
+  name?: string;
+  academicYear?: number;
+}
+
+export interface UpdateClassGroupResponseDTO {
+  classGroup: ClassGroupDTO;
+}
+
+export interface UpdateClassGroupStatusRequestDTO {
+  isActive: boolean;
+}
+
+export interface UpdateClassGroupStatusResponseDTO {
+  classGroup: ClassGroupDTO;
+}

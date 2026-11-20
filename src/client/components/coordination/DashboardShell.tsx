@@ -10,6 +10,7 @@ import {
   BarChart3,
   Bell,
   BellOff,
+  BookOpen,
   DoorOpen,
   GraduationCap,
   Menu,
@@ -84,6 +85,13 @@ export function DashboardShell({
         icon: DoorOpen,
       },
       {
+        id: 'classes',
+        label: 'Turmas',
+        ariaLabel: 'Turmas',
+        path: '/coordination/classes',
+        icon: BookOpen,
+      },
+      {
         id: 'settings',
         label: 'Configurações',
         ariaLabel: 'Configurações',
@@ -138,6 +146,13 @@ export function DashboardShell({
         title: 'Salas de Aula',
         subtitle:
           'Cadastro e gerenciamento das salas físicas disponíveis para os terminais',
+      };
+    }
+    if (currentPath === '/coordination/classes' || currentPath === '/classes') {
+      return {
+        title: 'Turmas',
+        subtitle:
+          'Cadastro e gerenciamento das turmas versionadas por ano letivo',
       };
     }
     if (

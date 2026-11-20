@@ -21,6 +21,7 @@ import {
   useInRouterContext,
 } from 'react-router-dom';
 import { CoordinationAnalyticsPage } from './coordination/CoordinationAnalyticsPage';
+import { CoordinationClassesPage } from './coordination/CoordinationClassesPage';
 import { CoordinationLivePage } from './coordination/CoordinationLivePage';
 import { CoordinationRoomsPage } from './coordination/CoordinationRoomsPage';
 import { CoordinationSettingsPage } from './coordination/CoordinationSettingsPage';
@@ -291,6 +292,10 @@ function CoordinationPageContent({
         />
         <Route path="rooms" element={<CoordinationRoomsPage token={token} />} />
         <Route
+          path="classes"
+          element={<CoordinationClassesPage token={token} />}
+        />
+        <Route
           path="settings"
           element={
             <CoordinationSettingsPage
@@ -317,6 +322,10 @@ function CoordinationPageContent({
         <Route
           path="coordination/rooms"
           element={<CoordinationRoomsPage token={token} />}
+        />
+        <Route
+          path="coordination/classes"
+          element={<CoordinationClassesPage token={token} />}
         />
         <Route
           path="coordination/settings"
