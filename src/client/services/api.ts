@@ -5,6 +5,7 @@ import type {
   CheckOverdueResponseDTO,
   ClaimQueueRequestDTO,
   ClaimQueueResponseDTO,
+  CoordinationActiveMovementsResponseDTO,
   CreateRoomRequestDTO,
   CreateRoomResponseDTO,
   EmergencyExitRequestDTO,
@@ -238,14 +239,15 @@ export const api = {
   },
 
   async getCoordinationActiveMovements(
-    params: { classCode?: string; status?: string } = {},
+    params: { classCode?: string; roomId?: string; status?: string } = {},
     token: string,
-  ): Promise<{ movements: MovementDTO[] }> {
+  ): Promise<CoordinationActiveMovementsResponseDTO> {
     const searchParams = new URLSearchParams();
     if (params.classCode) searchParams.append('classCode', params.classCode);
+    if (params.roomId) searchParams.append('roomId', params.roomId);
     if (params.status) searchParams.append('status', params.status);
     const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
-    return request<{ movements: MovementDTO[] }>(
+    return request<CoordinationActiveMovementsResponseDTO>(
       `/coordination/active-movements${qs}`,
       {
         method: 'GET',

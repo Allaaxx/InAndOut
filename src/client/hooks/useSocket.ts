@@ -1,4 +1,9 @@
-import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
+import type {
+  EndSessionResponseDTO,
+  MovementDTO,
+  StartSessionResponseDTO,
+  WaitingQueueDTO,
+} from '@shared/dtos';
 import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
 import { useEffect, useRef } from 'react';
 import { io, type Socket } from 'socket.io-client';
@@ -33,6 +38,8 @@ export interface UseSocketOptions {
   onMovementEscalated?: (movement: MovementDTO) => void;
   onMovementInTransitUnresolved?: (movement: MovementDTO) => void;
   onMovementResolved?: (movement: MovementDTO) => void;
+  onSessionStarted?: (payload: StartSessionResponseDTO) => void;
+  onSessionEnded?: (payload: EndSessionResponseDTO) => void;
 }
 
 export function useSocket({
@@ -52,6 +59,8 @@ export function useSocket({
   onMovementEscalated,
   onMovementInTransitUnresolved,
   onMovementResolved,
+  onSessionStarted,
+  onSessionEnded,
 }: UseSocketOptions) {
   const callbacksRef = useRef({
     onMovementExit,
@@ -64,6 +73,8 @@ export function useSocket({
     onMovementEscalated,
     onMovementInTransitUnresolved,
     onMovementResolved,
+    onSessionStarted,
+    onSessionEnded,
   });
 
   useEffect(() => {
@@ -78,6 +89,8 @@ export function useSocket({
       onMovementEscalated,
       onMovementInTransitUnresolved,
       onMovementResolved,
+      onSessionStarted,
+      onSessionEnded,
     };
   }, [
     onMovementExit,
@@ -90,6 +103,8 @@ export function useSocket({
     onMovementEscalated,
     onMovementInTransitUnresolved,
     onMovementResolved,
+    onSessionStarted,
+    onSessionEnded,
   ]);
 
   useEffect(() => {
@@ -180,6 +195,14 @@ export function useSocket({
       callbacksRef.current.onMovementResolved?.(movement);
     };
 
+    const handleSessionStarted = (payload: StartSessionResponseDTO) => {
+      callbacksRef.current.onSessionStarted?.(payload);
+    };
+
+    const handleSessionEnded = (payload: EndSessionResponseDTO) => {
+      callbacksRef.current.onSessionEnded?.(payload);
+    };
+
     const joinRooms = () => {
       socket?.emit(SOCKET_EVENTS.JOIN_ROOM, targetRoom);
       if (isCoordination) {
@@ -205,6 +228,8 @@ export function useSocket({
       handleInTransitUnresolved,
     );
     socket.on(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
+    socket.on(SOCKET_EVENTS.SESSION_STARTED, handleSessionStarted);
+    socket.on(SOCKET_EVENTS.SESSION_ENDED, handleSessionEnded);
 
     return () => {
       if (isCoordination) {
@@ -230,6 +255,8 @@ export function useSocket({
         handleInTransitUnresolved,
       );
       socket?.off(SOCKET_EVENTS.MOVEMENT_RESOLVED, handleResolved);
+      socket?.off(SOCKET_EVENTS.SESSION_STARTED, handleSessionStarted);
+      socket?.off(SOCKET_EVENTS.SESSION_ENDED, handleSessionEnded);
       socket?.disconnect();
     };
   }, [enabled, sessionId, room, isCoordination, url, autoConnect]);

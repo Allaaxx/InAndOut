@@ -1,5 +1,7 @@
+import { User } from '@server/domain/entities/User';
+import { hashPassword } from '@server/infrastructure/repositories/InMemoryUserRepository';
 import { createApp } from '@server/main/app';
-import { AlertLevel, MovementStatus } from '@shared/enums';
+import { AlertLevel, MovementStatus, UserRole } from '@shared/enums';
 import { describe, expect, it, vi } from 'vitest';
 
 describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', () => {
@@ -241,5 +243,138 @@ describe('Controller Seam: Coordination Panel & Active Movements (app.inject)', 
         status: MovementStatus.RETURNED_NORMAL,
       }),
     );
+  });
+
+  it('returns activeRooms summary with per-room active exit counts and alert flags across multiple rooms', async () => {
+    let currentTime = new Date('2026-03-10T08:00:00.000Z');
+    const { app, container } = await createApp({ clock: () => currentTime });
+
+    await container.userRepo.save(
+      User.create({
+        id: 'teacher-2',
+        name: 'Prof. Ana Paula',
+        email: 'prof2@linsdorego.edu.br',
+        passwordHash: hashPassword('senha123'),
+        role: UserRole.TEACHER,
+        pinCode: '5678',
+      }),
+    );
+
+    const teacher1Token = await loginAs(
+      app,
+      'prof@linsdorego.edu.br',
+      'senha123',
+    );
+    const teacher2Token = await loginAs(
+      app,
+      'prof2@linsdorego.edu.br',
+      'senha123',
+    );
+    const coordToken = await loginAs(
+      app,
+      'coord@linsdorego.edu.br',
+      'coord123',
+    );
+
+    // Start Session 1 in SALA-01 (1A)
+    const session1Res = await app.inject({
+      method: 'POST',
+      url: '/sessions/start',
+      headers: { authorization: `Bearer ${teacher1Token}` },
+      payload: {
+        classCode: '1A',
+        subject: 'Matemática',
+        roomId: 'SALA-01',
+        defaultTimeLimitMinutes: 10,
+      },
+    });
+    expect(session1Res.statusCode).toBe(201);
+    const session1Id = session1Res.json().session.id as string;
+
+    // Start Session 2 in SALA-02 (2B)
+    const session2Res = await app.inject({
+      method: 'POST',
+      url: '/sessions/start',
+      headers: { authorization: `Bearer ${teacher2Token}` },
+      payload: {
+        classCode: '2B',
+        subject: 'História',
+        roomId: 'SALA-02',
+        defaultTimeLimitMinutes: 10,
+      },
+    });
+    expect(session2Res.statusCode).toBe(201);
+    const session2Id = session2Res.json().session.id as string;
+
+    // Student exits in SALA-01 and gets escalated
+    const exit1Res = await app.inject({
+      method: 'POST',
+      url: '/movements/exit',
+      payload: { ra: '1001', sessionId: session1Id },
+    });
+    expect(exit1Res.statusCode).toBe(201);
+    const movement1Id = exit1Res.json().movement.id as string;
+
+    const escalateRes = await app.inject({
+      method: 'POST',
+      url: `/movements/${movement1Id}/escalate`,
+      headers: { authorization: `Bearer ${teacher1Token}` },
+      payload: { notes: 'Aluno não retornou.' },
+    });
+    expect(escalateRes.statusCode).toBe(200);
+
+    // Query coordination overview
+    const overviewRes = await app.inject({
+      method: 'GET',
+      url: '/coordination/active-movements',
+      headers: { authorization: `Bearer ${coordToken}` },
+    });
+
+    expect(overviewRes.statusCode).toBe(200);
+    const body = overviewRes.json();
+    expect(body.activeRooms).toHaveLength(2);
+    expect(body.activeRooms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sessionId: session1Id,
+          roomId: 'SALA-01',
+          roomName: 'Sala 01',
+          classCode: '1A',
+          subject: 'Matemática',
+          activeExitCount: 1,
+          hasEscalated: true,
+          hasOverdue: false,
+        }),
+        expect.objectContaining({
+          sessionId: session2Id,
+          roomId: 'SALA-02',
+          roomName: 'Sala 02',
+          classCode: '2B',
+          subject: 'História',
+          activeExitCount: 0,
+          hasEscalated: false,
+          hasOverdue: false,
+        }),
+      ]),
+    );
+
+    // End Session 2 -> should be removed from activeRooms
+    currentTime = new Date('2026-03-10T08:30:00.000Z');
+    const endRes = await app.inject({
+      method: 'POST',
+      url: '/sessions/end',
+      headers: { authorization: `Bearer ${teacher2Token}` },
+      payload: { sessionId: session2Id },
+    });
+    expect(endRes.statusCode).toBe(200);
+
+    const afterEndRes = await app.inject({
+      method: 'GET',
+      url: '/coordination/active-movements',
+      headers: { authorization: `Bearer ${coordToken}` },
+    });
+    expect(afterEndRes.statusCode).toBe(200);
+    expect(afterEndRes.json().activeRooms).toHaveLength(1);
+    expect(afterEndRes.json().activeRooms[0].roomId).toBe('SALA-01');
   });
 });

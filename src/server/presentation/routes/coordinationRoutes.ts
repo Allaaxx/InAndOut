@@ -12,6 +12,7 @@ import type { FastifyInstance } from 'fastify';
 
 export interface ActiveMovementsQuery {
   classCode?: string;
+  roomId?: string;
   status?: MovementStatus;
 }
 
@@ -23,6 +24,8 @@ export async function registerCoordinationRoutes(
   const getActiveMovementsOverviewUseCase =
     new GetActiveMovementsOverviewUseCase(container.movementRepo, {
       clock: container.clock,
+      sessionRepo: container.sessionRepo,
+      roomRepo: container.roomRepo,
     });
   const resolveMovementUseCase = new ResolveMovementIncidentUseCase(
     container.movementRepo,
@@ -41,10 +44,11 @@ export async function registerCoordinationRoutes(
     },
     async (request, reply) => {
       try {
-        const { classCode, status } = request.query;
+        const { classCode, roomId, status } = request.query;
 
         const result = await getActiveMovementsOverviewUseCase.execute({
           classCode,
+          roomId,
           status,
         });
 
