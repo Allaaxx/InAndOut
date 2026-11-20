@@ -30,6 +30,7 @@ model ClassSession {
   teacherId               String
   teacherName             String?             @default("Professor")
   roomId                  String?             @default("SALA-01")
+  classGroupId            String?
   classCode               String
   subject                 String
   status                  String              @default("ACTIVE")
@@ -43,11 +44,13 @@ model ClassSession {
 
   teacher                 User?               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   room                    Room?               @relation(fields: [roomId], references: [code], onDelete: SetNull)
+  classGroup              ClassGroup?         @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
   movements               MovementRecord[]
   queueEntries            WaitingQueueEntry[]
 
   @@index([teacherId])
   @@index([roomId])
+  @@index([classGroupId])
   @@index([classCode])
   @@index([status])
   @@map("class_sessions")
@@ -148,13 +151,15 @@ model Room {
 }
 
 model ClassGroup {
-  id           String   @id @default(uuid())
+  id           String         @id @default(uuid())
   code         String
   name         String
   academicYear Int
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  sessions     ClassSession[]
 
   @@unique([code, academicYear])
   @@index([academicYear])

@@ -1,6 +1,7 @@
 import { App } from '@client/App';
 import { api } from '@client/services/api';
 import type {
+  ClassGroupDTO,
   ClassSessionDTO,
   MovementDTO,
   RoomDTO,
@@ -65,6 +66,7 @@ vi.mock('@client/services/api', () => ({
     requestExit: vi.fn(),
     registerReturn: vi.fn(),
     listRooms: vi.fn(),
+    listClasses: vi.fn(),
   },
 }));
 
@@ -103,6 +105,27 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
     },
   ];
 
+  const activeClasses: ClassGroupDTO[] = [
+    {
+      id: 'class-2026-1a',
+      code: '1A',
+      name: '1º Ano A',
+      academicYear: 2026,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'class-2026-3a',
+      code: '3A',
+      name: '3º Ano A',
+      academicYear: 2026,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
     socketHandlers.clear();
@@ -117,6 +140,9 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
     });
     vi.mocked(api.listRooms).mockResolvedValue({
       rooms: activeRooms,
+    });
+    vi.mocked(api.listClasses).mockResolvedValue({
+      classes: activeClasses,
     });
   });
 
@@ -262,8 +288,16 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
         }),
       ).toBeInTheDocument();
 
+      await waitFor(() => {
+        expect(api.listClasses).toHaveBeenCalledWith('valid-teacher-token', {
+          onlyActive: true,
+        });
+      });
+
       await user.click(screen.getByLabelText(/Turma/i));
-      await user.click(await screen.findByRole('option', { name: '3A' }));
+      await user.click(
+        await screen.findByRole('option', { name: /3A — 3º Ano A \(2026\)/i }),
+      );
 
       await user.click(screen.getByLabelText(/Disciplina/i));
       await user.click(await screen.findByRole('option', { name: 'Física' }));
@@ -276,6 +310,7 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
         expect(api.startSession).toHaveBeenCalledWith(
           expect.objectContaining({
             roomId: 'SALA-02',
+            classGroupId: 'class-2026-3a',
             classCode: '3A',
             subject: 'Física',
           }),

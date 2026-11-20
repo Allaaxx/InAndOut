@@ -44,6 +44,7 @@ export async function registerClassGroupRoutes(
     container.classGroupRepo,
     {
       clock: container.clock,
+      sessionRepo: container.sessionRepo,
     },
   );
 

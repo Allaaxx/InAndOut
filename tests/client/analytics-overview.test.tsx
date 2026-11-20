@@ -1,7 +1,12 @@
 import { App } from '@client/App';
 import { AnalyticsDashboardPage } from '@client/pages/AnalyticsDashboardPage';
+import { CoordinationAnalyticsPage } from '@client/pages/coordination/CoordinationAnalyticsPage';
 import { api } from '@client/services/api';
-import type { SchoolOverviewAnalyticsDTO, UserDTO } from '@shared/dtos';
+import type {
+  ClassGroupDTO,
+  SchoolOverviewAnalyticsDTO,
+  UserDTO,
+} from '@shared/dtos';
 import { UserRole } from '@shared/enums';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -15,6 +20,7 @@ vi.mock('@client/services/api', () => ({
     getActiveSession: vi.fn(),
     getCoordinationActiveMovements: vi.fn(),
     getOverviewAnalytics: vi.fn(),
+    listClasses: vi.fn(),
   },
 }));
 
@@ -93,9 +99,42 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
     ],
   };
 
+  const mockClasses: ClassGroupDTO[] = [
+    {
+      id: 'class-2026-1a',
+      code: '1A',
+      name: '1º Ano A',
+      academicYear: 2026,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'class-2026-1c',
+      code: '1C',
+      name: '1º Ano C',
+      academicYear: 2026,
+      isActive: true,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'class-2025-1a',
+      code: '1A',
+      name: '1º Ano A (2025)',
+      academicYear: 2025,
+      isActive: false,
+      createdAt: '2025-01-01T00:00:00.000Z',
+      updatedAt: '2025-01-01T00:00:00.000Z',
+    },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    vi.mocked(api.listClasses).mockResolvedValue({
+      classes: mockClasses,
+    });
   });
 
   it('renders stat cards with average time, exits today, compliance rate, and active incidents', async () => {
@@ -210,5 +249,51 @@ describe('Frontend Seam: AnalyticsDashboardPage & Shadcn Recharts Visualizations
       await screen.findByText(/Indicadores de Fluxo e Permanência/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/Tempo Médio Fora de Sala/i)).toBeInTheDocument();
+  });
+
+  it('populates class filters dynamically from GET /classes in both AnalyticsDashboardPage and CoordinationAnalyticsPage while preserving classCode queries', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.getOverviewAnalytics).mockResolvedValue(mockAnalyticsData);
+
+    const { unmount } = render(
+      <AnalyticsDashboardPage user={coordinatorUser} token="test-token" />,
+    );
+
+    await screen.findByText(/Tempo Médio Fora de Sala/i);
+    await waitFor(() => {
+      expect(api.listClasses).toHaveBeenCalledWith('test-token');
+    });
+
+    await user.click(screen.getByLabelText(/Filtrar por Turma/i));
+    await user.click(await screen.findByRole('option', { name: 'Turma 1C' }));
+
+    await waitFor(() => {
+      expect(api.getOverviewAnalytics).toHaveBeenCalledWith(
+        expect.objectContaining({ classCode: '1C' }),
+        'test-token',
+      );
+    });
+
+    unmount();
+    vi.clearAllMocks();
+    vi.mocked(api.listClasses).mockResolvedValue({ classes: mockClasses });
+    vi.mocked(api.getOverviewAnalytics).mockResolvedValue(mockAnalyticsData);
+
+    render(<CoordinationAnalyticsPage token="coord-token" />);
+
+    await screen.findByText(/Dashboard Geral da Escola/i);
+    await waitFor(() => {
+      expect(api.listClasses).toHaveBeenCalledWith('coord-token');
+    });
+
+    await user.click(screen.getByLabelText(/Filtrar por Turma/i));
+    await user.click(await screen.findByRole('option', { name: 'Turma 1C' }));
+
+    await waitFor(() => {
+      expect(api.getOverviewAnalytics).toHaveBeenCalledWith(
+        expect.objectContaining({ classCode: '1C' }),
+        'coord-token',
+      );
+    });
   });
 });

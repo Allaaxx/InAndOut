@@ -50,6 +50,7 @@ export interface ClassSessionDTO {
   teacherId: string;
   teacherName: string;
   roomId: string;
+  classGroupId?: string;
   classCode: string;
   subject: string;
   status: SessionStatus;
@@ -60,6 +61,7 @@ export interface ClassSessionDTO {
 }
 
 export interface StartSessionRequestDTO {
+  classGroupId?: string;
   classCode?: string;
   className?: string;
   subject: string;

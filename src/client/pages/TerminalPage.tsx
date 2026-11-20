@@ -213,10 +213,12 @@ export function TerminalPage({
   };
 
   const handleStartSessionSubmit = async ({
+    classGroupId,
     classCode,
     subject,
     plannedDurationMinutes,
   }: {
+    classGroupId: string;
     classCode: string;
     subject: string;
     plannedDurationMinutes: number;
@@ -226,6 +228,7 @@ export function TerminalPage({
       setLastReturnedMovement(null);
       setIdleRaFeedback(null);
       await startSession({
+        classGroupId,
         classCode,
         subject,
         roomId: normalizedRoomId,
@@ -558,6 +561,7 @@ export function TerminalPage({
         open={startSessionOpen}
         onOpenChange={setStartSessionOpen}
         roomId={normalizedRoomId}
+        token={token}
         loading={loading}
         error={error}
         onStartSession={handleStartSessionSubmit}

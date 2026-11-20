@@ -51,6 +51,20 @@ export class InMemoryClassSessionRepository implements IClassSessionRepository {
     return null;
   }
 
+  public async findActiveByClassGroupId(
+    classGroupId: string,
+  ): Promise<ClassSession | null> {
+    for (const session of this.sessions.values()) {
+      if (
+        session.classGroupId === classGroupId &&
+        session.status === SessionStatus.ACTIVE
+      ) {
+        return session;
+      }
+    }
+    return null;
+  }
+
   public async findAllActive(): Promise<ClassSession[]> {
     const active: ClassSession[] = [];
     for (const session of this.sessions.values()) {
