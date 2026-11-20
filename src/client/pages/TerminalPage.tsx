@@ -1,51 +1,35 @@
 import { ActiveExitCard } from '@client/components/terminal/ActiveExitCard';
 import { KeypadForm } from '@client/components/terminal/KeypadForm';
 import { PinLockModal } from '@client/components/terminal/PinLockModal';
+import { RoomSelectionModal } from '@client/components/terminal/RoomSelectionModal';
 import { SessionHeader } from '@client/components/terminal/SessionHeader';
+import { StartSessionModal } from '@client/components/terminal/StartSessionModal';
 import { TeacherOverrideControls } from '@client/components/terminal/TeacherOverrideControls';
 import { TerminalFooter } from '@client/components/terminal/TerminalFooter';
+import { TerminalIdleState } from '@client/components/terminal/TerminalIdleState';
 import { TerminalNavbar } from '@client/components/terminal/TerminalNavbar';
 import { WaitingQueuePanel } from '@client/components/terminal/WaitingQueuePanel';
-import { Button } from '@client/components/ui/Button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@client/components/ui/Card';
-import { Label } from '@client/components/ui/Label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@client/components/ui/Select';
 import { useClassSession } from '@client/hooks/useClassSession';
 import { useSocket } from '@client/hooks/useSocket';
 import { api } from '@client/services/api';
-import type { MovementDTO, UserDTO, WaitingQueueDTO } from '@shared/dtos';
+import { normalizeRoomCode, saveRoomCode } from '@client/services/roomStorage';
+import type {
+  MovementDTO,
+  RoomDTO,
+  UserDTO,
+  WaitingQueueDTO,
+} from '@shared/dtos';
 import { QueueEntryStatus } from '@shared/enums';
-import type React from 'react';
 import { useCallback, useState } from 'react';
 
-const CLASS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B'];
-const SUBJECT_OPTIONS = [
-  'Matemática',
-  'Português',
-  'História',
-  'Física',
-  'Química',
-  'Biologia',
-  'Geografia',
-  'Inglês',
-];
+const IDLE_NO_SESSION_FEEDBACK =
+  'Não há aula ativa nesta sala no momento. Aguarde o professor iniciar a sessão de aula para registrar saídas.';
 
 export interface TerminalPageProps {
   user: UserDTO;
   token: string;
   roomId?: string;
+  onChangeRoom?: (roomCode: string) => void;
   onVerifyPin: (pin: string) => Promise<void>;
   onLogout: () => void;
 }
@@ -54,12 +38,15 @@ export function TerminalPage({
   user,
   token,
   roomId = 'SALA-01',
+  onChangeRoom,
   onVerifyPin,
   onLogout,
 }: TerminalPageProps) {
+  const normalizedRoomId = normalizeRoomCode(roomId);
   const [isLocked, setIsLocked] = useState(false);
-  const [selectedClassCode, setSelectedClassCode] = useState<string>('1A');
-  const [selectedSubject, setSelectedSubject] = useState<string>('Matemática');
+  const [startSessionOpen, setStartSessionOpen] = useState(false);
+  const [changeRoomOpen, setChangeRoomOpen] = useState(false);
+  const [idleRaFeedback, setIdleRaFeedback] = useState<string | null>(null);
   const [movementLoading, setMovementLoading] = useState(false);
   const [movementError, setMovementError] = useState<string | null>(null);
   const [queueFeedback, setQueueFeedback] = useState<{
@@ -85,7 +72,7 @@ export function TerminalPage({
     lastEndedSummary,
     startSession,
     endSession,
-  } = useClassSession({ token, roomId });
+  } = useClassSession({ token, roomId: normalizedRoomId });
 
   const handleMovementStarted = useCallback(
     (movement: MovementDTO) => {
@@ -166,20 +153,39 @@ export function TerminalPage({
     setIsLocked(false);
   };
 
-  const handleStartSessionSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleStartSessionSubmit = async ({
+    classCode,
+    subject,
+  }: {
+    classCode: string;
+    subject: string;
+  }) => {
     try {
       setReturnConfirmationMessage(null);
       setLastReturnedMovement(null);
+      setIdleRaFeedback(null);
       await startSession({
-        classCode: selectedClassCode,
-        subject: selectedSubject,
-        roomId,
+        classCode,
+        subject,
+        roomId: normalizedRoomId,
         plannedDurationMinutes: 50,
       });
+      setStartSessionOpen(false);
     } catch {
       // Error is captured in hook state
     }
+  };
+
+  const handleIdleKeypadSubmit = async (_ra: string) => {
+    setIdleRaFeedback(IDLE_NO_SESSION_FEEDBACK);
+  };
+
+  const handleSelectNewRoom = (room: RoomDTO) => {
+    const nextCode = normalizeRoomCode(room.code);
+    saveRoomCode(nextCode);
+    setChangeRoomOpen(false);
+    setIdleRaFeedback(null);
+    onChangeRoom?.(nextCode);
   };
 
   const handleRegisterReturn = async (ra: string) => {
@@ -377,7 +383,7 @@ export function TerminalPage({
       <div>
         <TerminalNavbar
           user={user}
-          roomId={roomId}
+          roomId={normalizedRoomId}
           activeSession={activeSession}
           isOccupied={isOccupied}
           isLocked={isLocked}
@@ -452,86 +458,43 @@ export function TerminalPage({
               />
             </>
           ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Iniciar Nova Sessão de Aula</CardTitle>
-                <CardDescription>
-                  Selecione a Turma e a Disciplina para liberar o registro de
-                  saídas no terminal (duração sugerida: 50 minutos).
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form
-                  onSubmit={handleStartSessionSubmit}
-                  className="grid gap-4 sm:grid-cols-3 sm:items-end"
-                >
-                  <div className="flex flex-col space-y-1.5">
-                    <Label
-                      htmlFor="session-class-select"
-                      className="text-sm font-medium text-slate-700"
-                    >
-                      Turma
-                    </Label>
-                    <Select
-                      value={selectedClassCode}
-                      onValueChange={setSelectedClassCode}
-                    >
-                      <SelectTrigger id="session-class-select">
-                        <SelectValue placeholder="Selecione a turma" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CLASS_OPTIONS.map((cls) => (
-                          <SelectItem key={cls} value={cls}>
-                            {cls}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            <div className="grid gap-6 md:grid-cols-2 items-start">
+              <TerminalIdleState
+                roomId={normalizedRoomId}
+                onStartSessionClick={() => setStartSessionOpen(true)}
+                onChangeRoomClick={() => setChangeRoomOpen(true)}
+              />
 
-                  <div className="flex flex-col space-y-1.5">
-                    <Label
-                      htmlFor="session-subject-select"
-                      className="text-sm font-medium text-slate-700"
-                    >
-                      Disciplina
-                    </Label>
-                    <Select
-                      value={selectedSubject}
-                      onValueChange={setSelectedSubject}
-                    >
-                      <SelectTrigger id="session-subject-select">
-                        <SelectValue placeholder="Selecione a disciplina" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SUBJECT_OPTIONS.map((subj) => (
-                          <SelectItem key={subj} value={subj}>
-                            {subj}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      Iniciar Sessão de Aula
-                    </Button>
-                  </div>
-                </form>
-
-                {error && (
-                  <p role="alert" className="mt-3 text-sm text-red-600">
-                    {error}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
+              <KeypadForm
+                loading={false}
+                error={idleRaFeedback}
+                onSubmitRa={handleIdleKeypadSubmit}
+                onReturnRa={handleIdleKeypadSubmit}
+              />
+            </div>
           )}
         </main>
       </div>
 
       <TerminalFooter />
+
+      <StartSessionModal
+        open={startSessionOpen}
+        onOpenChange={setStartSessionOpen}
+        roomId={normalizedRoomId}
+        loading={loading}
+        error={error}
+        onStartSession={handleStartSessionSubmit}
+      />
+
+      <RoomSelectionModal
+        open={changeRoomOpen}
+        onOpenChange={setChangeRoomOpen}
+        token={token}
+        currentRoomCode={normalizedRoomId}
+        dismissible={true}
+        onSelectRoom={handleSelectNewRoom}
+      />
 
       <PinLockModal
         open={isLocked}

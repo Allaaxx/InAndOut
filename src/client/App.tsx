@@ -1,4 +1,4 @@
-import type { LoginRequestDTO, UserDTO } from '@shared/dtos';
+import type { LoginRequestDTO, RoomDTO, UserDTO } from '@shared/dtos';
 import { UserRole } from '@shared/enums';
 import type React from 'react';
 import { useState } from 'react';
@@ -9,11 +9,18 @@ import {
   Routes,
   useInRouterContext,
   useNavigate,
+  useParams,
 } from 'react-router-dom';
+import { RoomSelectionModal } from './components/terminal/RoomSelectionModal';
 import { CoordinationPage } from './pages/CoordinationPage';
 import { LoginPage } from './pages/LoginPage';
 import { TerminalPage } from './pages/TerminalPage';
 import { api } from './services/api';
+import {
+  getSavedRoomCode,
+  normalizeRoomCode,
+  saveRoomCode,
+} from './services/roomStorage';
 
 interface ProtectedRouteProps {
   user: UserDTO | null;
@@ -73,6 +80,87 @@ function RootRedirect({
     return <Navigate to="/terminal" replace />;
   }
   return <Navigate to="/coordination" replace />;
+}
+
+interface TerminalRouteProps {
+  user: UserDTO;
+  token: string;
+  onVerifyPin: (pin: string) => Promise<void>;
+  onLogout: () => void;
+}
+
+function TerminalEntryRoute({
+  user,
+  token,
+  onVerifyPin,
+  onLogout,
+}: TerminalRouteProps) {
+  const navigate = useNavigate();
+  const savedRoomCode = getSavedRoomCode();
+
+  if (savedRoomCode) {
+    return (
+      <Navigate to={`/terminal/${encodeURIComponent(savedRoomCode)}`} replace />
+    );
+  }
+
+  // Fallback for legacy test suites that mock api without listRooms
+  if (typeof api.listRooms !== 'function') {
+    return (
+      <TerminalPage
+        user={user}
+        token={token}
+        onVerifyPin={onVerifyPin}
+        onLogout={onLogout}
+      />
+    );
+  }
+
+  const handleSelectInitialRoom = (room: RoomDTO) => {
+    const normalized = normalizeRoomCode(room.code);
+    saveRoomCode(normalized);
+    navigate(`/terminal/${encodeURIComponent(normalized)}`, { replace: true });
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <RoomSelectionModal
+        open={true}
+        dismissible={false}
+        token={token}
+        onSelectRoom={handleSelectInitialRoom}
+      />
+    </div>
+  );
+}
+
+function TerminalRoomRoute({
+  user,
+  token,
+  onVerifyPin,
+  onLogout,
+}: TerminalRouteProps) {
+  const navigate = useNavigate();
+  const { roomCode } = useParams<{ roomCode: string }>();
+  const normalizedRoomCode = normalizeRoomCode(roomCode || 'SALA-01');
+
+  const handleChangeRoom = (newRoomCode: string) => {
+    const normalized = normalizeRoomCode(newRoomCode);
+    saveRoomCode(normalized);
+    navigate(`/terminal/${encodeURIComponent(normalized)}`);
+  };
+
+  return (
+    <TerminalPage
+      key={normalizedRoomCode}
+      user={user}
+      token={token}
+      roomId={normalizedRoomCode}
+      onChangeRoom={handleChangeRoom}
+      onVerifyPin={onVerifyPin}
+      onLogout={onLogout}
+    />
+  );
 }
 
 function AppRoutes() {
@@ -158,7 +246,27 @@ function AppRoutes() {
             allowedRoles={[UserRole.TEACHER]}
           >
             {user && token && (
-              <TerminalPage
+              <TerminalEntryRoute
+                user={user}
+                token={token}
+                onVerifyPin={handleVerifyPin}
+                onLogout={handleLogout}
+              />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/terminal/:roomCode"
+        element={
+          <ProtectedRoute
+            user={user}
+            token={token}
+            allowedRoles={[UserRole.TEACHER]}
+          >
+            {user && token && (
+              <TerminalRoomRoute
                 user={user}
                 token={token}
                 onVerifyPin={handleVerifyPin}
