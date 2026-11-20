@@ -1,8 +1,9 @@
-import { normalizeRoomCode, Room } from '@server/domain/entities/Room';
+import { Room } from '@server/domain/entities/Room';
 import type {
   IRoomRepository,
   ListRoomsFilter,
 } from '@server/domain/repositories/IRoomRepository';
+import { DEFAULT_ROOM_CODE, normalizeRoomCode } from '@shared/roomCode';
 
 export class InMemoryRoomRepository implements IRoomRepository {
   private rooms: Map<string, Room> = new Map();
@@ -17,7 +18,7 @@ export class InMemoryRoomRepository implements IRoomRepository {
     const defaults: Room[] = [
       Room.create({
         id: 'room-sala-01',
-        code: 'SALA-01',
+        code: DEFAULT_ROOM_CODE,
         name: 'Sala 01',
         isActive: true,
       }),

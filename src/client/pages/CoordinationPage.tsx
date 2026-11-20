@@ -12,7 +12,7 @@ import {
   IncidentOutcome,
   MovementStatus,
 } from '@shared/enums';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   MemoryRouter,
   Navigate,
@@ -181,38 +181,28 @@ function CoordinationPageContent({
     onMovementExit: (movement) => {
       setMovements((prev) => {
         const exists = prev.some((m) => m.id === movement.id);
-        const next = exists
+        return exists
           ? prev.map((m) => (m.id === movement.id ? movement : m))
           : [movement, ...prev];
-        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
-        return next;
       });
     },
     onMovementReturn: (movement) => {
-      setMovements((prev) => {
-        const next = prev.filter((m) => m.id !== movement.id);
-        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
-        return next;
-      });
+      setMovements((prev) => prev.filter((m) => m.id !== movement.id));
       setSelectedMovement((current) =>
         current?.id === movement.id ? null : current,
       );
     },
     onMovementOverdue: (movement) => {
-      setMovements((prev) => {
-        const next = prev.map((m) => (m.id === movement.id ? movement : m));
-        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
-        return next;
-      });
+      setMovements((prev) =>
+        prev.map((m) => (m.id === movement.id ? movement : m)),
+      );
     },
     onMovementEscalated: (movement) => {
       setMovements((prev) => {
         const exists = prev.some((m) => m.id === movement.id);
-        const next = exists
+        return exists
           ? prev.map((m) => (m.id === movement.id ? movement : m))
           : [movement, ...prev];
-        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
-        return next;
       });
 
       // Visual floating alert via Sonner Toast
@@ -234,18 +224,12 @@ function CoordinationPageContent({
       playAlertSound();
     },
     onMovementInTransitUnresolved: (movement) => {
-      setMovements((prev) => {
-        const next = prev.map((m) => (m.id === movement.id ? movement : m));
-        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
-        return next;
-      });
+      setMovements((prev) =>
+        prev.map((m) => (m.id === movement.id ? movement : m)),
+      );
     },
     onMovementResolved: (movement) => {
-      setMovements((prev) => {
-        const next = prev.filter((m) => m.id !== movement.id);
-        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
-        return next;
-      });
+      setMovements((prev) => prev.filter((m) => m.id !== movement.id));
       setSelectedMovement((current) =>
         current?.id === movement.id ? null : current,
       );
@@ -258,10 +242,15 @@ function CoordinationPageContent({
     },
   });
 
+  const liveActiveRooms = useMemo(
+    () => syncActiveRoomsWithMovements(activeRooms, movements),
+    [activeRooms, movements],
+  );
+
   const livePageComponent = (
     <CoordinationLivePage
       movements={movements}
-      activeRooms={activeRooms}
+      activeRooms={liveActiveRooms}
       loading={loading}
       error={error}
       onRefresh={loadActiveMovements}

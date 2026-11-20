@@ -37,6 +37,7 @@ import type {
   UpdateRoomStatusResponseDTO,
   VerifyPinResponseDTO,
 } from '@shared/dtos';
+import { DEFAULT_ROOM_CODE } from '@shared/roomCode';
 
 const API_BASE_URL =
   (typeof import.meta !== 'undefined' &&
@@ -89,7 +90,7 @@ export const api = {
   },
 
   async getActiveSession(
-    roomId = 'SALA-01',
+    roomId = DEFAULT_ROOM_CODE,
     token?: string,
   ): Promise<ActiveSessionResponseDTO> {
     const query = roomId ? `?roomId=${encodeURIComponent(roomId)}` : '';

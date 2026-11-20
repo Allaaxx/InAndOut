@@ -35,7 +35,7 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export interface CoordinationLivePageProps {
   movements: MovementDTO[];
@@ -90,6 +90,15 @@ export function CoordinationLivePage({
       .map(([code, name]) => ({ code, name }))
       .sort((a, b) => a.code.localeCompare(b.code));
   }, [activeRooms, movements]);
+
+  useEffect(() => {
+    if (
+      selectedRoomId !== 'TODAS' &&
+      !roomOptions.some((room) => room.code === selectedRoomId)
+    ) {
+      setSelectedRoomId('TODAS');
+    }
+  }, [roomOptions, selectedRoomId]);
 
   const filteredMovements = useMemo(() => {
     return movements.filter((m) => {

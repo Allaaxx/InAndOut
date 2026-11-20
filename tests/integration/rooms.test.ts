@@ -156,15 +156,24 @@ describe('Controller Seam: Rooms Catalog Management (app.inject)', () => {
     });
     expect(badRes.statusCode).toBe(400);
 
-    // Admin can also create a room
+    // Admin can also create a room with accented/spaced code -> URL-safe slug
     const adminCreateRes = await app.inject({
       method: 'POST',
       url: '/rooms',
       headers: { authorization: `Bearer ${adminToken}` },
-      payload: { code: 'SALA-04', name: 'Sala 04' },
+      payload: { code: 'Lab Química', name: 'Laboratório de Química' },
     });
     expect(adminCreateRes.statusCode).toBe(201);
-    expect(adminCreateRes.json().room.code).toBe('SALA-04');
+    expect(adminCreateRes.json().room.code).toBe('LAB-QUIMICA');
+
+    // Punctuation-only code normalizes to empty -> 400
+    const punctuationRes = await app.inject({
+      method: 'POST',
+      url: '/rooms',
+      headers: { authorization: `Bearer ${adminToken}` },
+      payload: { code: '///', name: 'Sala Inválida' },
+    });
+    expect(punctuationRes.statusCode).toBe(400);
 
     await app.close();
   });

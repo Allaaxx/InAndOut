@@ -670,11 +670,12 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
         'Sala Liberada',
       );
 
-      // Summary banner includes inTransitUnresolvedCount info
+      // Summary banner includes inTransitUnresolvedCount info without internal enum tokens
       const statusBanner = screen.getByRole('status');
       expect(statusBanner).toHaveTextContent(/Sessão de aula encerrada/i);
       expect(statusBanner).toHaveTextContent(/1 saída\(s\) em trânsito/i);
       expect(statusBanner).toHaveTextContent(/Coordenação/i);
+      expect(statusBanner).not.toHaveTextContent(/IN_TRANSIT_UNRESOLVED/);
 
       // "Trocar de Sala" is immediately re-enabled and allows moving to LAB-01
       const changeRoomBtn = screen.getByRole('button', {
