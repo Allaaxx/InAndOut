@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@client/components/ui/Select';
 import { toast } from '@client/components/ui/Sonner';
+import { useClassCodes } from '@client/hooks/useClassCodes';
 import { api } from '@client/services/api';
 import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type { SchoolOverviewAnalyticsDTO } from '@shared/dtos';
@@ -47,6 +48,7 @@ export function CoordinationAnalyticsPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedClassCode, setSelectedClassCode] = useState<string>('TODOS');
+  const classCodes = useClassCodes(token);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [exporting, setExporting] = useState(false);
 
@@ -140,9 +142,11 @@ export function CoordinationAnalyticsPage({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="TODOS">Todas as Turmas</SelectItem>
-                <SelectItem value="1A">Turma 1A</SelectItem>
-                <SelectItem value="2B">Turma 2B</SelectItem>
-                <SelectItem value="3C">Turma 3C</SelectItem>
+                {classCodes.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    Turma {code}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

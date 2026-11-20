@@ -4,6 +4,7 @@ import {
   MovementAuthorizationError,
 } from '@server/application/use-cases/movements/EmergencyAndGuestExitUseCases';
 import {
+  InactiveStudentError,
   MovementConcurrencyConflictError,
   MovementNotFoundError,
   MovementValidationError,
@@ -127,7 +128,10 @@ export async function registerMovementOverrideRoutes(
     if (err instanceof MovementAuthorizationError) {
       return reply.status(401).send({ error: err.message });
     }
-    if (err instanceof StudentNotInClassError) {
+    if (
+      err instanceof StudentNotInClassError ||
+      err instanceof InactiveStudentError
+    ) {
       return reply.status(403).send({ error: err.message });
     }
     if (err instanceof MovementNotFoundError) {

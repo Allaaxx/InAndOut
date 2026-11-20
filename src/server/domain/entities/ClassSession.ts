@@ -8,6 +8,7 @@ export interface ClassSessionProps {
   teacherId: string;
   teacherName?: string;
   roomId?: string;
+  classGroupId?: string;
   classCode?: string;
   className?: string;
   subject: string;
@@ -26,6 +27,7 @@ export class ClassSession {
   public readonly teacherId: string;
   public readonly teacherName: string;
   public readonly roomId: string;
+  public readonly classGroupId?: string;
   public readonly classCode: string;
   public readonly subject: string;
   private _status: SessionStatus;
@@ -39,6 +41,7 @@ export class ClassSession {
     teacherId: string,
     teacherName: string,
     roomId: string,
+    classGroupId: string | undefined,
     classCode: string,
     subject: string,
     status: SessionStatus,
@@ -51,6 +54,7 @@ export class ClassSession {
     this.teacherId = teacherId;
     this.teacherName = teacherName;
     this.roomId = roomId;
+    this.classGroupId = classGroupId;
     this.classCode = classCode;
     this.subject = subject;
     this._status = status;
@@ -100,11 +104,14 @@ export class ClassSession {
       throw new Error('O tempo limite padrão deve ser maior que zero minutos.');
     }
 
+    const classGroupId = props.classGroupId?.trim() || undefined;
+
     return new ClassSession(
       props.id ?? randomUUID(),
       teacherId,
       teacherName,
       roomId,
+      classGroupId,
       classCode,
       subject,
       status,
@@ -143,6 +150,15 @@ export class ClassSession {
     return this._status === SessionStatus.ACTIVE;
   }
 
+  public includesStudent(student: {
+    classGroupId?: string;
+    classCode: string;
+  }): boolean {
+    return student.classGroupId && this.classGroupId
+      ? student.classGroupId === this.classGroupId
+      : student.classCode === this.classCode;
+  }
+
   public end(endedAt: Date = new Date()): void {
     if (this._status === SessionStatus.ENDED) {
       throw new Error('A sessão de aula já está encerrada.');
@@ -166,6 +182,7 @@ export class ClassSession {
       teacherId: this.teacherId,
       teacherName: this.teacherName,
       roomId: this.roomId,
+      ...(this.classGroupId ? { classGroupId: this.classGroupId } : {}),
       classCode: this.classCode,
       subject: this.subject,
       status: this._status,

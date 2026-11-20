@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { ClassGroup } from '@server/domain/entities/ClassGroup';
 import { ClassSession } from '@server/domain/entities/ClassSession';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
 import { Room } from '@server/domain/entities/Room';
@@ -6,6 +7,7 @@ import { Student } from '@server/domain/entities/Student';
 import { User } from '@server/domain/entities/User';
 import { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
 import {
+  InMemoryClassGroupRepository,
   InMemoryClassSessionRepository,
   InMemoryMovementRecordRepository,
   InMemoryRoomRepository,
@@ -14,6 +16,7 @@ import {
   InMemoryWaitingQueueRepository,
 } from '@server/infrastructure/repositories';
 import {
+  PrismaClassGroupRepository,
   PrismaClassSessionRepository,
   PrismaMovementRecordRepository,
   PrismaRoomRepository,
@@ -44,6 +47,9 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
 
       expect(container.userRepo).toBeInstanceOf(InMemoryUserRepository);
       expect(container.roomRepo).toBeInstanceOf(InMemoryRoomRepository);
+      expect(container.classGroupRepo).toBeInstanceOf(
+        InMemoryClassGroupRepository,
+      );
       expect(container.sessionRepo).toBeInstanceOf(
         InMemoryClassSessionRepository,
       );
@@ -63,6 +69,9 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
 
       expect(container.userRepo).toBeInstanceOf(InMemoryUserRepository);
       expect(container.roomRepo).toBeInstanceOf(InMemoryRoomRepository);
+      expect(container.classGroupRepo).toBeInstanceOf(
+        InMemoryClassGroupRepository,
+      );
       expect(container.sessionRepo).toBeInstanceOf(
         InMemoryClassSessionRepository,
       );
@@ -83,6 +92,9 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
 
       expect(container.userRepo).toBeInstanceOf(PrismaUserRepository);
       expect(container.roomRepo).toBeInstanceOf(PrismaRoomRepository);
+      expect(container.classGroupRepo).toBeInstanceOf(
+        PrismaClassGroupRepository,
+      );
       expect(container.sessionRepo).toBeInstanceOf(
         PrismaClassSessionRepository,
       );
@@ -246,17 +258,21 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
     });
 
     it('PrismaStudentRepository maps domain Student correctly', async () => {
+      const createdAt = new Date('2026-03-10T08:00:00.000Z');
+      const updatedAt = new Date('2026-03-10T08:00:00.000Z');
       const mockPrisma = {
         student: {
           findUnique: vi.fn().mockResolvedValue({
             id: 'student-3',
             ra: '1003',
             fullName: 'Ana Costa',
+            classGroupId: 'class-2026-1a',
             classCode: '1A',
             hasSpecialCondition: true,
             specialLimitMinutes: 20,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            isActive: true,
+            createdAt,
+            updatedAt,
           }),
           findMany: vi.fn().mockResolvedValue([]),
           upsert: vi.fn().mockResolvedValue({}),
@@ -269,6 +285,8 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
       expect(student).not.toBeNull();
       expect(student?.ra).toBe('1003');
       expect(student?.fullName).toBe('Ana Costa');
+      expect(student?.classGroupId).toBe('class-2026-1a');
+      expect(student?.isActive).toBe(true);
       expect(student?.hasSpecialTimeLimit()).toBe(true);
       expect(student?.specialTimeLimitMinutes).toBe(20);
 
@@ -276,7 +294,11 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
         id: 'student-4',
         ra: '2001',
         fullName: 'Pedro Alves',
+        classGroupId: 'class-2026-2b',
         classCode: '2B',
+        isActive: true,
+        createdAt,
+        updatedAt,
       });
 
       await repo.save(newStudent);
@@ -286,16 +308,23 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
           id: 'student-4',
           ra: '2001',
           fullName: 'Pedro Alves',
+          classGroupId: 'class-2026-2b',
           classCode: '2B',
           hasSpecialCondition: false,
           specialLimitMinutes: null,
+          isActive: true,
+          createdAt,
+          updatedAt,
         },
         update: {
           ra: '2001',
           fullName: 'Pedro Alves',
+          classGroupId: 'class-2026-2b',
           classCode: '2B',
           hasSpecialCondition: false,
           specialLimitMinutes: null,
+          isActive: true,
+          updatedAt,
         },
       });
     });
@@ -517,6 +546,88 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
         update: {
           code: 'LAB-02',
           name: 'Laboratório 02',
+          isActive: true,
+          updatedAt: now,
+        },
+      });
+    });
+
+    it('PrismaClassGroupRepository maps domain ClassGroup and enforces composite (code, academicYear) lookup', async () => {
+      const now = new Date('2026-03-10T08:00:00.000Z');
+      const mockPrisma = {
+        classGroup: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'class-2026-1a',
+            code: '1A',
+            name: '1º Ano A',
+            academicYear: 2026,
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          }),
+          findMany: vi.fn().mockResolvedValue([
+            {
+              id: 'class-2026-1a',
+              code: '1A',
+              name: '1º Ano A',
+              academicYear: 2026,
+              isActive: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          ]),
+          upsert: vi.fn().mockResolvedValue({}),
+        },
+      } as unknown as PrismaClient;
+
+      const repo = new PrismaClassGroupRepository(mockPrisma);
+
+      const found = await repo.findByCodeAndYear(' 1a ', 2026);
+      expect(found).not.toBeNull();
+      expect(found?.code).toBe('1A');
+      expect(found?.academicYear).toBe(2026);
+      expect(mockPrisma.classGroup.findUnique).toHaveBeenCalledWith({
+        where: {
+          code_academicYear: {
+            code: '1A',
+            academicYear: 2026,
+          },
+        },
+      });
+
+      const list = await repo.findAll({ onlyActive: true, academicYear: 2026 });
+      expect(list).toHaveLength(1);
+      expect(mockPrisma.classGroup.findMany).toHaveBeenCalledWith({
+        where: { isActive: true, academicYear: 2026 },
+        orderBy: [{ academicYear: 'desc' }, { code: 'asc' }],
+      });
+
+      const newClass = ClassGroup.create({
+        id: 'class-2027-1a',
+        code: '1a',
+        name: '1º Ano A',
+        academicYear: 2027,
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await repo.save(newClass);
+      expect(mockPrisma.classGroup.upsert).toHaveBeenCalledWith({
+        where: { id: 'class-2027-1a' },
+        create: {
+          id: 'class-2027-1a',
+          code: '1A',
+          name: '1º Ano A',
+          academicYear: 2027,
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        update: {
+          code: '1A',
+          name: '1º Ano A',
+          academicYear: 2027,
           isActive: true,
           updatedAt: now,
         },

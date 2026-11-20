@@ -1,3 +1,4 @@
+export * from './PrismaClassGroupRepository';
 export * from './PrismaClassSessionRepository';
 export * from './PrismaMovementRecordRepository';
 export * from './PrismaRoomRepository';

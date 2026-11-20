@@ -50,6 +50,7 @@ export interface ClassSessionDTO {
   teacherId: string;
   teacherName: string;
   roomId: string;
+  classGroupId?: string;
   classCode: string;
   subject: string;
   status: SessionStatus;
@@ -60,6 +61,7 @@ export interface ClassSessionDTO {
 }
 
 export interface StartSessionRequestDTO {
+  classGroupId?: string;
   classCode?: string;
   className?: string;
   subject: string;
@@ -104,8 +106,54 @@ export interface StudentDTO {
   fullName: string;
   publicName: string;
   abbreviatedName?: string;
+  classGroupId?: string;
   classCode: string;
+  hasSpecialCondition: boolean;
+  specialLimitMinutes?: number;
   specialTimeLimitMinutes?: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ListStudentsResponseDTO {
+  students: StudentDTO[];
+}
+
+export interface CreateStudentRequestDTO {
+  ra: string;
+  fullName: string;
+  classGroupId?: string;
+  classCode?: string;
+  hasSpecialCondition?: boolean;
+  specialLimitMinutes?: number | null;
+  specialTimeLimitMinutes?: number | null;
+}
+
+export interface CreateStudentResponseDTO {
+  student: StudentDTO;
+}
+
+export interface UpdateStudentRequestDTO {
+  ra?: string;
+  fullName?: string;
+  classGroupId?: string;
+  classCode?: string;
+  hasSpecialCondition?: boolean;
+  specialLimitMinutes?: number | null;
+  specialTimeLimitMinutes?: number | null;
+}
+
+export interface UpdateStudentResponseDTO {
+  student: StudentDTO;
+}
+
+export interface UpdateStudentStatusRequestDTO {
+  isActive: boolean;
+}
+
+export interface UpdateStudentStatusResponseDTO {
+  student: StudentDTO;
 }
 
 export interface MovementDTO {
@@ -381,4 +429,45 @@ export interface UpdateRoomStatusRequestDTO {
 
 export interface UpdateRoomStatusResponseDTO {
   room: RoomDTO;
+}
+
+export interface ClassGroupDTO {
+  id: string;
+  code: string;
+  name: string;
+  academicYear: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListClassGroupsResponseDTO {
+  classes: ClassGroupDTO[];
+}
+
+export interface CreateClassGroupRequestDTO {
+  code: string;
+  name: string;
+  academicYear: number;
+}
+
+export interface CreateClassGroupResponseDTO {
+  classGroup: ClassGroupDTO;
+}
+
+export interface UpdateClassGroupRequestDTO {
+  name?: string;
+  academicYear?: number;
+}
+
+export interface UpdateClassGroupResponseDTO {
+  classGroup: ClassGroupDTO;
+}
+
+export interface UpdateClassGroupStatusRequestDTO {
+  isActive: boolean;
+}
+
+export interface UpdateClassGroupStatusResponseDTO {
+  classGroup: ClassGroupDTO;
 }

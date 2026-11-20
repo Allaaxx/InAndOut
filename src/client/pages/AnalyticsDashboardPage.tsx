@@ -38,6 +38,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@client/components/ui/Tabs';
+import { useClassCodes } from '@client/hooks/useClassCodes';
 import { api } from '@client/services/api';
 import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type {
@@ -88,6 +89,7 @@ export function AnalyticsDashboardPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedClassCode, setSelectedClassCode] = useState<string>('TODOS');
+  const classCodes = useClassCodes(token);
   const [selectedDate, setSelectedDate] = useState<string>('');
 
   // Student history state
@@ -335,9 +337,11 @@ export function AnalyticsDashboardPage({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="TODOS">Todas as Turmas</SelectItem>
-                      <SelectItem value="1A">Turma 1A</SelectItem>
-                      <SelectItem value="2B">Turma 2B</SelectItem>
-                      <SelectItem value="3C">Turma 3C</SelectItem>
+                      {classCodes.map((code) => (
+                        <SelectItem key={code} value={code}>
+                          Turma {code}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

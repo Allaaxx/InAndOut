@@ -10,6 +10,7 @@ import {
   BarChart3,
   Bell,
   BellOff,
+  BookOpen,
   DoorOpen,
   GraduationCap,
   Menu,
@@ -71,8 +72,8 @@ export function DashboardShell({
       },
       {
         id: 'students',
-        label: 'Consulta por Aluno',
-        ariaLabel: 'Consultar Aluno',
+        label: 'Alunos',
+        ariaLabel: 'Alunos',
         path: '/coordination/students',
         icon: GraduationCap,
       },
@@ -82,6 +83,13 @@ export function DashboardShell({
         ariaLabel: 'Salas de Aula',
         path: '/coordination/rooms',
         icon: DoorOpen,
+      },
+      {
+        id: 'classes',
+        label: 'Turmas',
+        ariaLabel: 'Turmas',
+        path: '/coordination/classes',
+        icon: BookOpen,
       },
       {
         id: 'settings',
@@ -128,9 +136,9 @@ export function DashboardShell({
       currentPath === '/students'
     ) {
       return {
-        title: 'Consulta por Aluno',
+        title: 'Alunos',
         subtitle:
-          'Histórico individual de movimentações, assiduidade e exportação de relatórios',
+          'Gestão do catálogo de alunos, tempo especial e histórico de movimentações',
       };
     }
     if (currentPath === '/coordination/rooms' || currentPath === '/rooms') {
@@ -138,6 +146,13 @@ export function DashboardShell({
         title: 'Salas de Aula',
         subtitle:
           'Cadastro e gerenciamento das salas físicas disponíveis para os terminais',
+      };
+    }
+    if (currentPath === '/coordination/classes' || currentPath === '/classes') {
+      return {
+        title: 'Turmas',
+        subtitle:
+          'Cadastro e gerenciamento das turmas versionadas por ano letivo',
       };
     }
     if (

@@ -96,40 +96,111 @@ export async function main(): Promise<void> {
     `✅ Seeded ${rooms.length} rooms (SALA-01, SALA-02, SALA-03, LAB-01).`,
   );
 
-  // 2. Seed Students (Turmas 1A, 2B, 3C)
+  // 1.6. Seed Class Groups (Turmas)
+  const classGroups = [
+    {
+      id: 'class-2026-1a',
+      code: '1A',
+      name: '1º Ano A',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-1b',
+      code: '1B',
+      name: '1º Ano B',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-2a',
+      code: '2A',
+      name: '2º Ano A',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-2b',
+      code: '2B',
+      name: '2º Ano B',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-3a',
+      code: '3A',
+      name: '3º Ano A',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-3b',
+      code: '3B',
+      name: '3º Ano B',
+      academicYear: 2026,
+      isActive: true,
+    },
+  ];
+
+  for (const classGroup of classGroups) {
+    await prisma.classGroup.upsert({
+      where: {
+        code_academicYear: {
+          code: classGroup.code,
+          academicYear: classGroup.academicYear,
+        },
+      },
+      create: classGroup,
+      update: classGroup,
+    });
+  }
+
+  console.log(
+    `✅ Seeded ${classGroups.length} class groups (1A, 1B, 2A, 2B, 3A, 3B - 2026).`,
+  );
+
+  // 2. Seed Students (Turmas 1A, 2B, 3A)
   const students = [
     // Turma 1A
     {
       id: 'student-1001',
       ra: '1001',
       fullName: 'Lucas Silva',
+      classGroupId: 'class-2026-1a',
       classCode: '1A',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
     {
       id: 'student-1002',
       ra: '1002',
       fullName: 'João Mendes',
+      classGroupId: 'class-2026-1a',
       classCode: '1A',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
     {
       id: 'student-1003',
       ra: '1003',
       fullName: 'Ana Costa',
+      classGroupId: 'class-2026-1a',
       classCode: '1A',
       hasSpecialCondition: true,
       specialLimitMinutes: 20,
+      isActive: true,
     },
     {
       id: 'student-1004',
       ra: '1004',
       fullName: 'Beatriz Santos',
+      classGroupId: 'class-2026-1a',
       classCode: '1A',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
 
     // Turma 2B
@@ -137,67 +208,83 @@ export async function main(): Promise<void> {
       id: 'student-2001',
       ra: '2001',
       fullName: 'Pedro Alves',
+      classGroupId: 'class-2026-2b',
       classCode: '2B',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
     {
       id: 'student-2002',
       ra: '2002',
       fullName: 'Camila Rocha',
+      classGroupId: 'class-2026-2b',
       classCode: '2B',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
     {
       id: 'student-2003',
       ra: '2003',
       fullName: 'Gabriel Lima',
+      classGroupId: 'class-2026-2b',
       classCode: '2B',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
     {
       id: 'student-2004',
       ra: '2004',
       fullName: 'Larissa Souza',
+      classGroupId: 'class-2026-2b',
       classCode: '2B',
       hasSpecialCondition: true,
       specialLimitMinutes: 15,
+      isActive: true,
     },
 
-    // Turma 3C
+    // Turma 3A
     {
       id: 'student-3001',
       ra: '3001',
       fullName: 'Felipe Martins',
+      classGroupId: 'class-2026-3a',
       classCode: '3A',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
     {
       id: 'student-3002',
       ra: '3002',
       fullName: 'Juliana Ramos',
+      classGroupId: 'class-2026-3a',
       classCode: '3A',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
     {
       id: 'student-3003',
       ra: '3003',
       fullName: 'Matheus Pereira',
+      classGroupId: 'class-2026-3a',
       classCode: '3A',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
     {
       id: 'student-3004',
       ra: '3004',
       fullName: 'Sofia Carvalho',
+      classGroupId: 'class-2026-3a',
       classCode: '3A',
       hasSpecialCondition: false,
       specialLimitMinutes: null,
+      isActive: true,
     },
   ];
 
@@ -220,6 +307,7 @@ export async function main(): Promise<void> {
       teacherId: 'teacher-1',
       teacherName: 'Prof. Carlos Eduardo',
       roomId: 'SALA-01',
+      classGroupId: 'class-2026-1a',
       classCode: '1A',
       subject: 'História',
       status: 'ACTIVE',
@@ -232,6 +320,7 @@ export async function main(): Promise<void> {
       teacherId: 'teacher-2',
       teacherName: 'Profª. Fernanda Souza',
       roomId: 'SALA-02',
+      classGroupId: 'class-2026-2b',
       classCode: '2B',
       subject: 'Matemática',
       status: 'ACTIVE',

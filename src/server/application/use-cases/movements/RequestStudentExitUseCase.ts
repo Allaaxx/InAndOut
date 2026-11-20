@@ -33,6 +33,13 @@ export class StudentNotInClassError extends Error {
   }
 }
 
+export class InactiveStudentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InactiveStudentError';
+  }
+}
+
 export class MovementConcurrencyConflictError extends Error {
   constructor(message: string) {
     super(message);
@@ -107,7 +114,13 @@ export class RequestStudentExitUseCase {
       );
     }
 
-    if (!input.isGuest && student.classCode !== session.classCode) {
+    if (!student.isActive) {
+      throw new InactiveStudentError(
+        `O aluno ${student.publicName} (RA ${student.ra}) está inativo e não pode solicitar saída no Terminal de Sala.`,
+      );
+    }
+
+    if (!input.isGuest && !session.includesStudent(student)) {
       throw new StudentNotInClassError(
         `O aluno (${student.publicName}) pertence à turma ${student.classCode} e não está matriculado na turma ativa (${session.classCode}). Solicite Autorização Avulsa ao professor.`,
       );

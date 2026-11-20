@@ -30,6 +30,7 @@ model ClassSession {
   teacherId               String
   teacherName             String?             @default("Professor")
   roomId                  String?             @default("SALA-01")
+  classGroupId            String?
   classCode               String
   subject                 String
   status                  String              @default("ACTIVE")
@@ -43,28 +44,36 @@ model ClassSession {
 
   teacher                 User?               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   room                    Room?               @relation(fields: [roomId], references: [code], onDelete: SetNull)
+  classGroup              ClassGroup?         @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
   movements               MovementRecord[]
   queueEntries            WaitingQueueEntry[]
 
   @@index([teacherId])
   @@index([roomId])
+  @@index([classGroupId])
   @@index([classCode])
   @@index([status])
   @@map("class_sessions")
 }
 
 model Student {
-  id                  String   @id @default(uuid())
-  ra                  String   @unique
+  id                  String      @id @default(uuid())
+  ra                  String      @unique
   fullName            String
+  classGroupId        String?
   classCode           String
-  hasSpecialCondition Boolean  @default(false)
+  hasSpecialCondition Boolean     @default(false)
   specialLimitMinutes Int?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  isActive            Boolean     @default(true)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
+  classGroup          ClassGroup? @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
+
+  @@index([classGroupId])
   @@index([classCode])
   @@index([ra])
+  @@index([isActive])
   @@map("students")
 }
 
@@ -145,4 +154,22 @@ model Room {
   @@index([code])
   @@index([isActive])
   @@map("rooms")
+}
+
+model ClassGroup {
+  id           String         @id @default(uuid())
+  code         String
+  name         String
+  academicYear Int
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  sessions     ClassSession[]
+  students     Student[]
+
+  @@unique([code, academicYear])
+  @@index([academicYear])
+  @@index([isActive])
+  @@map("class_groups")
 }

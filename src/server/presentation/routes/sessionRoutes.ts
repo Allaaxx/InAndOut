@@ -25,6 +25,7 @@ export async function registerSessionRoutes(
     {
       clock: container.clock,
       roomRepo: container.roomRepo,
+      classGroupRepo: container.classGroupRepo,
       notificationSender: container.notificationSender,
     },
   );

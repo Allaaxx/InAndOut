@@ -1,3 +1,4 @@
+export * from './InMemoryClassGroupRepository';
 export * from './InMemoryClassSessionRepository';
 export * from './InMemoryMovementRecordRepository';
 export * from './InMemoryRoomRepository';

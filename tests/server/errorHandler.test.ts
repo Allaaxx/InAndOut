@@ -4,6 +4,7 @@ import {
 } from '@server/application/use-cases/auth/LoginUseCase';
 import { InvalidOutcomeError } from '@server/application/use-cases/coordination/ResolveMovementIncidentUseCase';
 import {
+  InactiveStudentError,
   MovementConcurrencyConflictError,
   MovementNotFoundError,
   MovementValidationError,
@@ -42,11 +43,17 @@ describe('Presentation Seam: Centralized Fastify Error Handler', () => {
     });
   });
 
-  it('maps authorization and studentNotInClass errors to 403 Forbidden', () => {
+  it('maps authorization, studentNotInClass, and inactiveStudent errors to 403 Forbidden', () => {
     const fErr = new StudentNotInClassError('Aluno não pertence à turma');
     expect(mapErrorToResponse(fErr)).toEqual({
       statusCode: 403,
       body: { error: 'Aluno não pertence à turma' },
+    });
+
+    const inactiveErr = new InactiveStudentError('Aluno inativo');
+    expect(mapErrorToResponse(inactiveErr)).toEqual({
+      statusCode: 403,
+      body: { error: 'Aluno inativo' },
     });
   });
 
