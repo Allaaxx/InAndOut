@@ -18,7 +18,7 @@ import {
   SheetTitle,
 } from '@client/components/ui/Sheet';
 import { Textarea } from '@client/components/ui/Textarea';
-import type { MovementDTO } from '@shared/dtos';
+import type { ActiveRoomSessionSummaryDTO, MovementDTO } from '@shared/dtos';
 import {
   AlertLevel,
   INCIDENT_OUTCOME_LABELS,
@@ -29,14 +29,17 @@ import { formatTimeInAppTimezone } from '@shared/timezone';
 import {
   AlertTriangle,
   Clock,
+  DoorOpen,
   Filter,
   ShieldAlert,
   UserCheck,
+  Users,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 export interface CoordinationLivePageProps {
   movements: MovementDTO[];
+  activeRooms?: ActiveRoomSessionSummaryDTO[];
   loading: boolean;
   error: string | null;
   onRefresh: () => void;
@@ -54,6 +57,7 @@ export interface CoordinationLivePageProps {
 
 export function CoordinationLivePage({
   movements,
+  activeRooms = [],
   loading,
   error,
   onRefresh: _onRefresh,
@@ -68,12 +72,30 @@ export function CoordinationLivePage({
   onCloseSheet,
   onConfirmResolution,
 }: CoordinationLivePageProps) {
+  const [selectedRoomId, setSelectedRoomId] = useState<string>('TODAS');
   const [selectedClassCode, setSelectedClassCode] = useState<string>('TODOS');
-
   const [filterStatus, setFilterStatus] = useState<string>('TODOS');
+
+  const roomOptions = useMemo(() => {
+    const roomsMap = new Map<string, string>();
+    for (const room of activeRooms) {
+      roomsMap.set(room.roomId, room.roomName);
+    }
+    for (const movement of movements) {
+      if (movement.roomId && !roomsMap.has(movement.roomId)) {
+        roomsMap.set(movement.roomId, movement.roomId);
+      }
+    }
+    return Array.from(roomsMap.entries())
+      .map(([code, name]) => ({ code, name }))
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }, [activeRooms, movements]);
 
   const filteredMovements = useMemo(() => {
     return movements.filter((m) => {
+      if (selectedRoomId !== 'TODAS' && m.roomId !== selectedRoomId) {
+        return false;
+      }
       if (selectedClassCode !== 'TODOS' && m.classCode !== selectedClassCode) {
         return false;
       }
@@ -82,7 +104,7 @@ export function CoordinationLivePage({
       }
       return true;
     });
-  }, [movements, selectedClassCode, filterStatus]);
+  }, [movements, selectedRoomId, selectedClassCode, filterStatus]);
 
   const escalatedCount = useMemo(
     () =>
@@ -137,18 +159,22 @@ export function CoordinationLivePage({
         ),
       },
       {
+        key: 'roomId',
+        header: 'Sala',
+        render: (item) => (
+          <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700 font-mono">
+            {item.roomId || 'Não informada'}
+          </span>
+        ),
+      },
+      {
         key: 'classCode',
-        header: 'Turma / Sala',
+        header: 'Turma',
         render: (item) => (
           <div>
             <span className="font-semibold text-slate-900">
               {item.classCode}
             </span>
-            {item.roomId && (
-              <span className="block text-xs text-slate-500">
-                {item.roomId}
-              </span>
-            )}
             {item.teacherName ? (
               <span className="block text-xs text-slate-500">
                 Prof: {item.teacherName}
@@ -254,6 +280,95 @@ export function CoordinationLivePage({
 
   return (
     <div className="space-y-6">
+      {/* Active Rooms Summary Cards */}
+      {activeRooms.length > 0 && (
+        <section aria-label="Salas Ativas" className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+              <DoorOpen className="h-4 w-4 text-indigo-600" />
+              <span>Salas Ativas</span>
+              <Badge variant="outline" className="ml-1 font-mono">
+                {activeRooms.length}
+              </Badge>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {activeRooms.map((room) => {
+              const isSelected = selectedRoomId === room.roomId;
+              const borderClass = room.hasEscalated
+                ? 'border-l-4 border-l-rose-600 bg-rose-50/40'
+                : room.hasOverdue
+                  ? 'border-l-4 border-l-amber-500 bg-amber-50/40'
+                  : 'border-l-4 border-l-emerald-500 bg-white';
+
+              return (
+                <Card
+                  key={room.sessionId}
+                  data-testid={`active-room-card-${room.roomId}`}
+                  onClick={() =>
+                    setSelectedRoomId((prev) =>
+                      prev === room.roomId ? 'TODAS' : room.roomId,
+                    )
+                  }
+                  className={`cursor-pointer p-4 shadow-xs transition-all hover:shadow-md ${borderClass} ${
+                    isSelected ? 'ring-2 ring-indigo-500' : ''
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-mono text-sm font-bold text-slate-900">
+                        {room.roomId}
+                      </p>
+                      {room.roomName && room.roomName !== room.roomId && (
+                        <p className="text-xs text-slate-500 truncate">
+                          {room.roomName}
+                        </p>
+                      )}
+                    </div>
+                    {room.hasEscalated ? (
+                      <Badge variant="destructive" className="shrink-0">
+                        Alerta Crítico
+                      </Badge>
+                    ) : room.hasOverdue ? (
+                      <Badge variant="warning" className="shrink-0">
+                        Tempo Excedido
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="shrink-0">
+                        Normal
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="mt-3 space-y-1 text-xs text-slate-600">
+                    <p className="font-medium text-slate-800 truncate">
+                      {room.teacherName}
+                    </p>
+                    <p className="text-slate-500 truncate">
+                      Turma {room.classCode}
+                      {room.subject ? ` • ${room.subject}` : ''}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 text-xs">
+                    <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                      <Users className="h-3.5 w-3.5 text-slate-400" />
+                      {room.activeExitCount} fora
+                    </span>
+                    {isSelected && (
+                      <span className="text-[11px] font-medium text-indigo-600">
+                        Filtrado
+                      </span>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-l-4 border-l-amber-500 bg-white p-4 shadow-xs">
@@ -325,6 +440,31 @@ export function CoordinationLivePage({
       <Card className="bg-white p-4 shadow-xs">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-2 w-full sm:w-fit">
+              <Select value={selectedRoomId} onValueChange={setSelectedRoomId}>
+                <SelectTrigger
+                  id="room-select"
+                  aria-label="Filtrar por Sala"
+                  className="h-9 w-full sm:w-fit font-medium text-slate-700"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <DoorOpen className="h-4 w-4 shrink-0 text-slate-400" />
+                    <SelectValue placeholder="Todas as Salas" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODAS">Todas as Salas</SelectItem>
+                  {roomOptions.map((room) => (
+                    <SelectItem key={room.code} value={room.code}>
+                      {room.name !== room.code
+                        ? `${room.code} — ${room.name}`
+                        : room.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="flex items-center gap-2 w-full sm:w-fit">
               <Select
                 value={selectedClassCode}

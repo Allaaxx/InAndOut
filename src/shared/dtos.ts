@@ -238,8 +238,23 @@ export interface CheckOverdueResponseDTO {
   autoEscalatedMovements: MovementDTO[];
 }
 
+export interface ActiveRoomSessionSummaryDTO {
+  sessionId: string;
+  roomId: string;
+  roomName: string;
+  teacherId: string;
+  teacherName: string;
+  classCode: string;
+  subject: string;
+  startedAt: string;
+  activeExitCount: number;
+  hasOverdue: boolean;
+  hasEscalated: boolean;
+}
+
 export interface CoordinationActiveMovementsResponseDTO {
   movements: MovementDTO[];
+  activeRooms?: ActiveRoomSessionSummaryDTO[];
 }
 
 export interface ResolveMovementRequestDTO {

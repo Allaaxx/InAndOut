@@ -2,8 +2,16 @@ import { DashboardShell } from '@client/components/coordination/DashboardShell';
 import { Toaster, toast } from '@client/components/ui/Sonner';
 import { useSocket } from '@client/hooks/useSocket';
 import { api } from '@client/services/api';
-import type { MovementDTO, UserDTO } from '@shared/dtos';
-import { INCIDENT_OUTCOME_LABELS, IncidentOutcome } from '@shared/enums';
+import type {
+  ActiveRoomSessionSummaryDTO,
+  MovementDTO,
+  UserDTO,
+} from '@shared/dtos';
+import {
+  INCIDENT_OUTCOME_LABELS,
+  IncidentOutcome,
+  MovementStatus,
+} from '@shared/enums';
 import { useCallback, useEffect, useState } from 'react';
 import {
   MemoryRouter,
@@ -26,6 +34,31 @@ export interface CoordinationPageProps {
   onNavigateToAnalytics?: () => void;
 }
 
+function syncActiveRoomsWithMovements(
+  rooms: ActiveRoomSessionSummaryDTO[],
+  movements: MovementDTO[],
+): ActiveRoomSessionSummaryDTO[] {
+  return rooms.map((room) => {
+    const sessionMovements = movements.filter(
+      (m) =>
+        m.sessionId === room.sessionId &&
+        (m.status === MovementStatus.IN_TRANSIT ||
+          m.status === MovementStatus.OVERDUE ||
+          m.status === MovementStatus.ESCALATED_TO_COORDINATION),
+    );
+    return {
+      ...room,
+      activeExitCount: sessionMovements.length,
+      hasOverdue: sessionMovements.some(
+        (m) => m.status === MovementStatus.OVERDUE,
+      ),
+      hasEscalated: sessionMovements.some(
+        (m) => m.status === MovementStatus.ESCALATED_TO_COORDINATION,
+      ),
+    };
+  });
+}
+
 function CoordinationPageContent({
   user,
   token,
@@ -34,6 +67,9 @@ function CoordinationPageContent({
   onNavigateToAnalytics,
 }: CoordinationPageProps) {
   const [movements, setMovements] = useState<MovementDTO[]>([]);
+  const [activeRooms, setActiveRooms] = useState<ActiveRoomSessionSummaryDTO[]>(
+    [],
+  );
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +117,7 @@ function CoordinationPageContent({
       setError(null);
       const res = await api.getCoordinationActiveMovements({}, token);
       setMovements(res.movements);
+      setActiveRooms(res.activeRooms ?? []);
     } catch (err) {
       setError(
         err instanceof Error
@@ -144,30 +181,38 @@ function CoordinationPageContent({
     onMovementExit: (movement) => {
       setMovements((prev) => {
         const exists = prev.some((m) => m.id === movement.id);
-        if (exists) {
-          return prev.map((m) => (m.id === movement.id ? movement : m));
-        }
-        return [movement, ...prev];
+        const next = exists
+          ? prev.map((m) => (m.id === movement.id ? movement : m))
+          : [movement, ...prev];
+        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
+        return next;
       });
     },
     onMovementReturn: (movement) => {
-      setMovements((prev) => prev.filter((m) => m.id !== movement.id));
+      setMovements((prev) => {
+        const next = prev.filter((m) => m.id !== movement.id);
+        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
+        return next;
+      });
       setSelectedMovement((current) =>
         current?.id === movement.id ? null : current,
       );
     },
     onMovementOverdue: (movement) => {
-      setMovements((prev) =>
-        prev.map((m) => (m.id === movement.id ? movement : m)),
-      );
+      setMovements((prev) => {
+        const next = prev.map((m) => (m.id === movement.id ? movement : m));
+        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
+        return next;
+      });
     },
     onMovementEscalated: (movement) => {
       setMovements((prev) => {
         const exists = prev.some((m) => m.id === movement.id);
-        if (exists) {
-          return prev.map((m) => (m.id === movement.id ? movement : m));
-        }
-        return [movement, ...prev];
+        const next = exists
+          ? prev.map((m) => (m.id === movement.id ? movement : m))
+          : [movement, ...prev];
+        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
+        return next;
       });
 
       // Visual floating alert via Sonner Toast
@@ -189,21 +234,34 @@ function CoordinationPageContent({
       playAlertSound();
     },
     onMovementInTransitUnresolved: (movement) => {
-      setMovements((prev) =>
-        prev.map((m) => (m.id === movement.id ? movement : m)),
-      );
+      setMovements((prev) => {
+        const next = prev.map((m) => (m.id === movement.id ? movement : m));
+        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
+        return next;
+      });
     },
     onMovementResolved: (movement) => {
-      setMovements((prev) => prev.filter((m) => m.id !== movement.id));
+      setMovements((prev) => {
+        const next = prev.filter((m) => m.id !== movement.id);
+        setActiveRooms((rooms) => syncActiveRoomsWithMovements(rooms, next));
+        return next;
+      });
       setSelectedMovement((current) =>
         current?.id === movement.id ? null : current,
       );
+    },
+    onSessionStarted: () => {
+      void loadActiveMovements();
+    },
+    onSessionEnded: () => {
+      void loadActiveMovements();
     },
   });
 
   const livePageComponent = (
     <CoordinationLivePage
       movements={movements}
+      activeRooms={activeRooms}
       loading={loading}
       error={error}
       onRefresh={loadActiveMovements}
