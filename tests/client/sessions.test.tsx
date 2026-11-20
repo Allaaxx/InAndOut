@@ -77,7 +77,10 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
       />,
     );
 
-    // 1. Select Turma and Disciplina to start a class session
+    // 1. Click "Iniciar Aula" to open the session modal and select Turma and Disciplina
+    await user.click(
+      await screen.findByRole('button', { name: /Iniciar Aula/i }),
+    );
     const classSelect = await screen.findByLabelText(/Turma/i);
     const subjectSelect = screen.getByLabelText(/Disciplina/i);
 
@@ -137,6 +140,65 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
     expect(
       await screen.findByText(/Sessão de aula encerrada/i),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/Turma/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Iniciar Aula/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('allows the teacher to select a custom planned duration in StartSessionModal and submits it', async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(api.getActiveSession).mockResolvedValueOnce({
+      session: null,
+      activeMovements: [],
+      queue: [],
+    });
+
+    vi.mocked(api.startSession).mockResolvedValueOnce({
+      session: {
+        id: 'session-custom-duration',
+        teacherId: teacherUser.id,
+        teacherName: teacherUser.name,
+        roomId: 'SALA-01',
+        classCode: '1A',
+        subject: 'Matemática',
+        status: SessionStatus.ACTIVE,
+        startedAt: new Date().toISOString(),
+        plannedDurationMinutes: 90,
+        defaultTimeLimitMinutes: 10,
+      },
+    });
+
+    render(
+      <TerminalPage
+        user={teacherUser}
+        token="jwt-access-token"
+        onVerifyPin={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+
+    await user.click(
+      await screen.findByRole('button', { name: /Iniciar Aula/i }),
+    );
+
+    const durationSelect = await screen.findByLabelText(/Duração \(min\)/i);
+    await user.click(durationSelect);
+    await user.click(await screen.findByRole('option', { name: '90 min' }));
+
+    await user.click(
+      screen.getByRole('button', { name: /Iniciar Sessão de Aula/i }),
+    );
+
+    await waitFor(() => {
+      expect(api.startSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          classCode: '1A',
+          subject: 'Matemática',
+          plannedDurationMinutes: 90,
+        }),
+        'jwt-access-token',
+      );
+    });
   });
 });

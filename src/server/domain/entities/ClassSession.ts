@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ClassSessionDTO } from '@shared/dtos';
 import { SessionStatus } from '@shared/enums';
+import { resolveRoomCode } from '@shared/roomCode';
 
 export interface ClassSessionProps {
   id?: string;
@@ -81,7 +82,7 @@ export class ClassSession {
       );
     }
 
-    const roomId = (props.roomId ?? 'SALA-01').trim() || 'SALA-01';
+    const roomId = resolveRoomCode(props.roomId);
     const teacherName =
       (props.teacherName ?? 'Professor').trim() || 'Professor';
     const startedAt = props.startedAt ?? props.startTime ?? new Date();

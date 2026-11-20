@@ -112,7 +112,7 @@ describe('Frontend Seam: Central Routing & Role Guards (Ticket #39)', () => {
 
       expect(
         await screen.findByRole('heading', {
-          name: /Iniciar Nova Sessão de Aula/i,
+          name: /Nenhuma aula ativa no momento/i,
         }),
       ).toBeInTheDocument();
       expect(screen.getByText(/Prof\. Carlos Eduardo/i)).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe('Frontend Seam: Central Routing & Role Guards (Ticket #39)', () => {
 
       expect(
         await screen.findByRole('heading', {
-          name: /Iniciar Nova Sessão de Aula/i,
+          name: /Nenhuma aula ativa no momento/i,
         }),
       ).toBeInTheDocument();
       expect(screen.getByText(/Prof\. Carlos Eduardo/i)).toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('Frontend Seam: Central Routing & Role Guards (Ticket #39)', () => {
 
       expect(
         await screen.findByRole('heading', {
-          name: /Iniciar Nova Sessão de Aula/i,
+          name: /Nenhuma aula ativa no momento/i,
         }),
       ).toBeInTheDocument();
     });
@@ -147,7 +147,7 @@ describe('Frontend Seam: Central Routing & Role Guards (Ticket #39)', () => {
 
       expect(
         await screen.findByRole('heading', {
-          name: /Iniciar Nova Sessão de Aula/i,
+          name: /Nenhuma aula ativa no momento/i,
         }),
       ).toBeInTheDocument();
     });

@@ -22,7 +22,11 @@ export async function registerSessionRoutes(
 ): Promise<void> {
   const startSessionUseCase = new StartClassSessionUseCase(
     container.sessionRepo,
-    { clock: container.clock },
+    {
+      clock: container.clock,
+      roomRepo: container.roomRepo,
+      notificationSender: container.notificationSender,
+    },
   );
   const getActiveSessionUseCase = new GetActiveSessionUseCase(
     container.sessionRepo,

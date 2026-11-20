@@ -8,6 +8,7 @@ import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaiti
 import { StudentRA } from '@server/domain/value-objects/StudentRA';
 import type { ClaimQueueRequestDTO, ClaimQueueResponseDTO } from '@shared/dtos';
 import { MovementStatus, QueueEntryStatus } from '@shared/enums';
+import { resolveRoomCode } from '@shared/roomCode';
 import {
   QueueConflictError,
   QueueWindowExpiredError,
@@ -64,7 +65,7 @@ export class ClaimQueueSlotUseCase {
         session = null;
       }
     } else {
-      const roomId = (input.roomId ?? 'SALA-01').trim() || 'SALA-01';
+      const roomId = resolveRoomCode(input.roomId);
       session = await this.sessionRepo.findActiveByRoomId(roomId);
     }
 

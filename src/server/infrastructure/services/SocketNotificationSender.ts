@@ -1,5 +1,10 @@
 import type { INotificationSender } from '@server/application/contracts/INotificationSender';
-import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
+import type {
+  ClassSessionDTO,
+  EndSessionResponseDTO,
+  MovementDTO,
+  WaitingQueueDTO,
+} from '@shared/dtos';
 import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
 import type { Server as SocketIOServer } from 'socket.io';
 
@@ -109,5 +114,37 @@ export class SocketNotificationSender implements INotificationSender {
       .to(SOCKET_ROOMS.COORDINATION)
       .to(SOCKET_ROOMS.COORDINATION_ROOM)
       .emit(SOCKET_EVENTS.MOVEMENT_RESOLVED, movement);
+  }
+
+  public async notifySessionStarted(session: ClassSessionDTO): Promise<void> {
+    if (!this.io) return;
+    this.io
+      .to(SOCKET_ROOMS.room(session.roomId))
+      .to(SOCKET_ROOMS.COORDINATION)
+      .to(SOCKET_ROOMS.COORDINATION_ROOM)
+      .emit(SOCKET_EVENTS.SESSION_STARTED, { session });
+  }
+
+  public async notifySessionEnded(
+    session: ClassSessionDTO,
+    summary?: EndSessionResponseDTO,
+  ): Promise<void> {
+    if (!this.io) return;
+    this.io
+      .to(SOCKET_ROOMS.room(session.roomId))
+      .to(SOCKET_ROOMS.COORDINATION)
+      .to(SOCKET_ROOMS.COORDINATION_ROOM)
+      .emit(
+        SOCKET_EVENTS.SESSION_ENDED,
+        summary ?? {
+          session,
+          metrics: {
+            totalExits: 0,
+            inTransitUnresolvedCount: 0,
+            elapsedMinutes: 0,
+          },
+          inTransitMovements: [],
+        },
+      );
   }
 }

@@ -1,4 +1,9 @@
-import type { MovementDTO, WaitingQueueDTO } from '@shared/dtos';
+import type {
+  ClassSessionDTO,
+  EndSessionResponseDTO,
+  MovementDTO,
+  WaitingQueueDTO,
+} from '@shared/dtos';
 
 export interface INotificationSender {
   notifyMovementExit(movement: MovementDTO): Promise<void>;
@@ -17,4 +22,9 @@ export interface INotificationSender {
   notifyMovementEscalated(movement: MovementDTO): Promise<void>;
   notifyMovementInTransitUnresolved(movement: MovementDTO): Promise<void>;
   notifyMovementResolved(movement: MovementDTO): Promise<void>;
+  notifySessionStarted?(session: ClassSessionDTO): Promise<void> | void;
+  notifySessionEnded?(
+    session: ClassSessionDTO,
+    summary?: EndSessionResponseDTO,
+  ): Promise<void> | void;
 }

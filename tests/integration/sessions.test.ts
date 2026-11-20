@@ -1,21 +1,28 @@
+import { User } from '@server/domain/entities/User';
+import { hashPassword } from '@server/infrastructure/repositories/InMemoryUserRepository';
 import { createApp } from '@server/main/app';
-import { SessionStatus } from '@shared/enums';
+import { SessionStatus, UserRole } from '@shared/enums';
 import { describe, expect, it } from 'vitest';
 
 describe('Controller Seam: ClassSession Lifecycle Endpoints (app.inject)', () => {
-  async function loginAsTeacher(
+  async function loginAs(
     app: Awaited<ReturnType<typeof createApp>>['app'],
+    email: string,
+    password: string,
   ) {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/login',
-      payload: {
-        email: 'prof@linsdorego.edu.br',
-        password: 'senha123',
-      },
+      payload: { email, password },
     });
     expect(res.statusCode).toBe(200);
     return res.json() as { token: string; user: { id: string; name: string } };
+  }
+
+  async function loginAsTeacher(
+    app: Awaited<ReturnType<typeof createApp>>['app'],
+  ) {
+    return loginAs(app, 'prof@linsdorego.edu.br', 'senha123');
   }
 
   it('starts a class session via POST /sessions/start and retrieves it via GET /sessions/active', async () => {
@@ -76,16 +83,33 @@ describe('Controller Seam: ClassSession Lifecycle Endpoints (app.inject)', () =>
     await app.close();
   });
 
-  it('enforces that only one class session can be active per room/terminal simultaneously (HTTP 409)', async () => {
+  it('enforces strict room and teacher concurrency locks (HTTP 409) and isolates active sessions by roomId', async () => {
     const currentTime = new Date('2026-03-10T08:00:00.000Z');
-    const { app } = await createApp({ clock: () => currentTime });
-    const { token } = await loginAsTeacher(app);
+    const { app, container } = await createApp({ clock: () => currentTime });
+
+    await container.userRepo.save(
+      User.create({
+        id: 'teacher-2',
+        name: 'Profa. Beatriz Nogueira',
+        email: 'beatriz@linsdorego.edu.br',
+        passwordHash: hashPassword('senha123'),
+        role: UserRole.TEACHER,
+        pinCode: '5678',
+      }),
+    );
+
+    const teacherA = await loginAsTeacher(app);
+    const teacherB = await loginAs(
+      app,
+      'beatriz@linsdorego.edu.br',
+      'senha123',
+    );
 
     const firstRes = await app.inject({
       method: 'POST',
       url: '/sessions/start',
       headers: {
-        authorization: `Bearer ${token}`,
+        authorization: `Bearer ${teacherA.token}`,
       },
       payload: {
         classCode: '1A',
@@ -94,13 +118,14 @@ describe('Controller Seam: ClassSession Lifecycle Endpoints (app.inject)', () =>
       },
     });
     expect(firstRes.statusCode).toBe(201);
+    const sessionA = firstRes.json().session;
 
-    // Attempting to start a second session on the same terminal/room returns 409 Conflict
-    const conflictRes = await app.inject({
+    // Another teacher attempting to start a session in the same room (SALA-01) -> 409 Conflict
+    const roomConflictRes = await app.inject({
       method: 'POST',
       url: '/sessions/start',
       headers: {
-        authorization: `Bearer ${token}`,
+        authorization: `Bearer ${teacherB.token}`,
       },
       payload: {
         classCode: '2B',
@@ -108,17 +133,17 @@ describe('Controller Seam: ClassSession Lifecycle Endpoints (app.inject)', () =>
         roomId: 'SALA-01',
       },
     });
-    expect(conflictRes.statusCode).toBe(409);
-    expect(conflictRes.json()).toMatchObject({
+    expect(roomConflictRes.statusCode).toBe(409);
+    expect(roomConflictRes.json()).toMatchObject({
       error: expect.stringMatching(/sessão.*ativa/i),
     });
 
-    // Starting a session on a different classroom terminal (SALA-02) succeeds
-    const otherRoomRes = await app.inject({
+    // Same teacher attempting to start a second session in another room (SALA-02) -> 409 Conflict
+    const teacherConflictRes = await app.inject({
       method: 'POST',
       url: '/sessions/start',
       headers: {
-        authorization: `Bearer ${token}`,
+        authorization: `Bearer ${teacherA.token}`,
       },
       payload: {
         classCode: '2B',
@@ -126,7 +151,120 @@ describe('Controller Seam: ClassSession Lifecycle Endpoints (app.inject)', () =>
         roomId: 'SALA-02',
       },
     });
+    expect(teacherConflictRes.statusCode).toBe(409);
+    expect(teacherConflictRes.json()).toMatchObject({
+      error: expect.stringMatching(/professor.*sessão.*ativa/i),
+    });
+
+    // Different teacher starting a session in a different room (SALA-02) succeeds
+    const otherRoomRes = await app.inject({
+      method: 'POST',
+      url: '/sessions/start',
+      headers: {
+        authorization: `Bearer ${teacherB.token}`,
+      },
+      payload: {
+        classCode: '2B',
+        subject: 'História',
+        roomId: 'sala-02',
+      },
+    });
     expect(otherRoomRes.statusCode).toBe(201);
+    const sessionB = otherRoomRes.json().session;
+    expect(sessionB.roomId).toBe('SALA-02');
+
+    // GET /sessions/active strictly filters by normalized roomId
+    const activeRoom1 = await app.inject({
+      method: 'GET',
+      url: '/sessions/active?roomId=sala-01',
+    });
+    expect(activeRoom1.statusCode).toBe(200);
+    expect(activeRoom1.json().session?.id).toBe(sessionA.id);
+
+    const activeRoom2 = await app.inject({
+      method: 'GET',
+      url: '/sessions/active?roomId=SALA-02',
+    });
+    expect(activeRoom2.statusCode).toBe(200);
+    expect(activeRoom2.json().session?.id).toBe(sessionB.id);
+
+    const activeRoom3 = await app.inject({
+      method: 'GET',
+      url: '/sessions/active?roomId=SALA-03',
+    });
+    expect(activeRoom3.statusCode).toBe(200);
+    expect(activeRoom3.json().session).toBeNull();
+
+    // After Teacher A ends their session in SALA-01, Teacher A can start a new session in SALA-03
+    const endA = await app.inject({
+      method: 'POST',
+      url: '/sessions/end',
+      headers: { authorization: `Bearer ${teacherA.token}` },
+      payload: { sessionId: sessionA.id },
+    });
+    expect(endA.statusCode).toBe(200);
+
+    const teacherANewRoom = await app.inject({
+      method: 'POST',
+      url: '/sessions/start',
+      headers: { authorization: `Bearer ${teacherA.token}` },
+      payload: {
+        classCode: '3B',
+        subject: 'Geografia',
+        roomId: 'SALA-03',
+      },
+    });
+    expect(teacherANewRoom.statusCode).toBe(201);
+
+    await app.close();
+  });
+
+  it('rejects starting a session in a non-existent or inactive room (HTTP 400)', async () => {
+    const currentTime = new Date('2026-03-10T08:00:00.000Z');
+    const { app } = await createApp({ clock: () => currentTime });
+    const teacher = await loginAsTeacher(app);
+    const coord = await loginAs(app, 'coord@linsdorego.edu.br', 'coord123');
+
+    // Non-existent room -> 400
+    const unknownRoomRes = await app.inject({
+      method: 'POST',
+      url: '/sessions/start',
+      headers: { authorization: `Bearer ${teacher.token}` },
+      payload: {
+        classCode: '1A',
+        subject: 'Matemática',
+        roomId: 'SALA-99',
+      },
+    });
+    expect(unknownRoomRes.statusCode).toBe(400);
+    expect(unknownRoomRes.json()).toMatchObject({
+      error: expect.stringMatching(/SALA-99/i),
+    });
+
+    // Deactivate SALA-03 via coordination endpoint
+    const deactivateRes = await app.inject({
+      method: 'PATCH',
+      url: '/rooms/room-sala-03/status',
+      headers: { authorization: `Bearer ${coord.token}` },
+      payload: { isActive: false },
+    });
+    expect(deactivateRes.statusCode).toBe(200);
+
+    // Inactive room -> 400
+    const inactiveRoomRes = await app.inject({
+      method: 'POST',
+      url: '/sessions/start',
+      headers: { authorization: `Bearer ${teacher.token}` },
+      payload: {
+        classCode: '1A',
+        subject: 'Matemática',
+        roomId: 'sala-03',
+      },
+    });
+    expect(inactiveRoomRes.statusCode).toBe(400);
+    expect(inactiveRoomRes.json()).toMatchObject({
+      error: expect.stringMatching(/inativa/i),
+    });
 
     await app.close();
   });

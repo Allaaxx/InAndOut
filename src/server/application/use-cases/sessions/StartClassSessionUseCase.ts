@@ -1,9 +1,12 @@
+import type { INotificationSender } from '@server/application/contracts/INotificationSender';
 import { ClassSession } from '@server/domain/entities/ClassSession';
 import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
+import type { IRoomRepository } from '@server/domain/repositories/IRoomRepository';
 import type {
   StartSessionRequestDTO,
   StartSessionResponseDTO,
 } from '@shared/dtos';
+import { resolveRoomCode } from '@shared/roomCode';
 
 export class SessionConflictError extends Error {
   constructor(message: string) {
@@ -24,15 +27,25 @@ export interface StartClassSessionInput extends StartSessionRequestDTO {
   teacherName: string;
 }
 
+export interface StartClassSessionOptions {
+  clock?: () => Date;
+  roomRepo?: IRoomRepository;
+  notificationSender?: INotificationSender;
+}
+
 export class StartClassSessionUseCase {
   private readonly sessionRepo: IClassSessionRepository;
+  private readonly roomRepo?: IRoomRepository;
+  private readonly notificationSender?: INotificationSender;
   private readonly clock: () => Date;
 
   constructor(
     sessionRepo: IClassSessionRepository,
-    options: { clock?: () => Date } = {},
+    options: StartClassSessionOptions = {},
   ) {
     this.sessionRepo = sessionRepo;
+    this.roomRepo = options.roomRepo;
+    this.notificationSender = options.notificationSender;
     this.clock = options.clock ?? (() => new Date());
   }
 
@@ -53,12 +66,35 @@ export class StartClassSessionUseCase {
       );
     }
 
-    const roomId = (input.roomId ?? 'SALA-01').trim() || 'SALA-01';
+    const roomId = resolveRoomCode(input.roomId);
 
-    const existingActive = await this.sessionRepo.findActiveByRoomId(roomId);
-    if (existingActive) {
+    if (this.roomRepo) {
+      const room = await this.roomRepo.findByCode(roomId);
+      if (!room) {
+        throw new SessionValidationError(
+          `A sala ${roomId} não está cadastrada no sistema.`,
+        );
+      }
+      if (!room.isActive) {
+        throw new SessionValidationError(
+          `A sala ${roomId} (${room.name}) está inativa e não pode receber novas sessões de aula.`,
+        );
+      }
+    }
+
+    const existingActiveInRoom =
+      await this.sessionRepo.findActiveByRoomId(roomId);
+    if (existingActiveInRoom) {
       throw new SessionConflictError(
-        `Já existe uma sessão de aula ativa no terminal/sala ${roomId} (${existingActive.classCode} — ${existingActive.subject}).`,
+        `Já existe uma sessão de aula ativa no terminal/sala ${roomId} (${existingActiveInRoom.classCode} — ${existingActiveInRoom.subject}).`,
+      );
+    }
+
+    const existingActiveByTeacher =
+      await this.sessionRepo.findActiveByTeacherId(input.teacherId);
+    if (existingActiveByTeacher) {
+      throw new SessionConflictError(
+        `O professor já possui uma sessão de aula ativa na sala ${existingActiveByTeacher.roomId} (${existingActiveByTeacher.classCode} — ${existingActiveByTeacher.subject}). Encerre a sessão atual antes de iniciar outra.`,
       );
     }
 
@@ -85,8 +121,14 @@ export class StartClassSessionUseCase {
 
     await this.sessionRepo.create(session);
 
-    return {
+    const response: StartSessionResponseDTO = {
       session: session.toDTO(),
     };
+
+    if (this.notificationSender?.notifySessionStarted) {
+      await this.notificationSender.notifySessionStarted(response.session);
+    }
+
+    return response;
   }
 }

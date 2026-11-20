@@ -2,9 +2,17 @@ import { DashboardShell } from '@client/components/coordination/DashboardShell';
 import { Toaster, toast } from '@client/components/ui/Sonner';
 import { useSocket } from '@client/hooks/useSocket';
 import { api } from '@client/services/api';
-import type { MovementDTO, UserDTO } from '@shared/dtos';
-import { INCIDENT_OUTCOME_LABELS, IncidentOutcome } from '@shared/enums';
-import { useCallback, useEffect, useState } from 'react';
+import type {
+  ActiveRoomSessionSummaryDTO,
+  MovementDTO,
+  UserDTO,
+} from '@shared/dtos';
+import {
+  INCIDENT_OUTCOME_LABELS,
+  IncidentOutcome,
+  MovementStatus,
+} from '@shared/enums';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   MemoryRouter,
   Navigate,
@@ -14,6 +22,7 @@ import {
 } from 'react-router-dom';
 import { CoordinationAnalyticsPage } from './coordination/CoordinationAnalyticsPage';
 import { CoordinationLivePage } from './coordination/CoordinationLivePage';
+import { CoordinationRoomsPage } from './coordination/CoordinationRoomsPage';
 import { CoordinationSettingsPage } from './coordination/CoordinationSettingsPage';
 import { CoordinationStudentsPage } from './coordination/CoordinationStudentsPage';
 
@@ -25,6 +34,31 @@ export interface CoordinationPageProps {
   onNavigateToAnalytics?: () => void;
 }
 
+function syncActiveRoomsWithMovements(
+  rooms: ActiveRoomSessionSummaryDTO[],
+  movements: MovementDTO[],
+): ActiveRoomSessionSummaryDTO[] {
+  return rooms.map((room) => {
+    const sessionMovements = movements.filter(
+      (m) =>
+        m.sessionId === room.sessionId &&
+        (m.status === MovementStatus.IN_TRANSIT ||
+          m.status === MovementStatus.OVERDUE ||
+          m.status === MovementStatus.ESCALATED_TO_COORDINATION),
+    );
+    return {
+      ...room,
+      activeExitCount: sessionMovements.length,
+      hasOverdue: sessionMovements.some(
+        (m) => m.status === MovementStatus.OVERDUE,
+      ),
+      hasEscalated: sessionMovements.some(
+        (m) => m.status === MovementStatus.ESCALATED_TO_COORDINATION,
+      ),
+    };
+  });
+}
+
 function CoordinationPageContent({
   user,
   token,
@@ -33,6 +67,9 @@ function CoordinationPageContent({
   onNavigateToAnalytics,
 }: CoordinationPageProps) {
   const [movements, setMovements] = useState<MovementDTO[]>([]);
+  const [activeRooms, setActiveRooms] = useState<ActiveRoomSessionSummaryDTO[]>(
+    [],
+  );
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +117,7 @@ function CoordinationPageContent({
       setError(null);
       const res = await api.getCoordinationActiveMovements({}, token);
       setMovements(res.movements);
+      setActiveRooms(res.activeRooms ?? []);
     } catch (err) {
       setError(
         err instanceof Error
@@ -143,10 +181,9 @@ function CoordinationPageContent({
     onMovementExit: (movement) => {
       setMovements((prev) => {
         const exists = prev.some((m) => m.id === movement.id);
-        if (exists) {
-          return prev.map((m) => (m.id === movement.id ? movement : m));
-        }
-        return [movement, ...prev];
+        return exists
+          ? prev.map((m) => (m.id === movement.id ? movement : m))
+          : [movement, ...prev];
       });
     },
     onMovementReturn: (movement) => {
@@ -163,10 +200,9 @@ function CoordinationPageContent({
     onMovementEscalated: (movement) => {
       setMovements((prev) => {
         const exists = prev.some((m) => m.id === movement.id);
-        if (exists) {
-          return prev.map((m) => (m.id === movement.id ? movement : m));
-        }
-        return [movement, ...prev];
+        return exists
+          ? prev.map((m) => (m.id === movement.id ? movement : m))
+          : [movement, ...prev];
       });
 
       // Visual floating alert via Sonner Toast
@@ -198,11 +234,23 @@ function CoordinationPageContent({
         current?.id === movement.id ? null : current,
       );
     },
+    onSessionStarted: () => {
+      void loadActiveMovements();
+    },
+    onSessionEnded: () => {
+      void loadActiveMovements();
+    },
   });
+
+  const liveActiveRooms = useMemo(
+    () => syncActiveRoomsWithMovements(activeRooms, movements),
+    [activeRooms, movements],
+  );
 
   const livePageComponent = (
     <CoordinationLivePage
       movements={movements}
+      activeRooms={liveActiveRooms}
       loading={loading}
       error={error}
       onRefresh={loadActiveMovements}
@@ -241,6 +289,7 @@ function CoordinationPageContent({
           path="students"
           element={<CoordinationStudentsPage token={token} />}
         />
+        <Route path="rooms" element={<CoordinationRoomsPage token={token} />} />
         <Route
           path="settings"
           element={
@@ -264,6 +313,10 @@ function CoordinationPageContent({
         <Route
           path="coordination/students"
           element={<CoordinationStudentsPage token={token} />}
+        />
+        <Route
+          path="coordination/rooms"
+          element={<CoordinationRoomsPage token={token} />}
         />
         <Route
           path="coordination/settings"

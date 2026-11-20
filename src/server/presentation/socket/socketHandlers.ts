@@ -7,6 +7,7 @@ interface SessionPayload {
 
 interface RoomPayload {
   room?: string;
+  roomCode?: string;
 }
 
 type AckCallback = (response?: Record<string, unknown>) => void;
@@ -32,10 +33,18 @@ function extractRoom(payload: unknown): string | null {
   if (typeof payload === 'string' && payload.trim().length > 0) {
     return payload.trim();
   }
-  if (typeof payload === 'object' && payload !== null && 'room' in payload) {
-    const rawRoom = (payload as RoomPayload).room;
-    if (typeof rawRoom === 'string' && rawRoom.trim().length > 0) {
-      return rawRoom.trim();
+  if (typeof payload === 'object' && payload !== null) {
+    if ('roomCode' in payload) {
+      const rawCode = (payload as RoomPayload).roomCode;
+      if (typeof rawCode === 'string' && rawCode.trim().length > 0) {
+        return SOCKET_ROOMS.room(rawCode);
+      }
+    }
+    if ('room' in payload) {
+      const rawRoom = (payload as RoomPayload).room;
+      if (typeof rawRoom === 'string' && rawRoom.trim().length > 0) {
+        return rawRoom.trim();
+      }
     }
   }
   return null;
@@ -129,6 +138,8 @@ export function registerSocketHandlers(io: SocketIOServer): void {
     };
 
     socket.on(SOCKET_EVENTS.JOIN_ROOM, handleJoinRoom);
+    socket.on('join_room', handleJoinRoom);
+    socket.on('join-room', handleJoinRoom);
 
     // Leave generic / specific room
     const handleLeaveRoom = (payload: unknown, ack?: AckCallback) => {
@@ -152,5 +163,7 @@ export function registerSocketHandlers(io: SocketIOServer): void {
     };
 
     socket.on(SOCKET_EVENTS.LEAVE_ROOM, handleLeaveRoom);
+    socket.on('leave_room', handleLeaveRoom);
+    socket.on('leave-room', handleLeaveRoom);
   });
 }

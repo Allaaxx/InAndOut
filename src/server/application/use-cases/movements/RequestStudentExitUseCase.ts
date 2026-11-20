@@ -10,6 +10,7 @@ import type {
   RequestExitResponseDTO,
 } from '@shared/dtos';
 import { MovementStatus } from '@shared/enums';
+import { resolveRoomCode } from '@shared/roomCode';
 
 export class MovementValidationError extends Error {
   constructor(message: string) {
@@ -89,7 +90,7 @@ export class RequestStudentExitUseCase {
         session = null;
       }
     } else {
-      const roomId = (input.roomId ?? 'SALA-01').trim() || 'SALA-01';
+      const roomId = resolveRoomCode(input.roomId);
       session = await this.sessionRepo.findActiveByRoomId(roomId);
     }
 

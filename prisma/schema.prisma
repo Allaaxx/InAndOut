@@ -42,10 +42,12 @@ model ClassSession {
   updatedAt               DateTime            @updatedAt
 
   teacher                 User?               @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  room                    Room?               @relation(fields: [roomId], references: [code], onDelete: SetNull)
   movements               MovementRecord[]
   queueEntries            WaitingQueueEntry[]
 
   @@index([teacherId])
+  @@index([roomId])
   @@index([classCode])
   @@index([status])
   @@map("class_sessions")
@@ -128,4 +130,19 @@ model WaitingQueueEntry {
   @@index([studentRa])
   @@index([status])
   @@map("waiting_queue_entries")
+}
+
+model Room {
+  id        String         @id @default(uuid())
+  code      String         @unique
+  name      String
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  sessions  ClassSession[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("rooms")
 }

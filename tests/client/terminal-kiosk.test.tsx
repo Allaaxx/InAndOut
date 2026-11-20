@@ -88,42 +88,6 @@ describe('Kiosk Terminal: Minimalist Navbar & Footer Components (Ticket #37)', (
       expect(screen.getByText(/Carlos Eduardo/i)).toBeInTheDocument();
     });
 
-    it('renders "Sala Liberada" in green when single concurrency is unoccupied', () => {
-      render(
-        <TerminalNavbar
-          user={teacherUser}
-          roomId="SALA-01"
-          activeSession={activeSessionDTO}
-          isOccupied={false}
-          isLocked={false}
-          onLock={vi.fn()}
-          onLogout={vi.fn()}
-        />,
-      );
-
-      const badge = screen.getByTestId('concurrency-badge');
-      expect(badge).toHaveTextContent('Sala Liberada');
-      expect(badge).toHaveClass('bg-emerald-600');
-    });
-
-    it('renders "Em Atendimento" in amber when single concurrency is occupied', () => {
-      render(
-        <TerminalNavbar
-          user={teacherUser}
-          roomId="SALA-01"
-          activeSession={activeSessionDTO}
-          isOccupied={true}
-          isLocked={false}
-          onLock={vi.fn()}
-          onLogout={vi.fn()}
-        />,
-      );
-
-      const badge = screen.getByTestId('concurrency-badge');
-      expect(badge).toHaveTextContent('Em Atendimento');
-      expect(badge).toHaveClass('bg-amber-500');
-    });
-
     it('triggers quick 1-touch screen lock when clicking the lock button', async () => {
       const user = userEvent.setup();
       const handleLock = vi.fn();
@@ -140,7 +104,12 @@ describe('Kiosk Terminal: Minimalist Navbar & Footer Components (Ticket #37)', (
         />,
       );
 
-      const lockBtn = screen.getByRole('button', {
+      const menuTrigger = screen.getByRole('button', {
+        name: /Ações do Professor/i,
+      });
+      await user.click(menuTrigger);
+
+      const lockBtn = await screen.findByRole('menuitem', {
         name: /Bloquear Terminal/i,
       });
       await user.click(lockBtn);
@@ -227,6 +196,66 @@ describe('Kiosk Terminal: Minimalist Navbar & Footer Components (Ticket #37)', (
 
       expect(handleEndSession).toHaveBeenCalledTimes(1);
     });
+
+    it('disables "Trocar de Sala" in the discreet menu while a session is ACTIVE', async () => {
+      const user = userEvent.setup();
+      const handleChangeRoom = vi.fn();
+
+      render(
+        <TerminalNavbar
+          user={teacherUser}
+          roomId="SALA-01"
+          activeSession={activeSessionDTO}
+          isOccupied={false}
+          isLocked={false}
+          onLock={vi.fn()}
+          onChangeRoom={handleChangeRoom}
+          onLogout={vi.fn()}
+        />,
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: /Ações do Professor/i }),
+      );
+      const menuItem = await screen.findByRole('menuitem', {
+        name: /Trocar de Sala/i,
+      });
+      expect(menuItem).toHaveAttribute('aria-disabled', 'true');
+      expect(menuItem).toHaveAttribute(
+        'title',
+        expect.stringMatching(/encerre/i),
+      );
+      expect(handleChangeRoom).not.toHaveBeenCalled();
+    });
+
+    it('enables "Trocar de Sala" in the discreet menu when no session is active', async () => {
+      const user = userEvent.setup();
+      const handleChangeRoom = vi.fn();
+
+      render(
+        <TerminalNavbar
+          user={teacherUser}
+          roomId="SALA-01"
+          activeSession={null}
+          isOccupied={false}
+          isLocked={false}
+          onLock={vi.fn()}
+          onChangeRoom={handleChangeRoom}
+          onLogout={vi.fn()}
+        />,
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: /Ações do Professor/i }),
+      );
+      const menuItem = await screen.findByRole('menuitem', {
+        name: /Trocar de Sala/i,
+      });
+      expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
+      await user.click(menuItem);
+
+      expect(handleChangeRoom).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('TerminalFooter Unit Behavior', () => {
@@ -293,9 +322,8 @@ describe('Kiosk Terminal: Minimalist Navbar & Footer Components (Ticket #37)', (
       expect(brandElements.length).toBeGreaterThanOrEqual(2);
       expect(screen.getAllByText(/Turma 2A/i).length).toBeGreaterThanOrEqual(1);
 
-      // Single concurrency badge shows "Em Atendimento" because activeMovement exists
-      const badge = screen.getByTestId('concurrency-badge');
-      expect(badge).toHaveTextContent('Em Atendimento');
+      // Active movement student name is visible in kiosk body
+      expect(screen.getByText('Lucas S.')).toBeInTheDocument();
 
       // Minimalist Footer is present
       expect(

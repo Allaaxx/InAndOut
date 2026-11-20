@@ -8,6 +8,7 @@ import { registerMovementEscalationRoutes } from '@server/presentation/routes/mo
 import { registerMovementOverrideRoutes } from '@server/presentation/routes/movementOverrideRoutes';
 import { registerMovementQueueRoutes } from '@server/presentation/routes/movementQueueRoutes';
 import { registerMovementRoutes } from '@server/presentation/routes/movementRoutes';
+import { registerRoomRoutes } from '@server/presentation/routes/roomRoutes';
 import { registerSessionRoutes } from '@server/presentation/routes/sessionRoutes';
 import { registerSocketHandlers } from '@server/presentation/socket/socketHandlers';
 import Fastify, { type FastifyInstance } from 'fastify';
@@ -64,6 +65,7 @@ export async function createApp(
   registerSocketHandlers(io);
 
   await registerAuthRoutes(app, container);
+  await registerRoomRoutes(app, container);
   await registerSessionRoutes(app, container);
   await registerMovementRoutes(app, container);
   await registerMovementQueueRoutes(app, container);

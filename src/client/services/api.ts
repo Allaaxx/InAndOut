@@ -5,6 +5,9 @@ import type {
   CheckOverdueResponseDTO,
   ClaimQueueRequestDTO,
   ClaimQueueResponseDTO,
+  CoordinationActiveMovementsResponseDTO,
+  CreateRoomRequestDTO,
+  CreateRoomResponseDTO,
   EmergencyExitRequestDTO,
   EndSessionRequestDTO,
   EndSessionResponseDTO,
@@ -13,6 +16,7 @@ import type {
   EscalateMovementRequestDTO,
   ExportAnalyticsQueryDTO,
   GuestExitRequestDTO,
+  ListRoomsResponseDTO,
   LoginRequestDTO,
   LoginResponseDTO,
   MovementDTO,
@@ -29,8 +33,11 @@ import type {
   StartSessionResponseDTO,
   StudentHistoryQueryDTO,
   StudentHistoryReportDTO,
+  UpdateRoomStatusRequestDTO,
+  UpdateRoomStatusResponseDTO,
   VerifyPinResponseDTO,
 } from '@shared/dtos';
+import { DEFAULT_ROOM_CODE } from '@shared/roomCode';
 
 const API_BASE_URL =
   (typeof import.meta !== 'undefined' &&
@@ -83,7 +90,7 @@ export const api = {
   },
 
   async getActiveSession(
-    roomId = 'SALA-01',
+    roomId = DEFAULT_ROOM_CODE,
     token?: string,
   ): Promise<ActiveSessionResponseDTO> {
     const query = roomId ? `?roomId=${encodeURIComponent(roomId)}` : '';
@@ -233,14 +240,15 @@ export const api = {
   },
 
   async getCoordinationActiveMovements(
-    params: { classCode?: string; status?: string } = {},
+    params: { classCode?: string; roomId?: string; status?: string } = {},
     token: string,
-  ): Promise<{ movements: MovementDTO[] }> {
+  ): Promise<CoordinationActiveMovementsResponseDTO> {
     const searchParams = new URLSearchParams();
     if (params.classCode) searchParams.append('classCode', params.classCode);
+    if (params.roomId) searchParams.append('roomId', params.roomId);
     if (params.status) searchParams.append('status', params.status);
     const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
-    return request<{ movements: MovementDTO[] }>(
+    return request<CoordinationActiveMovementsResponseDTO>(
       `/coordination/active-movements${qs}`,
       {
         method: 'GET',
@@ -333,5 +341,48 @@ export const api = {
     }
 
     return response.blob();
+  },
+
+  async listRooms(
+    token: string,
+    params: { onlyActive?: boolean } = {},
+  ): Promise<ListRoomsResponseDTO> {
+    const query = params.onlyActive ? '?onlyActive=true' : '';
+    return request<ListRoomsResponseDTO>(`/rooms${query}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  async createRoom(
+    payload: CreateRoomRequestDTO,
+    token: string,
+  ): Promise<CreateRoomResponseDTO> {
+    return request<CreateRoomResponseDTO>('/rooms', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async updateRoomStatus(
+    roomId: string,
+    payload: UpdateRoomStatusRequestDTO,
+    token: string,
+  ): Promise<UpdateRoomStatusResponseDTO> {
+    return request<UpdateRoomStatusResponseDTO>(
+      `/rooms/${encodeURIComponent(roomId)}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      },
+    );
   },
 };

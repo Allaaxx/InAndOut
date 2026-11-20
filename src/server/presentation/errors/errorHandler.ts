@@ -19,6 +19,11 @@ import {
   MovementValidationError,
   StudentNotInClassError,
 } from '@server/application/use-cases/movements/RequestStudentExitUseCase';
+import {
+  RoomConflictError,
+  RoomValidationError,
+} from '@server/application/use-cases/rooms/CreateRoomUseCase';
+import { RoomNotFoundError } from '@server/application/use-cases/rooms/UpdateRoomStatusUseCase';
 import { SessionNotFoundError } from '@server/application/use-cases/sessions/EndClassSessionUseCase';
 import {
   SessionConflictError,
@@ -38,6 +43,7 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     err instanceof ValidationError ||
     err instanceof MovementValidationError ||
     err instanceof SessionValidationError ||
+    err instanceof RoomValidationError ||
     err instanceof InvalidOutcomeError ||
     err instanceof InvalidExportFormatError ||
     err instanceof MovementAuthorizationError ||
@@ -67,7 +73,8 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     err instanceof MovementNotFoundExitError ||
     err instanceof CoordinationMovementNotFoundError ||
     err instanceof SessionNotFoundError ||
-    err instanceof StudentNotFoundError
+    err instanceof StudentNotFoundError ||
+    err instanceof RoomNotFoundError
   ) {
     return {
       statusCode: 404,
@@ -78,7 +85,8 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
   if (
     err instanceof MovementConcurrencyConflictError ||
     err instanceof QueueConflictError ||
-    err instanceof SessionConflictError
+    err instanceof SessionConflictError ||
+    err instanceof RoomConflictError
   ) {
     return {
       statusCode: 409,

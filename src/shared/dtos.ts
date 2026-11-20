@@ -238,8 +238,23 @@ export interface CheckOverdueResponseDTO {
   autoEscalatedMovements: MovementDTO[];
 }
 
+export interface ActiveRoomSessionSummaryDTO {
+  sessionId: string;
+  roomId: string;
+  roomName: string;
+  teacherId: string;
+  teacherName: string;
+  classCode: string;
+  subject: string;
+  startedAt: string;
+  activeExitCount: number;
+  hasOverdue: boolean;
+  hasEscalated: boolean;
+}
+
 export interface CoordinationActiveMovementsResponseDTO {
   movements: MovementDTO[];
+  activeRooms?: ActiveRoomSessionSummaryDTO[];
 }
 
 export interface ResolveMovementRequestDTO {
@@ -336,4 +351,34 @@ export interface ExportAnalyticsQueryDTO {
   classCode?: string;
   startDate?: string;
   endDate?: string;
+}
+
+export interface RoomDTO {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListRoomsResponseDTO {
+  rooms: RoomDTO[];
+}
+
+export interface CreateRoomRequestDTO {
+  code: string;
+  name: string;
+}
+
+export interface CreateRoomResponseDTO {
+  room: RoomDTO;
+}
+
+export interface UpdateRoomStatusRequestDTO {
+  isActive: boolean;
+}
+
+export interface UpdateRoomStatusResponseDTO {
+  room: RoomDTO;
 }

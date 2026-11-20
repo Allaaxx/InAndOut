@@ -16,6 +16,7 @@ import type {
   GuestExitRequestDTO,
 } from '@shared/dtos';
 import { UserRole } from '@shared/enums';
+import { resolveRoomCode } from '@shared/roomCode';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 interface OverrideAuthFields {
@@ -96,7 +97,7 @@ export async function registerMovementOverrideRoutes(
         const session = body.sessionId
           ? await container.sessionRepo.findById(body.sessionId)
           : await container.sessionRepo.findActiveByRoomId(
-              body.roomId ?? 'SALA-01',
+              resolveRoomCode(body.roomId),
             );
         targetTeacherId = session?.teacherId ?? 'teacher-1';
       }

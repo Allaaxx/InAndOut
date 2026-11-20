@@ -1,27 +1,38 @@
+import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
-import type { MovementDTO } from '@shared/dtos';
+import type { IRoomRepository } from '@server/domain/repositories/IRoomRepository';
+import type { ActiveRoomSessionSummaryDTO, MovementDTO } from '@shared/dtos';
 import { MovementStatus } from '@shared/enums';
+import { normalizeRoomCode } from '@shared/roomCode';
 
 export interface GetActiveMovementsOverviewInput {
   classCode?: string;
+  roomId?: string;
   status?: MovementStatus;
 }
 
 export interface GetActiveMovementsOverviewOutput {
   movements: MovementDTO[];
+  activeRooms: ActiveRoomSessionSummaryDTO[];
 }
 
 export class GetActiveMovementsOverviewUseCase {
   private readonly movementRepo: IMovementRecordRepository;
+  private readonly sessionRepo?: IClassSessionRepository;
+  private readonly roomRepo?: IRoomRepository;
   private readonly clock: () => Date;
 
   constructor(
     movementRepo: IMovementRecordRepository,
     options: {
       clock?: () => Date;
+      sessionRepo?: IClassSessionRepository;
+      roomRepo?: IRoomRepository;
     } = {},
   ) {
     this.movementRepo = movementRepo;
+    this.sessionRepo = options.sessionRepo;
+    this.roomRepo = options.roomRepo;
     this.clock = options.clock ?? (() => new Date());
   }
 
@@ -32,6 +43,9 @@ export class GetActiveMovementsOverviewUseCase {
     const now = this.clock();
 
     const normalizedClassCode = input.classCode?.trim().toLowerCase();
+    const normalizedRoomId = input.roomId
+      ? normalizeRoomCode(input.roomId)
+      : undefined;
 
     const filtered = allRecords.filter((record) => {
       // Status filter
@@ -52,6 +66,13 @@ export class GetActiveMovementsOverviewUseCase {
       // Class code filter
       if (normalizedClassCode) {
         if (record.classCode.trim().toLowerCase() !== normalizedClassCode) {
+          return false;
+        }
+      }
+
+      // Room filter
+      if (normalizedRoomId) {
+        if (normalizeRoomCode(record.roomId ?? '') !== normalizedRoomId) {
           return false;
         }
       }
@@ -81,8 +102,56 @@ export class GetActiveMovementsOverviewUseCase {
       return b.startedAt.getTime() - a.startedAt.getTime();
     });
 
+    const activeRooms = await this.buildActiveRoomsSummary(allRecords);
+
     return {
       movements: filtered.map((m) => m.toDTO(now)),
+      activeRooms,
     };
+  }
+
+  private async buildActiveRoomsSummary(
+    allRecords: Awaited<ReturnType<IMovementRecordRepository['findAll']>>,
+  ): Promise<ActiveRoomSessionSummaryDTO[]> {
+    if (!this.sessionRepo) {
+      return [];
+    }
+
+    const [activeSessions, rooms] = await Promise.all([
+      this.sessionRepo.findAllActive(),
+      this.roomRepo ? this.roomRepo.findAll() : Promise.resolve([]),
+    ]);
+
+    const roomNameByCode = new Map(
+      rooms.map((room) => [normalizeRoomCode(room.code), room.name]),
+    );
+
+    return activeSessions
+      .map((session) => {
+        const sessionActiveMovements = allRecords.filter(
+          (record) => record.sessionId === session.id && record.isActive(),
+        );
+        const normalizedCode = normalizeRoomCode(session.roomId);
+
+        return {
+          sessionId: session.id,
+          roomId: session.roomId,
+          roomName: roomNameByCode.get(normalizedCode) ?? session.roomId,
+          teacherId: session.teacherId,
+          teacherName: session.teacherName,
+          classCode: session.classCode,
+          subject: session.subject,
+          startedAt: session.startedAt.toISOString(),
+          activeExitCount: sessionActiveMovements.length,
+          hasOverdue: sessionActiveMovements.some(
+            (record) => record.status === MovementStatus.OVERDUE,
+          ),
+          hasEscalated: sessionActiveMovements.some(
+            (record) =>
+              record.status === MovementStatus.ESCALATED_TO_COORDINATION,
+          ),
+        };
+      })
+      .sort((a, b) => a.roomId.localeCompare(b.roomId));
   }
 }
