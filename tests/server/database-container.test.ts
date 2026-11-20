@@ -258,17 +258,21 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
     });
 
     it('PrismaStudentRepository maps domain Student correctly', async () => {
+      const createdAt = new Date('2026-03-10T08:00:00.000Z');
+      const updatedAt = new Date('2026-03-10T08:00:00.000Z');
       const mockPrisma = {
         student: {
           findUnique: vi.fn().mockResolvedValue({
             id: 'student-3',
             ra: '1003',
             fullName: 'Ana Costa',
+            classGroupId: 'class-2026-1a',
             classCode: '1A',
             hasSpecialCondition: true,
             specialLimitMinutes: 20,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            isActive: true,
+            createdAt,
+            updatedAt,
           }),
           findMany: vi.fn().mockResolvedValue([]),
           upsert: vi.fn().mockResolvedValue({}),
@@ -281,6 +285,8 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
       expect(student).not.toBeNull();
       expect(student?.ra).toBe('1003');
       expect(student?.fullName).toBe('Ana Costa');
+      expect(student?.classGroupId).toBe('class-2026-1a');
+      expect(student?.isActive).toBe(true);
       expect(student?.hasSpecialTimeLimit()).toBe(true);
       expect(student?.specialTimeLimitMinutes).toBe(20);
 
@@ -288,7 +294,11 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
         id: 'student-4',
         ra: '2001',
         fullName: 'Pedro Alves',
+        classGroupId: 'class-2026-2b',
         classCode: '2B',
+        isActive: true,
+        createdAt,
+        updatedAt,
       });
 
       await repo.save(newStudent);
@@ -298,16 +308,23 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
           id: 'student-4',
           ra: '2001',
           fullName: 'Pedro Alves',
+          classGroupId: 'class-2026-2b',
           classCode: '2B',
           hasSpecialCondition: false,
           specialLimitMinutes: null,
+          isActive: true,
+          createdAt,
+          updatedAt,
         },
         update: {
           ra: '2001',
           fullName: 'Pedro Alves',
+          classGroupId: 'class-2026-2b',
           classCode: '2B',
           hasSpecialCondition: false,
           specialLimitMinutes: null,
+          isActive: true,
+          updatedAt,
         },
       });
     });

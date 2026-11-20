@@ -104,8 +104,54 @@ export interface StudentDTO {
   fullName: string;
   publicName: string;
   abbreviatedName?: string;
+  classGroupId?: string;
   classCode: string;
+  hasSpecialCondition: boolean;
+  specialLimitMinutes?: number;
   specialTimeLimitMinutes?: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ListStudentsResponseDTO {
+  students: StudentDTO[];
+}
+
+export interface CreateStudentRequestDTO {
+  ra: string;
+  fullName: string;
+  classGroupId?: string;
+  classCode?: string;
+  hasSpecialCondition?: boolean;
+  specialLimitMinutes?: number | null;
+  specialTimeLimitMinutes?: number | null;
+}
+
+export interface CreateStudentResponseDTO {
+  student: StudentDTO;
+}
+
+export interface UpdateStudentRequestDTO {
+  ra?: string;
+  fullName?: string;
+  classGroupId?: string;
+  classCode?: string;
+  hasSpecialCondition?: boolean;
+  specialLimitMinutes?: number | null;
+  specialTimeLimitMinutes?: number | null;
+}
+
+export interface UpdateStudentResponseDTO {
+  student: StudentDTO;
+}
+
+export interface UpdateStudentStatusRequestDTO {
+  isActive: boolean;
+}
+
+export interface UpdateStudentStatusResponseDTO {
+  student: StudentDTO;
 }
 
 export interface MovementDTO {

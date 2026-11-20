@@ -34,6 +34,11 @@ import {
   SessionConflictError,
   SessionValidationError,
 } from '@server/application/use-cases/sessions/StartClassSessionUseCase';
+import {
+  StudentConflictError,
+  StudentValidationError,
+} from '@server/application/use-cases/students/CreateStudentUseCase';
+import { StudentCatalogNotFoundError } from '@server/application/use-cases/students/UpdateStudentUseCase';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 export interface ErrorResponse {
@@ -50,6 +55,7 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     err instanceof SessionValidationError ||
     err instanceof RoomValidationError ||
     err instanceof ClassGroupValidationError ||
+    err instanceof StudentValidationError ||
     err instanceof InvalidOutcomeError ||
     err instanceof InvalidExportFormatError ||
     err instanceof MovementAuthorizationError ||
@@ -80,6 +86,7 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     err instanceof CoordinationMovementNotFoundError ||
     err instanceof SessionNotFoundError ||
     err instanceof StudentNotFoundError ||
+    err instanceof StudentCatalogNotFoundError ||
     err instanceof RoomNotFoundError ||
     err instanceof ClassGroupNotFoundError
   ) {
@@ -94,7 +101,8 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     err instanceof QueueConflictError ||
     err instanceof SessionConflictError ||
     err instanceof RoomConflictError ||
-    err instanceof ClassGroupConflictError
+    err instanceof ClassGroupConflictError ||
+    err instanceof StudentConflictError
   ) {
     return {
       statusCode: 409,

@@ -3,6 +3,7 @@ import { Button } from '@client/components/ui/Button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@client/components/ui/Card';
@@ -12,12 +13,33 @@ import {
   type DateRange,
   formatIsoDate,
 } from '@client/components/ui/DatePicker';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@client/components/ui/Dialog';
 import { Input } from '@client/components/ui/Input';
 import { Label } from '@client/components/ui/Label';
 import { toast } from '@client/components/ui/Sonner';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@client/components/ui/Table';
 import { api } from '@client/services/api';
 import { buildReportFilename, downloadBlob } from '@client/services/download';
-import type { MovementDTO, StudentHistoryReportDTO } from '@shared/dtos';
+import type {
+  ClassGroupDTO,
+  MovementDTO,
+  StudentDTO,
+  StudentHistoryReportDTO,
+} from '@shared/dtos';
 import {
   getIncidentOutcomeLabel,
   getMovementStatusLabel,
@@ -29,20 +51,58 @@ import {
   Clock,
   FileSpreadsheet,
   FileText,
+  GraduationCap,
+  History,
   LogOut,
+  Pencil,
+  Plus,
+  Power,
+  RefreshCw,
   Search,
   User,
 } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export interface CoordinationStudentsPageProps {
   token: string;
 }
 
+function sortStudents(list: StudentDTO[]): StudentDTO[] {
+  return [...list].sort((a, b) => a.fullName.localeCompare(b.fullName));
+}
+
 export function CoordinationStudentsPage({
   token,
 }: CoordinationStudentsPageProps) {
+  // Catalog state
+  const [students, setStudents] = useState<StudentDTO[]>([]);
+  const [classes, setClasses] = useState<ClassGroupDTO[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [togglingStudentId, setTogglingStudentId] = useState<string | null>(
+    null,
+  );
+
+  // Catalog filters
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [classFilter, setClassFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<
+    'ALL' | 'ACTIVE' | 'INACTIVE'
+  >('ALL');
+
+  // Create / Edit Dialog state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingStudent, setEditingStudent] = useState<StudentDTO | null>(null);
+  const [formRa, setFormRa] = useState('');
+  const [formFullName, setFormFullName] = useState('');
+  const [formClassGroupId, setFormClassGroupId] = useState('');
+  const [formHasSpecial, setFormHasSpecial] = useState(false);
+  const [formSpecialMinutes, setFormSpecialMinutes] = useState('15');
+  const [savingStudent, setSavingStudent] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // History Report state
   const [searchRa, setSearchRa] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [studentReport, setStudentReport] =
@@ -51,11 +111,219 @@ export function CoordinationStudentsPage({
   const [studentError, setStudentError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  const handleSearchStudent = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
+  const loadCatalog = useCallback(async () => {
+    const canListStudents = typeof api.listStudents === 'function';
+    const canListClasses = typeof api.listClasses === 'function';
+    if (!canListStudents && !canListClasses) return;
+
+    try {
+      setCatalogLoading(true);
+      setCatalogError(null);
+      const [studentsRes, classesRes] = await Promise.all([
+        canListStudents
+          ? api.listStudents(token)
+          : Promise.resolve({ students: [] as StudentDTO[] }),
+        canListClasses
+          ? api.listClasses(token)
+          : Promise.resolve({ classes: [] as ClassGroupDTO[] }),
+      ]);
+      setStudents(sortStudents(studentsRes?.students ?? []));
+      setClasses(classesRes?.classes ?? []);
+    } catch (err) {
+      setCatalogError(
+        err instanceof Error
+          ? err.message
+          : 'Erro ao carregar o catálogo de alunos.',
+      );
+    } finally {
+      setCatalogLoading(false);
     }
-    const trimmedRa = searchRa.trim();
+  }, [token]);
+
+  useEffect(() => {
+    loadCatalog();
+  }, [loadCatalog]);
+
+  const activeClasses = useMemo(
+    () => classes.filter((item) => item.isActive),
+    [classes],
+  );
+
+  const filteredStudents = useMemo(() => {
+    const term = catalogSearch.trim().toLowerCase();
+    return students.filter((student) => {
+      if (term) {
+        const matchesName = student.fullName.toLowerCase().includes(term);
+        const matchesRa = student.ra.toLowerCase().includes(term);
+        if (!matchesName && !matchesRa) return false;
+      }
+
+      if (classFilter !== 'ALL') {
+        const matchesGroupId = student.classGroupId === classFilter;
+        const selectedClass = classes.find((c) => c.id === classFilter);
+        const matchesCode =
+          selectedClass !== undefined &&
+          student.classCode === selectedClass.code;
+        if (!matchesGroupId && !matchesCode) return false;
+      }
+
+      if (statusFilter === 'ACTIVE' && !student.isActive) return false;
+      if (statusFilter === 'INACTIVE' && student.isActive) return false;
+
+      return true;
+    });
+  }, [students, catalogSearch, classFilter, statusFilter, classes]);
+
+  const activeStudentsCount = useMemo(
+    () => students.filter((s) => s.isActive).length,
+    [students],
+  );
+
+  const handleOpenCreateDialog = () => {
+    setEditingStudent(null);
+    setFormRa('');
+    setFormFullName('');
+    setFormClassGroupId(activeClasses[0]?.id ?? '');
+    setFormHasSpecial(false);
+    setFormSpecialMinutes('15');
+    setFormError(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenEditDialog = (student: StudentDTO) => {
+    const resolvedMinutes =
+      student.specialLimitMinutes ?? student.specialTimeLimitMinutes;
+    setEditingStudent(student);
+    setFormRa(student.ra);
+    setFormFullName(student.fullName);
+    setFormClassGroupId(
+      student.classGroupId ??
+        activeClasses.find((c) => c.code === student.classCode)?.id ??
+        activeClasses[0]?.id ??
+        '',
+    );
+    setFormHasSpecial(Boolean(student.hasSpecialCondition || resolvedMinutes));
+    setFormSpecialMinutes(resolvedMinutes ? String(resolvedMinutes) : '15');
+    setFormError(null);
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmitStudent = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmedFullName = formFullName.trim();
+    const trimmedRa = formRa.trim();
+
+    if (!editingStudent && !trimmedRa) {
+      setFormError('Informe o RA numérico do aluno.');
+      return;
+    }
+
+    if (!trimmedFullName) {
+      setFormError('Informe o nome completo do aluno.');
+      return;
+    }
+
+    if (!formClassGroupId) {
+      setFormError('Selecione uma turma ativa para o aluno.');
+      return;
+    }
+
+    let parsedSpecialMinutes: number | null = null;
+    if (formHasSpecial) {
+      const parsed = Number(formSpecialMinutes);
+      if (!Number.isInteger(parsed) || parsed <= 0) {
+        setFormError(
+          'O Tempo Especial deve ser um número inteiro positivo de minutos.',
+        );
+        return;
+      }
+      parsedSpecialMinutes = parsed;
+    }
+
+    try {
+      setSavingStudent(true);
+      setFormError(null);
+
+      if (editingStudent) {
+        const res = await api.updateStudent(
+          editingStudent.id,
+          {
+            fullName: trimmedFullName,
+            classGroupId: formClassGroupId,
+            hasSpecialCondition: formHasSpecial,
+            specialLimitMinutes: formHasSpecial ? parsedSpecialMinutes : null,
+          },
+          token,
+        );
+        setStudents((prev) =>
+          sortStudents(
+            prev.map((item) =>
+              item.id === editingStudent.id ? res.student : item,
+            ),
+          ),
+        );
+        setIsDialogOpen(false);
+        toast.success(
+          `Aluno ${res.student.fullName} (RA ${res.student.ra}) atualizado com sucesso.`,
+        );
+      } else {
+        const res = await api.createStudent(
+          {
+            ra: trimmedRa,
+            fullName: trimmedFullName,
+            classGroupId: formClassGroupId,
+            hasSpecialCondition: formHasSpecial,
+            ...(formHasSpecial && parsedSpecialMinutes !== null
+              ? { specialLimitMinutes: parsedSpecialMinutes }
+              : {}),
+          },
+          token,
+        );
+        setStudents((prev) => sortStudents([...prev, res.student]));
+        setIsDialogOpen(false);
+        toast.success(
+          `Aluno ${res.student.fullName} (RA ${res.student.ra}) cadastrado com sucesso.`,
+        );
+      }
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : 'Erro ao salvar dados do aluno.',
+      );
+    } finally {
+      setSavingStudent(false);
+    }
+  };
+
+  const handleToggleStatus = async (student: StudentDTO) => {
+    try {
+      setTogglingStudentId(student.id);
+      setCatalogError(null);
+      const res = await api.updateStudentStatus(
+        student.id,
+        { isActive: !student.isActive },
+        token,
+      );
+      setStudents((prev) =>
+        prev.map((item) => (item.id === student.id ? res.student : item)),
+      );
+      toast.success(
+        res.student.isActive
+          ? `Aluno ${res.student.fullName} ativado com sucesso.`
+          : `Aluno ${res.student.fullName} desativado com sucesso.`,
+      );
+    } catch (err) {
+      setCatalogError(
+        err instanceof Error
+          ? err.message
+          : 'Erro ao atualizar o status do aluno.',
+      );
+    } finally {
+      setTogglingStudentId(null);
+    }
+  };
+
+  const fetchStudentHistory = async (targetRa: string) => {
+    const trimmedRa = targetRa.trim();
     if (!trimmedRa) return;
 
     try {
@@ -80,6 +348,18 @@ export function CoordinationStudentsPage({
     } finally {
       setStudentLoading(false);
     }
+  };
+
+  const handleSearchStudent = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    await fetchStudentHistory(searchRa);
+  };
+
+  const handleViewStudentHistory = async (student: StudentDTO) => {
+    setSearchRa(student.ra);
+    await fetchStudentHistory(student.ra);
   };
 
   const handleExport = async (
@@ -175,8 +455,218 @@ export function CoordinationStudentsPage({
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Search Filter Card */}
+    <div className="w-full space-y-6">
+      {/* Catalog Header */}
+      <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-6 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <GraduationCap className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">
+              Catálogo de Alunos
+            </h2>
+            <p className="text-sm text-slate-500">
+              Cadastre, transfira de turma, configure Tempo Especial e consulte
+              o histórico de movimentações
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={loadCatalog}
+            disabled={catalogLoading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${catalogLoading ? 'animate-spin' : ''}`}
+            />
+            <span>Atualizar</span>
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleOpenCreateDialog}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Novo Aluno</span>
+          </Button>
+        </div>
+      </div>
+
+      {catalogError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {catalogError}
+        </div>
+      )}
+
+      {/* Catalog Filters & Table */}
+      <Card className="bg-white shadow-xs">
+        <CardHeader className="space-y-4 pb-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-base font-bold text-slate-900">
+                Alunos Cadastrados
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-500">
+                {activeStudentsCount} de {students.length} alunos ativos
+              </CardDescription>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Input
+                aria-label="Buscar aluno por nome ou RA"
+                placeholder="Buscar por nome ou RA..."
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                className="pl-9 text-sm"
+              />
+            </div>
+
+            <div>
+              <select
+                aria-label="Filtrar por Turma"
+                value={classFilter}
+                onChange={(e) => setClassFilter(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="ALL">Todas as turmas</option>
+                {classes.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.code} — {item.name} ({item.academicYear})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <select
+                aria-label="Filtrar por Status"
+                value={statusFilter}
+                onChange={(e) =>
+                  setStatusFilter(
+                    e.target.value as 'ALL' | 'ACTIVE' | 'INACTIVE',
+                  )
+                }
+                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="ALL">Todos os status</option>
+                <option value="ACTIVE">Ativos</option>
+                <option value="INACTIVE">Inativos</option>
+              </select>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {catalogLoading && students.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-500">
+              Carregando alunos...
+            </p>
+          ) : filteredStudents.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-500">
+              Nenhum aluno encontrado com os filtros aplicados.
+            </p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>RA</TableHead>
+                  <TableHead>Nome Completo</TableHead>
+                  <TableHead>Turma</TableHead>
+                  <TableHead>Tempo Especial</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStudents.map((student) => {
+                  const specialMinutes =
+                    student.specialLimitMinutes ??
+                    student.specialTimeLimitMinutes;
+                  return (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-mono font-semibold text-slate-900">
+                        {student.ra}
+                      </TableCell>
+                      <TableCell className="font-medium text-slate-800">
+                        {student.fullName}
+                      </TableCell>
+                      <TableCell className="font-mono text-slate-700">
+                        {student.classCode}
+                      </TableCell>
+                      <TableCell>
+                        {student.hasSpecialCondition && specialMinutes ? (
+                          <Badge variant="warning">{specialMinutes} min</Badge>
+                        ) : (
+                          <span className="text-xs text-slate-400">Padrão</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={student.isActive ? 'success' : 'secondary'}
+                        >
+                          {student.isActive ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewStudentHistory(student)}
+                            className="inline-flex items-center gap-1.5"
+                          >
+                            <History className="h-3.5 w-3.5" />
+                            <span>Histórico</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenEditDialog(student)}
+                            className="inline-flex items-center gap-1.5"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            <span>Editar</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={togglingStudentId === student.id}
+                            onClick={() => handleToggleStatus(student)}
+                            className="inline-flex items-center gap-1.5"
+                          >
+                            <Power className="h-3.5 w-3.5" />
+                            <span>
+                              {student.isActive ? 'Desativar' : 'Ativar'}
+                            </span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Search Filter Card for Movement History Report */}
       <Card className="shadow-xs bg-white">
         <CardHeader>
           <CardTitle className="text-base font-bold text-slate-900">
@@ -411,6 +901,122 @@ export function CoordinationStudentsPage({
           </Card>
         </div>
       )}
+
+      {/* Create / Edit Student Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingStudent ? 'Editar Aluno' : 'Cadastrar Novo Aluno'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingStudent
+                ? 'Atualize o nome, a turma ou o Tempo Especial do aluno. O RA é imutável.'
+                : 'Informe o RA numérico, nome completo, turma ativa e eventual Tempo Especial.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmitStudent} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="student-ra-input">RA</Label>
+              <Input
+                id="student-ra-input"
+                placeholder="Ex.: 4001"
+                value={formRa}
+                onChange={(e) => setFormRa(e.target.value)}
+                disabled={savingStudent || editingStudent !== null}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="student-name-input">Nome Completo</Label>
+              <Input
+                id="student-name-input"
+                placeholder="Ex.: Mariana Souza"
+                value={formFullName}
+                onChange={(e) => setFormFullName(e.target.value)}
+                disabled={savingStudent}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="student-class-select">Turma</Label>
+              <select
+                id="student-class-select"
+                value={formClassGroupId}
+                onChange={(e) => setFormClassGroupId(e.target.value)}
+                disabled={savingStudent}
+                required
+                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Selecione uma turma ativa</option>
+                {activeClasses.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.code} — {item.name} ({item.academicYear})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
+                <input
+                  type="checkbox"
+                  checked={formHasSpecial}
+                  onChange={(e) => setFormHasSpecial(e.target.checked)}
+                  disabled={savingStudent}
+                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span>Possui Tempo Especial</span>
+              </label>
+
+              {formHasSpecial && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="student-special-minutes-input">
+                    Limite Especial (min)
+                  </Label>
+                  <Input
+                    id="student-special-minutes-input"
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={formSpecialMinutes}
+                    onChange={(e) => setFormSpecialMinutes(e.target.value)}
+                    disabled={savingStudent}
+                    required
+                  />
+                </div>
+              )}
+            </div>
+
+            {formError && (
+              <p role="alert" className="text-sm font-medium text-red-600">
+                {formError}
+              </p>
+            )}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                disabled={savingStudent}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={savingStudent}>
+                {savingStudent
+                  ? 'Salvando...'
+                  : editingStudent
+                    ? 'Salvar Alterações'
+                    : 'Cadastrar Aluno'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

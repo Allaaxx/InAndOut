@@ -11,6 +11,7 @@ import { registerMovementQueueRoutes } from '@server/presentation/routes/movemen
 import { registerMovementRoutes } from '@server/presentation/routes/movementRoutes';
 import { registerRoomRoutes } from '@server/presentation/routes/roomRoutes';
 import { registerSessionRoutes } from '@server/presentation/routes/sessionRoutes';
+import { registerStudentRoutes } from '@server/presentation/routes/studentRoutes';
 import { registerSocketHandlers } from '@server/presentation/socket/socketHandlers';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { Server as SocketIOServer } from 'socket.io';
@@ -68,6 +69,7 @@ export async function createApp(
   await registerAuthRoutes(app, container);
   await registerRoomRoutes(app, container);
   await registerClassGroupRoutes(app, container);
+  await registerStudentRoutes(app, container);
   await registerSessionRoutes(app, container);
   await registerMovementRoutes(app, container);
   await registerMovementQueueRoutes(app, container);
