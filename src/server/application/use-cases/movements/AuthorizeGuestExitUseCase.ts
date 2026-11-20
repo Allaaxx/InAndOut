@@ -7,6 +7,7 @@ import { StudentRA } from '@server/domain/value-objects/StudentRA';
 import type { GuestExitRequestDTO, RequestExitResponseDTO } from '@shared/dtos';
 import { MovementAuthorizationError } from './AuthorizeEmergencyExitUseCase';
 import {
+  InactiveStudentError,
   MovementValidationError,
   RequestStudentExitUseCase,
 } from './RequestStudentExitUseCase';
@@ -60,6 +61,12 @@ export class AuthorizeGuestExitUseCase {
     }
 
     let student = await this.studentRepo.findByRa(raObj.value);
+    if (student && !student.isActive) {
+      throw new InactiveStudentError(
+        `O aluno ${student.publicName} (RA ${student.ra}) está inativo e não pode receber Autorização Avulsa no Terminal de Sala.`,
+      );
+    }
+
     if (!student) {
       const guestName =
         (input.fullName ?? '').trim() || `Aluno Visitante ${raObj.value}`;

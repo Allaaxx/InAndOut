@@ -19,6 +19,7 @@ import {
   QueueWindowExpiredError,
 } from '@server/application/use-cases/movements/EnqueueStudentUseCase';
 import {
+  InactiveStudentError,
   MovementConcurrencyConflictError,
   MovementNotFoundError as MovementNotFoundExitError,
   MovementValidationError,
@@ -74,7 +75,10 @@ export function mapErrorToResponse(err: unknown): ErrorResponse {
     };
   }
 
-  if (err instanceof StudentNotInClassError) {
+  if (
+    err instanceof StudentNotInClassError ||
+    err instanceof InactiveStudentError
+  ) {
     return {
       statusCode: 403,
       body: { error: err.message },

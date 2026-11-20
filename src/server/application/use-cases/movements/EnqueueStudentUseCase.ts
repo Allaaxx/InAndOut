@@ -13,6 +13,7 @@ import type {
 import { QueueEntryStatus } from '@shared/enums';
 import { resolveRoomCode } from '@shared/roomCode';
 import {
+  InactiveStudentError,
   MovementNotFoundError,
   MovementValidationError,
   StudentNotInClassError,
@@ -96,7 +97,18 @@ export class EnqueueStudentUseCase {
       );
     }
 
-    if (student.classCode !== session.classCode) {
+    if (!student.isActive) {
+      throw new InactiveStudentError(
+        `O aluno ${student.publicName} (RA ${student.ra}) está inativo e não pode entrar na Fila de Espera.`,
+      );
+    }
+
+    const matchesSessionClass =
+      student.classGroupId && session.classGroupId
+        ? student.classGroupId === session.classGroupId
+        : student.classCode === session.classCode;
+
+    if (!matchesSessionClass) {
       throw new StudentNotInClassError(
         `O aluno (${student.publicName}) pertence à turma ${student.classCode} e não está matriculado na turma ativa (${session.classCode}).`,
       );
