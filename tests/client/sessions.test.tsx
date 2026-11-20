@@ -77,7 +77,10 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
       />,
     );
 
-    // 1. Select Turma and Disciplina to start a class session
+    // 1. Click "Iniciar Aula" to open the session modal and select Turma and Disciplina
+    await user.click(
+      await screen.findByRole('button', { name: /Iniciar Aula/i }),
+    );
     const classSelect = await screen.findByLabelText(/Turma/i);
     const subjectSelect = screen.getByLabelText(/Disciplina/i);
 
@@ -137,6 +140,8 @@ describe('Frontend Seam: Classroom Terminal Session Lifecycle (Selection, Active
     expect(
       await screen.findByText(/Sessão de aula encerrada/i),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/Turma/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Iniciar Aula/i }),
+    ).toBeInTheDocument();
   });
 });
