@@ -7,7 +7,7 @@ Contexto de controle de fluxo de saída de alunos da sala de aula para o banheir
 ### Sessões e Usuários
 
 **Aluno**:
-Estudante do ensino médio identificado por RA com permissão para solicitar saída de sala.
+Estudante do ensino médio cadastrado pela Coordenação, identificado por RA imutável e vinculado a uma Turma; apenas alunos ativos podem solicitar saída no Terminal de Sala.
 _Avoid_: Usuário comum, cliente
 
 **Professor**:
@@ -23,8 +23,12 @@ Ambiente físico cadastrado pela Coordenação (ex.: Sala 01, Laboratório 01) o
 _Avoid_: Turma, classe, carteira, ambiente virtual
 
 **Turma**:
-Agrupamento acadêmico ou série de estudantes (ex.: 1A, 2B, 3A) que assistem às aulas em uma Sala.
+Agrupamento acadêmico ou série de estudantes cadastrado pela Coordenação, identificado por código e Ano Letivo (ex.: 1A — 2026), que assistem às aulas em uma Sala; admite no máximo uma Sessão de Aula ativa por vez.
 _Avoid_: Sala, período, grupo
+
+**Ano Letivo**:
+Período anual de referência escolar que qualifica uma Turma, permitindo que códigos como `1A` coexistam em anos distintos sem colisão histórica.
+_Avoid_: Semestre, ciclo, temporada, edição
 
 **Sessão de Aula**:
 Período pedagógico ativo de aula conduzido por um professor para uma turma e disciplina específicas dentro de uma Sala.
