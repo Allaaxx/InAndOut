@@ -18,12 +18,20 @@ _Avoid_: Monitor, instrutor
 Setor administrativo e pedagógico da escola responsável pela gestão disciplinar e acompanhamento dos alertas escalados.
 _Avoid_: Diretoria, administração central
 
+**Sala (ou Sala de Aula)**:
+Ambiente físico cadastrado pela Coordenação (ex.: Sala 01, Laboratório 01) onde ocorrem as aulas e no qual um Terminal de Sala opera.
+_Avoid_: Turma, classe, carteira, ambiente virtual
+
+**Turma**:
+Agrupamento acadêmico ou série de estudantes (ex.: 1A, 2B, 3A) que assistem às aulas em uma Sala.
+_Avoid_: Sala, período, grupo
+
 **Sessão de Aula**:
-Período pedagógico ativo de aula conduzido por um professor para uma turma e disciplina específicas.
+Período pedagógico ativo de aula conduzido por um professor para uma turma e disciplina específicas dentro de uma Sala.
 _Avoid_: Aula, turno, período livre, horário
 
 **Terminal de Sala**:
-Interface reativa pública instalada no computador ou tablet da sala de aula, bloqueada pelo professor via PIN de 4 dígitos.
+Interface reativa pública instalada no computador ou tablet fixado ou alocado a uma Sala de Aula, vinculada à Sessão de Aula ativa daquele espaço e bloqueada pelo professor via PIN de 4 dígitos.
 _Avoid_: Totem, quiosque, máquina, painel do professor, tela de login
 
 **Registro Acadêmico (RA)**:
