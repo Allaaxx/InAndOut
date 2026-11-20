@@ -129,3 +129,16 @@ model WaitingQueueEntry {
   @@index([status])
   @@map("waiting_queue_entries")
 }
+
+model Room {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([code])
+  @@index([isActive])
+  @@map("rooms")
+}

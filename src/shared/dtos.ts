@@ -337,3 +337,33 @@ export interface ExportAnalyticsQueryDTO {
   startDate?: string;
   endDate?: string;
 }
+
+export interface RoomDTO {
+  id: string;
+  code: string;
+  name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ListRoomsResponseDTO {
+  rooms: RoomDTO[];
+}
+
+export interface CreateRoomRequestDTO {
+  code: string;
+  name: string;
+}
+
+export interface CreateRoomResponseDTO {
+  room: RoomDTO;
+}
+
+export interface UpdateRoomStatusRequestDTO {
+  isActive: boolean;
+}
+
+export interface UpdateRoomStatusResponseDTO {
+  room: RoomDTO;
+}

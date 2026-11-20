@@ -56,6 +56,46 @@ export async function main(): Promise<void> {
 
   console.log(`✅ Seeded ${users.length} users.`);
 
+  // 1.5. Seed Rooms (Salas de Aula)
+  const rooms = [
+    {
+      id: 'room-sala-01',
+      code: 'SALA-01',
+      name: 'Sala 01',
+      isActive: true,
+    },
+    {
+      id: 'room-sala-02',
+      code: 'SALA-02',
+      name: 'Sala 02',
+      isActive: true,
+    },
+    {
+      id: 'room-sala-03',
+      code: 'SALA-03',
+      name: 'Sala 03',
+      isActive: true,
+    },
+    {
+      id: 'room-lab-01',
+      code: 'LAB-01',
+      name: 'Laboratório 01',
+      isActive: true,
+    },
+  ];
+
+  for (const room of rooms) {
+    await prisma.room.upsert({
+      where: { code: room.code },
+      create: room,
+      update: room,
+    });
+  }
+
+  console.log(
+    `✅ Seeded ${rooms.length} rooms (SALA-01, SALA-02, SALA-03, LAB-01).`,
+  );
+
   // 2. Seed Students (Turmas 1A, 2B, 3C)
   const students = [
     // Turma 1A

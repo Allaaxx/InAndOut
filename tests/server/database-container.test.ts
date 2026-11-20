@@ -1,12 +1,14 @@
 import type { PrismaClient } from '@prisma/client';
 import { ClassSession } from '@server/domain/entities/ClassSession';
 import { MovementRecord } from '@server/domain/entities/MovementRecord';
+import { Room } from '@server/domain/entities/Room';
 import { Student } from '@server/domain/entities/Student';
 import { User } from '@server/domain/entities/User';
 import { WaitingQueueEntry } from '@server/domain/entities/WaitingQueueEntry';
 import {
   InMemoryClassSessionRepository,
   InMemoryMovementRecordRepository,
+  InMemoryRoomRepository,
   InMemoryStudentRepository,
   InMemoryUserRepository,
   InMemoryWaitingQueueRepository,
@@ -14,6 +16,7 @@ import {
 import {
   PrismaClassSessionRepository,
   PrismaMovementRecordRepository,
+  PrismaRoomRepository,
   PrismaStudentRepository,
   PrismaUserRepository,
   PrismaWaitingQueueRepository,
@@ -40,6 +43,7 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
       const container = createContainer();
 
       expect(container.userRepo).toBeInstanceOf(InMemoryUserRepository);
+      expect(container.roomRepo).toBeInstanceOf(InMemoryRoomRepository);
       expect(container.sessionRepo).toBeInstanceOf(
         InMemoryClassSessionRepository,
       );
@@ -58,6 +62,7 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
       const container = createContainer();
 
       expect(container.userRepo).toBeInstanceOf(InMemoryUserRepository);
+      expect(container.roomRepo).toBeInstanceOf(InMemoryRoomRepository);
       expect(container.sessionRepo).toBeInstanceOf(
         InMemoryClassSessionRepository,
       );
@@ -77,6 +82,7 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
       const container = createContainer();
 
       expect(container.userRepo).toBeInstanceOf(PrismaUserRepository);
+      expect(container.roomRepo).toBeInstanceOf(PrismaRoomRepository);
       expect(container.sessionRepo).toBeInstanceOf(
         PrismaClassSessionRepository,
       );
@@ -444,6 +450,76 @@ describe('Hybrid Container & Prisma Repositories (Ticket #26)', () => {
           sessionId: 'session-1',
           studentRa: '1003',
         }),
+      });
+    });
+
+    it('PrismaRoomRepository maps domain Room to/from Prisma schema correctly', async () => {
+      const now = new Date('2026-03-10T08:00:00.000Z');
+      const mockPrisma = {
+        room: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: 'room-sala-01',
+            code: 'SALA-01',
+            name: 'Sala 01',
+            isActive: true,
+            createdAt: now,
+            updatedAt: now,
+          }),
+          findMany: vi.fn().mockResolvedValue([
+            {
+              id: 'room-sala-01',
+              code: 'SALA-01',
+              name: 'Sala 01',
+              isActive: true,
+              createdAt: now,
+              updatedAt: now,
+            },
+          ]),
+          upsert: vi.fn().mockResolvedValue({}),
+        },
+      } as unknown as PrismaClient;
+
+      const repo = new PrismaRoomRepository(mockPrisma);
+
+      const found = await repo.findByCode(' sala-01 ');
+      expect(found).not.toBeNull();
+      expect(found?.code).toBe('SALA-01');
+      expect(found?.name).toBe('Sala 01');
+      expect(found?.isActive).toBe(true);
+
+      const list = await repo.findAll({ onlyActive: true });
+      expect(list).toHaveLength(1);
+      expect(mockPrisma.room.findMany).toHaveBeenCalledWith({
+        where: { isActive: true },
+        orderBy: { code: 'asc' },
+      });
+
+      const newRoom = Room.create({
+        id: 'room-lab-02',
+        code: 'lab-02',
+        name: 'Laboratório 02',
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await repo.save(newRoom);
+      expect(mockPrisma.room.upsert).toHaveBeenCalledWith({
+        where: { id: 'room-lab-02' },
+        create: {
+          id: 'room-lab-02',
+          code: 'LAB-02',
+          name: 'Laboratório 02',
+          isActive: true,
+          createdAt: now,
+          updatedAt: now,
+        },
+        update: {
+          code: 'LAB-02',
+          name: 'Laboratório 02',
+          isActive: true,
+          updatedAt: now,
+        },
       });
     });
   });

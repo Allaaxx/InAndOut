@@ -5,6 +5,8 @@ import type {
   CheckOverdueResponseDTO,
   ClaimQueueRequestDTO,
   ClaimQueueResponseDTO,
+  CreateRoomRequestDTO,
+  CreateRoomResponseDTO,
   EmergencyExitRequestDTO,
   EndSessionRequestDTO,
   EndSessionResponseDTO,
@@ -13,6 +15,7 @@ import type {
   EscalateMovementRequestDTO,
   ExportAnalyticsQueryDTO,
   GuestExitRequestDTO,
+  ListRoomsResponseDTO,
   LoginRequestDTO,
   LoginResponseDTO,
   MovementDTO,
@@ -29,6 +32,8 @@ import type {
   StartSessionResponseDTO,
   StudentHistoryQueryDTO,
   StudentHistoryReportDTO,
+  UpdateRoomStatusRequestDTO,
+  UpdateRoomStatusResponseDTO,
   VerifyPinResponseDTO,
 } from '@shared/dtos';
 
@@ -333,5 +338,48 @@ export const api = {
     }
 
     return response.blob();
+  },
+
+  async listRooms(
+    token: string,
+    params: { onlyActive?: boolean } = {},
+  ): Promise<ListRoomsResponseDTO> {
+    const query = params.onlyActive ? '?onlyActive=true' : '';
+    return request<ListRoomsResponseDTO>(`/rooms${query}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  async createRoom(
+    payload: CreateRoomRequestDTO,
+    token: string,
+  ): Promise<CreateRoomResponseDTO> {
+    return request<CreateRoomResponseDTO>('/rooms', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async updateRoomStatus(
+    roomId: string,
+    payload: UpdateRoomStatusRequestDTO,
+    token: string,
+  ): Promise<UpdateRoomStatusResponseDTO> {
+    return request<UpdateRoomStatusResponseDTO>(
+      `/rooms/${encodeURIComponent(roomId)}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      },
+    );
   },
 };

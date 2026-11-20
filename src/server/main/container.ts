@@ -2,17 +2,20 @@ import type { INotificationSender } from '@server/application/contracts/INotific
 import type { ITokenService } from '@server/application/contracts/ITokenService';
 import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
+import type { IRoomRepository } from '@server/domain/repositories/IRoomRepository';
 import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 import type { IUserRepository } from '@server/domain/repositories/IUserRepository';
 import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
 import { InMemoryClassSessionRepository } from '@server/infrastructure/repositories/InMemoryClassSessionRepository';
 import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
+import { InMemoryRoomRepository } from '@server/infrastructure/repositories/InMemoryRoomRepository';
 import { InMemoryStudentRepository } from '@server/infrastructure/repositories/InMemoryStudentRepository';
 import { InMemoryUserRepository } from '@server/infrastructure/repositories/InMemoryUserRepository';
 import { InMemoryWaitingQueueRepository } from '@server/infrastructure/repositories/InMemoryWaitingQueueRepository';
 import {
   PrismaClassSessionRepository,
   PrismaMovementRecordRepository,
+  PrismaRoomRepository,
   PrismaStudentRepository,
   PrismaUserRepository,
   PrismaWaitingQueueRepository,
@@ -23,6 +26,7 @@ import { SocketNotificationSender } from '@server/infrastructure/services/Socket
 export interface AppContainer {
   clock: () => Date;
   userRepo: IUserRepository;
+  roomRepo: IRoomRepository;
   sessionRepo: IClassSessionRepository;
   studentRepo: IStudentRepository;
   movementRepo: IMovementRecordRepository;
@@ -42,6 +46,10 @@ export function createContainer(
   const userRepo =
     overrides.userRepo ??
     (useDatabase ? new PrismaUserRepository() : new InMemoryUserRepository());
+
+  const roomRepo =
+    overrides.roomRepo ??
+    (useDatabase ? new PrismaRoomRepository() : new InMemoryRoomRepository());
 
   const sessionRepo =
     overrides.sessionRepo ??
@@ -74,6 +82,7 @@ export function createContainer(
   return {
     clock,
     userRepo,
+    roomRepo,
     sessionRepo,
     studentRepo,
     movementRepo,
