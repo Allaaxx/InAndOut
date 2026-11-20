@@ -10,6 +10,8 @@ import type {
   CreateClassGroupResponseDTO,
   CreateRoomRequestDTO,
   CreateRoomResponseDTO,
+  CreateStudentRequestDTO,
+  CreateStudentResponseDTO,
   EmergencyExitRequestDTO,
   EndSessionRequestDTO,
   EndSessionResponseDTO,
@@ -20,6 +22,7 @@ import type {
   GuestExitRequestDTO,
   ListClassGroupsResponseDTO,
   ListRoomsResponseDTO,
+  ListStudentsResponseDTO,
   LoginRequestDTO,
   LoginResponseDTO,
   MovementDTO,
@@ -42,6 +45,10 @@ import type {
   UpdateClassGroupStatusResponseDTO,
   UpdateRoomStatusRequestDTO,
   UpdateRoomStatusResponseDTO,
+  UpdateStudentRequestDTO,
+  UpdateStudentResponseDTO,
+  UpdateStudentStatusRequestDTO,
+  UpdateStudentStatusResponseDTO,
   VerifyPinResponseDTO,
 } from '@shared/dtos';
 import { DEFAULT_ROOM_CODE } from '@shared/roomCode';
@@ -448,6 +455,83 @@ export const api = {
   ): Promise<UpdateClassGroupStatusResponseDTO> {
     return request<UpdateClassGroupStatusResponseDTO>(
       `/classes/${encodeURIComponent(classId)}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+  },
+
+  async listStudents(
+    token: string,
+    params: {
+      search?: string;
+      classGroupId?: string;
+      classCode?: string;
+      isActive?: boolean;
+      onlyActive?: boolean;
+    } = {},
+  ): Promise<ListStudentsResponseDTO> {
+    const searchParams = new URLSearchParams();
+    if (params.search?.trim()) searchParams.append('search', params.search);
+    if (params.classGroupId) {
+      searchParams.append('classGroupId', params.classGroupId);
+    }
+    if (params.classCode) searchParams.append('classCode', params.classCode);
+    if (params.onlyActive) {
+      searchParams.append('onlyActive', 'true');
+    } else if (params.isActive !== undefined) {
+      searchParams.append('isActive', String(params.isActive));
+    }
+    const query = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return request<ListStudentsResponseDTO>(`/students${query}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
+
+  async createStudent(
+    payload: CreateStudentRequestDTO,
+    token: string,
+  ): Promise<CreateStudentResponseDTO> {
+    return request<CreateStudentResponseDTO>('/students', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async updateStudent(
+    studentId: string,
+    payload: UpdateStudentRequestDTO,
+    token: string,
+  ): Promise<UpdateStudentResponseDTO> {
+    return request<UpdateStudentResponseDTO>(
+      `/students/${encodeURIComponent(studentId)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+  },
+
+  async updateStudentStatus(
+    studentId: string,
+    payload: UpdateStudentStatusRequestDTO,
+    token: string,
+  ): Promise<UpdateStudentStatusResponseDTO> {
+    return request<UpdateStudentStatusResponseDTO>(
+      `/students/${encodeURIComponent(studentId)}/status`,
       {
         method: 'PATCH',
         headers: {

@@ -72,8 +72,8 @@ export function DashboardShell({
       },
       {
         id: 'students',
-        label: 'Consulta por Aluno',
-        ariaLabel: 'Consultar Aluno',
+        label: 'Alunos',
+        ariaLabel: 'Alunos',
         path: '/coordination/students',
         icon: GraduationCap,
       },
@@ -136,9 +136,9 @@ export function DashboardShell({
       currentPath === '/students'
     ) {
       return {
-        title: 'Consulta por Aluno',
+        title: 'Alunos',
         subtitle:
-          'Histórico individual de movimentações, assiduidade e exportação de relatórios',
+          'Gestão do catálogo de alunos, tempo especial e histórico de movimentações',
       };
     }
     if (currentPath === '/coordination/rooms' || currentPath === '/rooms') {

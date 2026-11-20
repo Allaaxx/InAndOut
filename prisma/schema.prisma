@@ -57,17 +57,23 @@ model ClassSession {
 }
 
 model Student {
-  id                  String   @id @default(uuid())
-  ra                  String   @unique
+  id                  String      @id @default(uuid())
+  ra                  String      @unique
   fullName            String
+  classGroupId        String?
   classCode           String
-  hasSpecialCondition Boolean  @default(false)
+  hasSpecialCondition Boolean     @default(false)
   specialLimitMinutes Int?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  isActive            Boolean     @default(true)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
+  classGroup          ClassGroup? @relation(fields: [classGroupId], references: [id], onDelete: SetNull)
+
+  @@index([classGroupId])
   @@index([classCode])
   @@index([ra])
+  @@index([isActive])
   @@map("students")
 }
 
@@ -160,6 +166,7 @@ model ClassGroup {
   updatedAt    DateTime       @updatedAt
 
   sessions     ClassSession[]
+  students     Student[]
 
   @@unique([code, academicYear])
   @@index([academicYear])

@@ -1,9 +1,14 @@
 import type {
+  Prisma,
   PrismaClient,
   Student as PrismaStudentModel,
 } from '@prisma/client';
+import { normalizeClassCode } from '@server/domain/entities/ClassGroup';
 import { Student } from '@server/domain/entities/Student';
-import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
+import type {
+  IStudentRepository,
+  ListStudentsFilter,
+} from '@server/domain/repositories/IStudentRepository';
 import { getPrismaClient } from '@server/infrastructure/database/prismaClient';
 
 export class PrismaStudentRepository implements IStudentRepository {
@@ -29,7 +34,7 @@ export class PrismaStudentRepository implements IStudentRepository {
   }
 
   public async findByClassCode(classCode: string): Promise<Student[]> {
-    const normalized = classCode.trim();
+    const normalized = normalizeClassCode(classCode);
     const rows = await this.prisma.student.findMany({
       where: { classCode: normalized },
       orderBy: { fullName: 'asc' },
@@ -37,8 +42,31 @@ export class PrismaStudentRepository implements IStudentRepository {
     return rows.map((r) => this.toDomain(r));
   }
 
-  public async findAll(): Promise<Student[]> {
+  public async findAll(filter?: ListStudentsFilter): Promise<Student[]> {
+    const where: Prisma.StudentWhereInput = {};
+
+    if (filter?.search?.trim()) {
+      const term = filter.search.trim();
+      where.OR = [
+        { fullName: { contains: term, mode: 'insensitive' } },
+        { ra: { contains: term, mode: 'insensitive' } },
+      ];
+    }
+
+    if (filter?.classGroupId?.trim()) {
+      where.classGroupId = filter.classGroupId.trim();
+    }
+
+    if (filter?.classCode?.trim()) {
+      where.classCode = normalizeClassCode(filter.classCode);
+    }
+
+    if (filter?.isActive !== undefined) {
+      where.isActive = filter.isActive;
+    }
+
     const rows = await this.prisma.student.findMany({
+      where,
       orderBy: { fullName: 'asc' },
     });
     return rows.map((r) => this.toDomain(r));
@@ -48,9 +76,12 @@ export class PrismaStudentRepository implements IStudentRepository {
     const data = {
       ra: student.ra,
       fullName: student.fullName,
+      classGroupId: student.classGroupId ?? null,
       classCode: student.classCode,
       hasSpecialCondition: student.hasSpecialTimeLimit(),
       specialLimitMinutes: student.specialTimeLimitMinutes ?? null,
+      isActive: student.isActive,
+      updatedAt: student.updatedAt,
     };
 
     await this.prisma.student.upsert({
@@ -58,6 +89,7 @@ export class PrismaStudentRepository implements IStudentRepository {
       create: {
         id: student.id,
         ...data,
+        createdAt: student.createdAt,
       },
       update: data,
     });
@@ -68,8 +100,12 @@ export class PrismaStudentRepository implements IStudentRepository {
       id: row.id,
       ra: row.ra,
       fullName: row.fullName,
+      classGroupId: row.classGroupId ?? undefined,
       classCode: row.classCode,
       specialTimeLimitMinutes: row.specialLimitMinutes ?? undefined,
+      isActive: row.isActive,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
     });
   }
 }
