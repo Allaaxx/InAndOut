@@ -38,6 +38,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@client/components/ui/Tabs';
+import { useClassCodes } from '@client/hooks/useClassCodes';
 import { api } from '@client/services/api';
 import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type {
@@ -88,7 +89,7 @@ export function AnalyticsDashboardPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedClassCode, setSelectedClassCode] = useState<string>('TODOS');
-  const [classCodes, setClassCodes] = useState<string[]>([]);
+  const classCodes = useClassCodes(token);
   const [selectedDate, setSelectedDate] = useState<string>('');
 
   // Student history state
@@ -132,30 +133,6 @@ export function AnalyticsDashboardPage({
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
-
-  useEffect(() => {
-    if (typeof api.listClasses !== 'function') {
-      return;
-    }
-
-    let cancelled = false;
-    api
-      .listClasses(token)
-      .then((res) => {
-        if (cancelled) return;
-        const uniqueCodes = Array.from(
-          new Set((res.classes ?? []).map((item) => item.code)),
-        ).sort((a, b) => a.localeCompare(b));
-        setClassCodes(uniqueCodes);
-      })
-      .catch(() => {
-        // Keep existing options if class catalog fails to load
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
 
   const handleSearchStudent = async (e?: React.FormEvent) => {
     if (e) {

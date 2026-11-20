@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@client/components/ui/Select';
 import { toast } from '@client/components/ui/Sonner';
+import { useClassCodes } from '@client/hooks/useClassCodes';
 import { api } from '@client/services/api';
 import { buildReportFilename, downloadBlob } from '@client/services/download';
 import type { SchoolOverviewAnalyticsDTO } from '@shared/dtos';
@@ -47,33 +48,9 @@ export function CoordinationAnalyticsPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedClassCode, setSelectedClassCode] = useState<string>('TODOS');
-  const [classCodes, setClassCodes] = useState<string[]>([]);
+  const classCodes = useClassCodes(token);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [exporting, setExporting] = useState(false);
-
-  useEffect(() => {
-    if (typeof api.listClasses !== 'function') {
-      return;
-    }
-
-    let cancelled = false;
-    api
-      .listClasses(token)
-      .then((res) => {
-        if (cancelled) return;
-        const uniqueCodes = Array.from(
-          new Set((res.classes ?? []).map((item) => item.code)),
-        ).sort((a, b) => a.localeCompare(b));
-        setClassCodes(uniqueCodes);
-      })
-      .catch(() => {
-        // Keep existing options if class catalog fails to load
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [token]);
 
   const fetchAnalytics = useCallback(async () => {
     try {

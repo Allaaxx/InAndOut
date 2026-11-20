@@ -131,7 +131,7 @@ describe('Controller Seam: Inactive Student Guards & Historical Class Snapshot (
     await app.close();
   });
 
-  it('blocks a student deactivated while waiting in queue with HTTP 403 when claiming the called slot (POST /movements/queue/claim)', async () => {
+  it('blocks a student deactivated while waiting in queue with HTTP 403 when claiming the called slot (POST /movements/queue/claim) and promotes the next waiting student', async () => {
     let currentTime = new Date('2026-03-15T09:20:00.000Z');
     const { app } = await createApp({ clock: () => currentTime });
 
@@ -156,13 +156,20 @@ describe('Controller Seam: Inactive Student Guards & Historical Class Snapshot (
     });
     expect(firstExit.statusCode).toBe(201);
 
-    // RA 1002 enters queue while still active
-    const enqueueRes = await app.inject({
+    // RA 1002 and RA 1003 enter queue while still active
+    const enqueueRes1 = await app.inject({
       method: 'POST',
       url: '/movements/queue',
       payload: { ra: '1002', sessionId: session.id },
     });
-    expect(enqueueRes.statusCode).toBe(201);
+    expect(enqueueRes1.statusCode).toBe(201);
+
+    const enqueueRes2 = await app.inject({
+      method: 'POST',
+      url: '/movements/queue',
+      payload: { ra: '1003', sessionId: session.id },
+    });
+    expect(enqueueRes2.statusCode).toBe(201);
 
     // Coordination deactivates RA 1002 while in queue
     await deactivateStudent(app, coordinatorToken, 'student-2');
@@ -176,7 +183,7 @@ describe('Controller Seam: Inactive Student Guards & Historical Class Snapshot (
     });
     expect(returnRes.statusCode).toBe(200);
 
-    // Now deactivated RA 1002 tries to claim the slot -> 403
+    // Now deactivated RA 1002 tries to claim the slot -> 403, and their entry is cancelled while RA 1003 is promoted to CALLED
     currentTime = new Date('2026-03-15T09:25:30.000Z');
     const claimRes = await app.inject({
       method: 'POST',
@@ -186,6 +193,18 @@ describe('Controller Seam: Inactive Student Guards & Historical Class Snapshot (
     expect(claimRes.statusCode).toBe(403);
     expect(claimRes.json()).toMatchObject({
       error: expect.stringMatching(/inativ/i),
+    });
+
+    // Next waiting student (RA 1003) can immediately claim the slot without waiting 2 minutes for 1002 to expire
+    const nextClaimRes = await app.inject({
+      method: 'POST',
+      url: '/movements/queue/claim',
+      payload: { ra: '1003', sessionId: session.id },
+    });
+    expect(nextClaimRes.statusCode).toBe(201);
+    expect(nextClaimRes.json().movement).toMatchObject({
+      studentRa: '1003',
+      status: MovementStatus.IN_TRANSIT,
     });
 
     await app.close();

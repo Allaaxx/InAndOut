@@ -422,6 +422,35 @@ describe('Controller Seam: Students Catalog Management (app.inject)', () => {
     });
     expect(inactiveTransferRes.statusCode).toBe(400);
 
+    // If student's current Turma (2B) is deactivated, editing fullName or Tempo Especial while keeping the same classGroupId succeeds -> 200
+    await app.inject({
+      method: 'PATCH',
+      url: '/classes/class-2026-2b/status',
+      headers: { authorization: `Bearer ${coordToken}` },
+      payload: { isActive: false },
+    });
+
+    const editOnInactiveCurrentClassRes = await app.inject({
+      method: 'PATCH',
+      url: '/students/student-1',
+      headers: { authorization: `Bearer ${coordToken}` },
+      payload: {
+        fullName: 'Lucas Silva Pereira Editado',
+        classGroupId: 'class-2026-2b',
+        hasSpecialCondition: true,
+        specialLimitMinutes: 22,
+      },
+    });
+    expect(editOnInactiveCurrentClassRes.statusCode).toBe(200);
+    expect(editOnInactiveCurrentClassRes.json().student).toMatchObject({
+      id: 'student-1',
+      fullName: 'Lucas Silva Pereira Editado',
+      classGroupId: 'class-2026-2b',
+      classCode: '2B',
+      hasSpecialCondition: true,
+      specialLimitMinutes: 22,
+    });
+
     // Non-existent student -> 404
     const notFoundRes = await app.inject({
       method: 'PATCH',

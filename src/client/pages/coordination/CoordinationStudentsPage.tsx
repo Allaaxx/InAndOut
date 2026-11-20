@@ -1,3 +1,4 @@
+import { StudentFormDialog } from '@client/components/coordination/StudentFormDialog';
 import { Badge } from '@client/components/ui/Badge';
 import { Button } from '@client/components/ui/Button';
 import {
@@ -13,16 +14,15 @@ import {
   type DateRange,
   formatIsoDate,
 } from '@client/components/ui/DatePicker';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@client/components/ui/Dialog';
 import { Input } from '@client/components/ui/Input';
 import { Label } from '@client/components/ui/Label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@client/components/ui/Select';
 import { toast } from '@client/components/ui/Sonner';
 import {
   Table,
@@ -198,7 +198,7 @@ export function CoordinationStudentsPage({
     setFormFullName(student.fullName);
     setFormClassGroupId(
       student.classGroupId ??
-        activeClasses.find((c) => c.code === student.classCode)?.id ??
+        classes.find((c) => c.code === student.classCode)?.id ??
         activeClasses[0]?.id ??
         '',
     );
@@ -535,36 +535,37 @@ export function CoordinationStudentsPage({
             </div>
 
             <div>
-              <select
-                aria-label="Filtrar por Turma"
-                value={classFilter}
-                onChange={(e) => setClassFilter(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="ALL">Todas as turmas</option>
-                {classes.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.code} — {item.name} ({item.academicYear})
-                  </option>
-                ))}
-              </select>
+              <Select value={classFilter} onValueChange={setClassFilter}>
+                <SelectTrigger aria-label="Filtrar por Turma">
+                  <SelectValue placeholder="Todas as turmas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas as turmas</SelectItem>
+                  {classes.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.code} — {item.name} ({item.academicYear})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
-              <select
-                aria-label="Filtrar por Status"
+              <Select
                 value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(
-                    e.target.value as 'ALL' | 'ACTIVE' | 'INACTIVE',
-                  )
+                onValueChange={(value) =>
+                  setStatusFilter(value as 'ALL' | 'ACTIVE' | 'INACTIVE')
                 }
-                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="ALL">Todos os status</option>
-                <option value="ACTIVE">Ativos</option>
-                <option value="INACTIVE">Inativos</option>
-              </select>
+                <SelectTrigger aria-label="Filtrar por Status">
+                  <SelectValue placeholder="Todos os status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos os status</SelectItem>
+                  <SelectItem value="ACTIVE">Ativos</SelectItem>
+                  <SelectItem value="INACTIVE">Inativos</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -903,120 +904,26 @@ export function CoordinationStudentsPage({
       )}
 
       {/* Create / Edit Student Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingStudent ? 'Editar Aluno' : 'Cadastrar Novo Aluno'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingStudent
-                ? 'Atualize o nome, a turma ou o Tempo Especial do aluno. O RA é imutável.'
-                : 'Informe o RA numérico, nome completo, turma ativa e eventual Tempo Especial.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmitStudent} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="student-ra-input">RA</Label>
-              <Input
-                id="student-ra-input"
-                placeholder="Ex.: 4001"
-                value={formRa}
-                onChange={(e) => setFormRa(e.target.value)}
-                disabled={savingStudent || editingStudent !== null}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="student-name-input">Nome Completo</Label>
-              <Input
-                id="student-name-input"
-                placeholder="Ex.: Mariana Souza"
-                value={formFullName}
-                onChange={(e) => setFormFullName(e.target.value)}
-                disabled={savingStudent}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="student-class-select">Turma</Label>
-              <select
-                id="student-class-select"
-                value={formClassGroupId}
-                onChange={(e) => setFormClassGroupId(e.target.value)}
-                disabled={savingStudent}
-                required
-                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Selecione uma turma ativa</option>
-                {activeClasses.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.code} — {item.name} ({item.academicYear})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
-                <input
-                  type="checkbox"
-                  checked={formHasSpecial}
-                  onChange={(e) => setFormHasSpecial(e.target.checked)}
-                  disabled={savingStudent}
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <span>Possui Tempo Especial</span>
-              </label>
-
-              {formHasSpecial && (
-                <div className="space-y-1.5">
-                  <Label htmlFor="student-special-minutes-input">
-                    Limite Especial (min)
-                  </Label>
-                  <Input
-                    id="student-special-minutes-input"
-                    type="number"
-                    min={1}
-                    max={120}
-                    value={formSpecialMinutes}
-                    onChange={(e) => setFormSpecialMinutes(e.target.value)}
-                    disabled={savingStudent}
-                    required
-                  />
-                </div>
-              )}
-            </div>
-
-            {formError && (
-              <p role="alert" className="text-sm font-medium text-red-600">
-                {formError}
-              </p>
-            )}
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                disabled={savingStudent}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={savingStudent}>
-                {savingStudent
-                  ? 'Salvando...'
-                  : editingStudent
-                    ? 'Salvar Alterações'
-                    : 'Cadastrar Aluno'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <StudentFormDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        editingStudent={editingStudent}
+        classes={classes}
+        activeClasses={activeClasses}
+        formRa={formRa}
+        onFormRaChange={setFormRa}
+        formFullName={formFullName}
+        onFormFullNameChange={setFormFullName}
+        formClassGroupId={formClassGroupId}
+        onFormClassGroupIdChange={setFormClassGroupId}
+        formHasSpecial={formHasSpecial}
+        onFormHasSpecialChange={setFormHasSpecial}
+        formSpecialMinutes={formSpecialMinutes}
+        onFormSpecialMinutesChange={setFormSpecialMinutes}
+        savingStudent={savingStudent}
+        formError={formError}
+        onSubmit={handleSubmitStudent}
+      />
     </div>
   );
 }

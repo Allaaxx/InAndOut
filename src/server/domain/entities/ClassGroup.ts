@@ -5,7 +5,12 @@ export const MIN_ACADEMIC_YEAR = 2000;
 export const MAX_ACADEMIC_YEAR = 2100;
 
 export function normalizeClassCode(code: string): string {
-  return code.trim().toUpperCase();
+  return code
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toUpperCase();
 }
 
 export function isValidAcademicYear(year: unknown): year is number {

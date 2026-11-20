@@ -120,12 +120,7 @@ export class RequestStudentExitUseCase {
       );
     }
 
-    const matchesSessionClass =
-      student.classGroupId && session.classGroupId
-        ? student.classGroupId === session.classGroupId
-        : student.classCode === session.classCode;
-
-    if (!input.isGuest && !matchesSessionClass) {
+    if (!input.isGuest && !session.includesStudent(student)) {
       throw new StudentNotInClassError(
         `O aluno (${student.publicName}) pertence à turma ${student.classCode} e não está matriculado na turma ativa (${session.classCode}). Solicite Autorização Avulsa ao professor.`,
       );

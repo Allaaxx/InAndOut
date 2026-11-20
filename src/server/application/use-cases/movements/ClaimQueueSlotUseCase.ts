@@ -84,6 +84,42 @@ export class ClaimQueueSlotUseCase {
     }
 
     if (!student.isActive) {
+      const activeEntry = await this.queueRepo.findActiveByStudentRa(
+        student.ra,
+        session.id,
+      );
+      if (activeEntry) {
+        const wasCalled = activeEntry.status === QueueEntryStatus.CALLED;
+        const now = this.clock();
+        activeEntry.cancel();
+        await this.queueRepo.update(activeEntry);
+
+        const remainingQueue = await this.queueRepo.findActiveBySessionId(
+          session.id,
+        );
+        const activeMovements = await this.movementRepo.findActiveBySessionId(
+          session.id,
+        );
+        if (
+          (wasCalled || activeMovements.length === 0) &&
+          remainingQueue.length > 0
+        ) {
+          const nextHead = remainingQueue[0];
+          if (nextHead.status === QueueEntryStatus.WAITING) {
+            nextHead.callSlot(now, 2);
+            await this.queueRepo.update(nextHead);
+            await this.notificationSender.notifyQueueSlotCalled(
+              session.id,
+              nextHead.toDTO(),
+            );
+          }
+        }
+        await this.notificationSender.notifyQueueUpdated(
+          session.id,
+          remainingQueue.map((q) => q.toDTO()),
+        );
+      }
+
       throw new InactiveStudentError(
         `O aluno ${student.publicName} (RA ${student.ra}) está inativo e não pode confirmar saída pela Fila de Espera.`,
       );

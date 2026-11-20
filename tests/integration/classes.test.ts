@@ -156,6 +156,14 @@ describe('Controller Seam: Classes Catalog Management (app.inject)', () => {
     });
     expect(emptyCodeRes.statusCode).toBe(400);
 
+    const punctuationOnlyCodeRes = await app.inject({
+      method: 'POST',
+      url: '/classes',
+      headers: { authorization: `Bearer ${coordToken}` },
+      payload: { code: ' --- !!! ', name: 'Pontuação', academicYear: 2026 },
+    });
+    expect(punctuationOnlyCodeRes.statusCode).toBe(400);
+
     const invalidYearRes = await app.inject({
       method: 'POST',
       url: '/classes',

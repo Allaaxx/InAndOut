@@ -1,3 +1,4 @@
+import { normalizeClassCode } from '@server/domain/entities/ClassGroup';
 import type { IClassGroupRepository } from '@server/domain/repositories/IClassGroupRepository';
 import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 import type { UpdateStudentResponseDTO } from '@shared/dtos';
@@ -84,13 +85,29 @@ export class UpdateStudentUseCase {
     let targetClassGroupId: string | undefined;
     let targetClassCode: string | undefined;
     if (hasClassTransfer) {
-      const classGroup = await resolveActiveClassGroup(
-        this.classGroupRepo,
-        typeof input.classGroupId === 'string' ? input.classGroupId : undefined,
-        typeof input.classCode === 'string' ? input.classCode : undefined,
-      );
-      targetClassGroupId = classGroup.id;
-      targetClassCode = classGroup.code;
+      const requestedId =
+        typeof input.classGroupId === 'string' ? input.classGroupId.trim() : '';
+      const requestedCode =
+        typeof input.classCode === 'string'
+          ? normalizeClassCode(input.classCode)
+          : '';
+
+      const isUnchangedById =
+        Boolean(requestedId) && requestedId === existing.classGroupId;
+      const isUnchangedByCode =
+        !requestedId &&
+        Boolean(requestedCode) &&
+        requestedCode === existing.classCode;
+
+      if (!isUnchangedById && !isUnchangedByCode) {
+        const classGroup = await resolveActiveClassGroup(
+          this.classGroupRepo,
+          requestedId || undefined,
+          requestedCode || undefined,
+        );
+        targetClassGroupId = classGroup.id;
+        targetClassCode = classGroup.code;
+      }
     }
 
     let specialTimeLimitMinutes: number | null | undefined;

@@ -150,6 +150,15 @@ export class ClassSession {
     return this._status === SessionStatus.ACTIVE;
   }
 
+  public includesStudent(student: {
+    classGroupId?: string;
+    classCode: string;
+  }): boolean {
+    return student.classGroupId && this.classGroupId
+      ? student.classGroupId === this.classGroupId
+      : student.classCode === this.classCode;
+  }
+
   public end(endedAt: Date = new Date()): void {
     if (this._status === SessionStatus.ENDED) {
       throw new Error('A sessão de aula já está encerrada.');

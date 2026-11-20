@@ -206,14 +206,19 @@ describe('Frontend Seam: Unified Coordination Students Management & History (/co
 
     // Filter by Turma
     const classFilter = screen.getByLabelText(/Filtrar por Turma/i);
-    await user.selectOptions(classFilter, 'class-2026-2b');
+    await user.click(classFilter);
+    await user.click(await screen.findByRole('option', { name: /2º Ano B/i }));
     expect(screen.getByText('Pedro Alves')).toBeInTheDocument();
     expect(screen.queryByText('Lucas Silva')).not.toBeInTheDocument();
-    await user.selectOptions(classFilter, 'ALL');
+    await user.click(classFilter);
+    await user.click(
+      await screen.findByRole('option', { name: /Todas as turmas/i }),
+    );
 
     // Filter by status
     const statusFilter = screen.getByLabelText(/Filtrar por Status/i);
-    await user.selectOptions(statusFilter, 'INACTIVE');
+    await user.click(statusFilter);
+    await user.click(await screen.findByRole('option', { name: /Inativos/i }));
     expect(screen.getByText('Pedro Alves')).toBeInTheDocument();
     expect(screen.queryByText('Ana Costa')).not.toBeInTheDocument();
   });
@@ -245,9 +250,12 @@ describe('Frontend Seam: Unified Coordination Students Management & History (/co
     await user.type(screen.getByLabelText(/Nome Completo/i), 'Mariana Souza');
 
     const turmaSelect = screen.getByLabelText(/^Turma$/i);
+    await user.click(turmaSelect);
     // Inactive 3B must not be offered in active selector
-    expect(within(turmaSelect).queryByText(/3B/)).not.toBeInTheDocument();
-    await user.selectOptions(turmaSelect, 'class-2026-2b');
+    expect(
+      screen.queryByRole('option', { name: /3B/ }),
+    ).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('option', { name: /2B/ }));
 
     await user.click(screen.getByLabelText(/Tempo Especial/i));
     const minutesInput = screen.getByLabelText(/Limite Especial \(min\)/i);
@@ -299,10 +307,8 @@ describe('Frontend Seam: Unified Coordination Students Management & History (/co
     await user.clear(nameInput);
     await user.type(nameInput, 'Ana Costa Lima');
 
-    await user.selectOptions(
-      screen.getByLabelText(/^Turma$/i),
-      'class-2026-2b',
-    );
+    await user.click(screen.getByLabelText(/^Turma$/i));
+    await user.click(await screen.findByRole('option', { name: /2B/ }));
 
     // Uncheck Tempo Especial
     await user.click(screen.getByLabelText(/Tempo Especial/i));
@@ -392,14 +398,70 @@ describe('Frontend Seam: Unified Coordination Students Management & History (/co
     await user.click(screen.getByRole('button', { name: /Novo Aluno/i }));
     await user.type(screen.getByLabelText(/^RA$/i), '1001');
     await user.type(screen.getByLabelText(/Nome Completo/i), 'Lucas Duplicado');
-    await user.selectOptions(
-      screen.getByLabelText(/^Turma$/i),
-      'class-2026-1a',
-    );
+    await user.click(screen.getByLabelText(/^Turma$/i));
+    await user.click(await screen.findByRole('option', { name: /1A/ }));
     await user.click(screen.getByRole('button', { name: /Cadastrar Aluno/i }));
 
     expect(
       await screen.findByText(/Já existe um aluno cadastrado com o RA "1001"/i),
     ).toBeInTheDocument();
+  });
+
+  it('preserves an inactive current Turma when editing a student so name or Tempo Especial can be updated without involuntary transfer', async () => {
+    const user = userEvent.setup();
+    const studentInInactiveClass: StudentDTO = {
+      id: 'student-legacy',
+      ra: '3009',
+      fullName: 'Beatriz Rocha',
+      publicName: 'Beatriz R.',
+      abbreviatedName: 'Beatriz R.',
+      classGroupId: 'class-2025-3b',
+      classCode: '3B',
+      hasSpecialCondition: false,
+      isActive: true,
+    };
+    vi.mocked(api.listStudents).mockResolvedValue({
+      students: [...initialStudents, studentInInactiveClass],
+    });
+    vi.mocked(api.updateStudent).mockResolvedValue({
+      student: {
+        ...studentInInactiveClass,
+        fullName: 'Beatriz Rocha Lima',
+        hasSpecialCondition: true,
+        specialLimitMinutes: 15,
+        specialTimeLimitMinutes: 15,
+      },
+    });
+
+    render(<CoordinationPage user={coordUser} token="valid-coord-jwt" />);
+    await user.click(screen.getByTestId('sidebar-nav-students'));
+    await screen.findByText('Beatriz Rocha');
+
+    const rowBeatriz = screen
+      .getByText('Beatriz Rocha')
+      .closest('tr') as HTMLElement;
+    await user.click(
+      within(rowBeatriz).getByRole('button', { name: /Editar/i }),
+    );
+
+    const nameInput = screen.getByLabelText(/Nome Completo/i);
+    await user.clear(nameInput);
+    await user.type(nameInput, 'Beatriz Rocha Lima');
+
+    await user.click(screen.getByLabelText(/Tempo Especial/i));
+    await user.click(
+      screen.getByRole('button', { name: /Salvar Alterações/i }),
+    );
+
+    expect(api.updateStudent).toHaveBeenCalledWith(
+      'student-legacy',
+      {
+        fullName: 'Beatriz Rocha Lima',
+        classGroupId: 'class-2025-3b',
+        hasSpecialCondition: true,
+        specialLimitMinutes: 15,
+      },
+      'valid-coord-jwt',
+    );
   });
 });
