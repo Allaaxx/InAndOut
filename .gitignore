@@ -9,3 +9,6 @@ coverage/
 .DS_Store
 .vite/
 *.tsbuildinfo
+
+# pnpm only
+package-lock.json

@@ -23,10 +23,13 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
+  api:
     profiles: ["app"]
-    build: .
-    container_name: inandout-app
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: inandout-api
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,7 +39,21 @@ services:
       HOST: 0.0.0.0
       TZ: America/Sao_Paulo
     ports:
-      - "3000:3000"
+      - "${API_PORT:-3000}:3000"
+
+  web:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: inandout-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8080}:80"
 
 volumes:
   postgres_data:
