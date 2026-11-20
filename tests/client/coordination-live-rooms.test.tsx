@@ -298,4 +298,55 @@ describe('Frontend Seam: Coordination Live Multi-Room Cards, Room Column, Filter
       expect(screen.queryByText('Pedro A.')).not.toBeInTheDocument();
     });
   });
+
+  it('resets a stale selected room filter back to "Todas as Salas" when that room session ends with no remaining movements', async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(api.getCoordinationActiveMovements)
+      .mockResolvedValueOnce({
+        movements: initialMovements,
+        activeRooms: initialActiveRooms,
+      })
+      .mockResolvedValueOnce({
+        movements: [initialMovements[0]],
+        activeRooms: [initialActiveRooms[0], initialActiveRooms[2]],
+      });
+
+    render(<CoordinationPage user={coordUser} token="mock-coord-token" />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Lucas S.')).toBeInTheDocument();
+      expect(screen.getByText('Pedro A.')).toBeInTheDocument();
+    });
+
+    // Filter by SALA-02
+    const roomSelect = screen.getByRole('combobox', {
+      name: /Filtrar por Sala/i,
+    });
+    await user.click(roomSelect);
+    await user.click(await screen.findByRole('option', { name: /SALA-02/i }));
+
+    expect(screen.getByText('Pedro A.')).toBeInTheDocument();
+    expect(screen.queryByText('Lucas S.')).not.toBeInTheDocument();
+
+    // SALA-02 ends with no remaining movements -> stale filter resets to TODAS and SALA-01 movement reappears
+    act(() => {
+      socketListeners['session:ended']?.forEach((cb) => {
+        cb({
+          session: {
+            id: 'session-102',
+            roomId: 'SALA-02',
+            classCode: '2B',
+            subject: 'História',
+          },
+        });
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Lucas S.')).toBeInTheDocument();
+      expect(screen.queryByText('Pedro A.')).not.toBeInTheDocument();
+    });
+    expect(roomSelect).toHaveTextContent(/Todas as Salas/i);
+  });
 });

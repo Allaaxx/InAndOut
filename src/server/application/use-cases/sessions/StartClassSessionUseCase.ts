@@ -1,13 +1,12 @@
 import type { INotificationSender } from '@server/application/contracts/INotificationSender';
 import { ClassSession } from '@server/domain/entities/ClassSession';
-import { normalizeRoomCode } from '@server/domain/entities/Room';
 import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import type { IRoomRepository } from '@server/domain/repositories/IRoomRepository';
 import type {
   StartSessionRequestDTO,
   StartSessionResponseDTO,
 } from '@shared/dtos';
-import { SOCKET_EVENTS } from '@shared/events';
+import { resolveRoomCode } from '@shared/roomCode';
 
 export class SessionConflictError extends Error {
   constructor(message: string) {
@@ -67,9 +66,7 @@ export class StartClassSessionUseCase {
       );
     }
 
-    const roomId = normalizeRoomCode(
-      (input.roomId ?? 'SALA-01').trim() || 'SALA-01',
-    );
+    const roomId = resolveRoomCode(input.roomId);
 
     if (this.roomRepo) {
       const room = await this.roomRepo.findByCode(roomId);
@@ -128,12 +125,8 @@ export class StartClassSessionUseCase {
       session: session.toDTO(),
     };
 
-    if (this.notificationSender?.emitToRoom) {
-      await this.notificationSender.emitToRoom(
-        session.roomId,
-        SOCKET_EVENTS.SESSION_STARTED,
-        response,
-      );
+    if (this.notificationSender?.notifySessionStarted) {
+      await this.notificationSender.notifySessionStarted(response.session);
     }
 
     return response;

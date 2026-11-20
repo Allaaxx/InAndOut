@@ -1,5 +1,6 @@
 import type { LoginRequestDTO, RoomDTO, UserDTO } from '@shared/dtos';
 import { UserRole } from '@shared/enums';
+import { normalizeRoomCode, resolveRoomCode } from '@shared/roomCode';
 import type React from 'react';
 import { useState } from 'react';
 import {
@@ -16,11 +17,7 @@ import { CoordinationPage } from './pages/CoordinationPage';
 import { LoginPage } from './pages/LoginPage';
 import { TerminalPage } from './pages/TerminalPage';
 import { api } from './services/api';
-import {
-  getSavedRoomCode,
-  normalizeRoomCode,
-  saveRoomCode,
-} from './services/roomStorage';
+import { getSavedRoomCode, saveRoomCode } from './services/roomStorage';
 
 interface ProtectedRouteProps {
   user: UserDTO | null;
@@ -142,7 +139,7 @@ function TerminalRoomRoute({
 }: TerminalRouteProps) {
   const navigate = useNavigate();
   const { roomCode } = useParams<{ roomCode: string }>();
-  const normalizedRoomCode = normalizeRoomCode(roomCode || 'SALA-01');
+  const normalizedRoomCode = resolveRoomCode(roomCode);
 
   const handleChangeRoom = (newRoomCode: string) => {
     const normalized = normalizeRoomCode(newRoomCode);

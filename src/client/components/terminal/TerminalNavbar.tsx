@@ -16,6 +16,7 @@ import {
 import { cn } from '@client/components/ui/utils';
 import type { ClassSessionDTO, UserDTO } from '@shared/dtos';
 import { SessionStatus } from '@shared/enums';
+import { DEFAULT_ROOM_CODE } from '@shared/roomCode';
 import { ArrowLeftRight, Lock, PowerOff, RefreshCwIcon } from 'lucide-react';
 import { useState } from 'react';
 
@@ -37,7 +38,7 @@ export interface TerminalNavbarProps {
 
 export function TerminalNavbar({
   user,
-  roomId = 'SALA-01',
+  roomId = DEFAULT_ROOM_CODE,
   activeSession,
   isOccupied = false,
   isLocked = false,

@@ -1,6 +1,7 @@
-import { normalizeRoomCode, Room } from '@server/domain/entities/Room';
+import { Room } from '@server/domain/entities/Room';
 import type { IRoomRepository } from '@server/domain/repositories/IRoomRepository';
 import type { CreateRoomRequestDTO, CreateRoomResponseDTO } from '@shared/dtos';
+import { normalizeRoomCode } from '@shared/roomCode';
 
 export class RoomValidationError extends Error {
   constructor(message: string) {

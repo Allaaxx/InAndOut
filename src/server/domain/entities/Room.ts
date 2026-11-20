@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { RoomDTO } from '@shared/dtos';
+import { normalizeRoomCode } from '@shared/roomCode';
 
 export interface RoomProps {
   id?: string;
@@ -8,10 +9,6 @@ export interface RoomProps {
   isActive?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-}
-
-export function normalizeRoomCode(code: string): string {
-  return code.trim().toUpperCase();
 }
 
 export class Room {

@@ -1,6 +1,5 @@
 import type { INotificationSender } from '@server/application/contracts/INotificationSender';
 import type { ClassSession } from '@server/domain/entities/ClassSession';
-import { normalizeRoomCode } from '@server/domain/entities/Room';
 import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 import type {
@@ -8,7 +7,7 @@ import type {
   EndSessionResponseDTO,
   MovementDTO,
 } from '@shared/dtos';
-import { SOCKET_EVENTS } from '@shared/events';
+import { resolveRoomCode } from '@shared/roomCode';
 
 export class SessionNotFoundError extends Error {
   constructor(message: string) {
@@ -50,9 +49,7 @@ export class EndClassSessionUseCase {
         );
       }
     } else {
-      const roomId = normalizeRoomCode(
-        (input.roomId ?? 'SALA-01').trim() || 'SALA-01',
-      );
+      const roomId = resolveRoomCode(input.roomId);
       session = await this.sessionRepo.findActiveByRoomId(roomId);
     }
 
@@ -98,10 +95,9 @@ export class EndClassSessionUseCase {
       inTransitMovements,
     };
 
-    if (this.notificationSender?.emitToRoom) {
-      await this.notificationSender.emitToRoom(
-        session.roomId,
-        SOCKET_EVENTS.SESSION_ENDED,
+    if (this.notificationSender?.notifySessionEnded) {
+      await this.notificationSender.notifySessionEnded(
+        response.session,
         response,
       );
     }

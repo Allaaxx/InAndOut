@@ -5,6 +5,7 @@ import type {
   WaitingQueueDTO,
 } from '@shared/dtos';
 import { SOCKET_EVENTS, SOCKET_ROOMS } from '@shared/events';
+import { normalizeRoomCode } from '@shared/roomCode';
 import { useEffect, useRef } from 'react';
 import { io, type Socket } from 'socket.io-client';
 
@@ -110,8 +111,8 @@ export function useSocket({
   ]);
 
   useEffect(() => {
-    const normalizedRoomCode = roomCode?.trim()
-      ? roomCode.trim().toUpperCase()
+    const normalizedRoomCode = roomCode
+      ? normalizeRoomCode(roomCode) || null
       : null;
 
     const targetRoom =

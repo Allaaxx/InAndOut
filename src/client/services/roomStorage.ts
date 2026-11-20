@@ -1,8 +1,6 @@
-export const TERMINAL_ROOM_STORAGE_KEY = 'inandout_room_code';
+import { normalizeRoomCode } from '@shared/roomCode';
 
-export function normalizeRoomCode(roomCode: string): string {
-  return roomCode.trim().toUpperCase();
-}
+export const TERMINAL_ROOM_STORAGE_KEY = 'inandout_room_code';
 
 export function getSavedRoomCode(): string | null {
   if (typeof localStorage === 'undefined') {

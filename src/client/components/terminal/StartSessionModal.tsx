@@ -20,6 +20,7 @@ import type React from 'react';
 import { useState } from 'react';
 
 const CLASS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B'];
+const DURATION_OPTIONS = [45, 50, 60, 90, 100];
 const SUBJECT_OPTIONS = [
   'Matemática',
   'Português',
@@ -40,6 +41,7 @@ export interface StartSessionModalProps {
   onStartSession: (payload: {
     classCode: string;
     subject: string;
+    plannedDurationMinutes: number;
   }) => Promise<void>;
 }
 
@@ -53,12 +55,15 @@ export function StartSessionModal({
 }: StartSessionModalProps) {
   const [selectedClassCode, setSelectedClassCode] = useState<string>('1A');
   const [selectedSubject, setSelectedSubject] = useState<string>('Matemática');
+  const [plannedDurationMinutes, setPlannedDurationMinutes] =
+    useState<number>(50);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onStartSession({
       classCode: selectedClassCode,
       subject: selectedSubject,
+      plannedDurationMinutes,
     });
   };
 
@@ -117,6 +122,32 @@ export function StartSessionModal({
                 {SUBJECT_OPTIONS.map((subj) => (
                   <SelectItem key={subj} value={subj}>
                     {subj}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col space-y-1.5">
+            <Label
+              htmlFor="session-duration-select"
+              className="text-sm font-medium text-slate-700"
+            >
+              Duração (min)
+            </Label>
+            <Select
+              value={String(plannedDurationMinutes)}
+              onValueChange={(value) =>
+                setPlannedDurationMinutes(Number(value))
+              }
+            >
+              <SelectTrigger id="session-duration-select">
+                <SelectValue placeholder="Selecione a duração" />
+              </SelectTrigger>
+              <SelectContent>
+                {DURATION_OPTIONS.map((minutes) => (
+                  <SelectItem key={minutes} value={String(minutes)}>
+                    {minutes} min
                   </SelectItem>
                 ))}
               </SelectContent>

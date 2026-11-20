@@ -12,7 +12,7 @@ import { WaitingQueuePanel } from '@client/components/terminal/WaitingQueuePanel
 import { useClassSession } from '@client/hooks/useClassSession';
 import { useSocket } from '@client/hooks/useSocket';
 import { api } from '@client/services/api';
-import { normalizeRoomCode, saveRoomCode } from '@client/services/roomStorage';
+import { saveRoomCode } from '@client/services/roomStorage';
 import type {
   EndSessionResponseDTO,
   MovementDTO,
@@ -22,6 +22,11 @@ import type {
   WaitingQueueDTO,
 } from '@shared/dtos';
 import { QueueEntryStatus, SessionStatus } from '@shared/enums';
+import {
+  DEFAULT_ROOM_CODE,
+  normalizeRoomCode,
+  resolveRoomCode,
+} from '@shared/roomCode';
 import { useCallback, useState } from 'react';
 
 const IDLE_NO_SESSION_FEEDBACK =
@@ -39,12 +44,12 @@ export interface TerminalPageProps {
 export function TerminalPage({
   user,
   token,
-  roomId = 'SALA-01',
+  roomId = DEFAULT_ROOM_CODE,
   onChangeRoom,
   onVerifyPin,
   onLogout,
 }: TerminalPageProps) {
-  const normalizedRoomId = normalizeRoomCode(roomId);
+  const normalizedRoomId = resolveRoomCode(roomId);
   const [isLocked, setIsLocked] = useState(false);
   const [startSessionOpen, setStartSessionOpen] = useState(false);
   const [changeRoomOpen, setChangeRoomOpen] = useState(false);
@@ -210,9 +215,11 @@ export function TerminalPage({
   const handleStartSessionSubmit = async ({
     classCode,
     subject,
+    plannedDurationMinutes,
   }: {
     classCode: string;
     subject: string;
+    plannedDurationMinutes: number;
   }) => {
     try {
       setReturnConfirmationMessage(null);
@@ -222,7 +229,7 @@ export function TerminalPage({
         classCode,
         subject,
         roomId: normalizedRoomId,
-        plannedDurationMinutes: 50,
+        plannedDurationMinutes,
       });
       setStartSessionOpen(false);
     } catch {
@@ -473,8 +480,7 @@ export function TerminalPage({
               {lastEndedSummary.metrics.inTransitUnresolvedCount > 0 && (
                 <p className="mt-1 font-medium text-amber-800">
                   {lastEndedSummary.metrics.inTransitUnresolvedCount} saída(s)
-                  em trânsito encaminhada(s) à Coordenação
-                  (IN_TRANSIT_UNRESOLVED).
+                  em trânsito encaminhada(s) à Coordenação.
                 </p>
               )}
             </div>

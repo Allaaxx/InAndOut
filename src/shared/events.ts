@@ -1,3 +1,5 @@
+import { normalizeRoomCode } from './roomCode';
+
 export const SOCKET_EVENTS = {
   MOVEMENT_EXIT: 'movement:exit',
   MOVEMENT_STARTED: 'movement:started',
@@ -25,5 +27,5 @@ export const SOCKET_ROOMS = {
   COORDINATION: 'coordenacao',
   COORDINATION_ROOM: 'room:coordenacao',
   sessionRoom: (sessionId: string) => `room:session:${sessionId}`,
-  room: (roomCode: string) => `room:${roomCode.trim().toUpperCase()}`,
+  room: (roomCode: string) => `room:${normalizeRoomCode(roomCode)}`,
 } as const;

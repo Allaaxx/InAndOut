@@ -1,10 +1,11 @@
 import type { PrismaClient, Room as PrismaRoomModel } from '@prisma/client';
-import { normalizeRoomCode, Room } from '@server/domain/entities/Room';
+import { Room } from '@server/domain/entities/Room';
 import type {
   IRoomRepository,
   ListRoomsFilter,
 } from '@server/domain/repositories/IRoomRepository';
 import { getPrismaClient } from '@server/infrastructure/database/prismaClient';
+import { normalizeRoomCode } from '@shared/roomCode';
 
 export class PrismaRoomRepository implements IRoomRepository {
   private prisma: PrismaClient;

@@ -6,6 +6,7 @@ import type {
   StartSessionRequestDTO,
   WaitingQueueDTO,
 } from '@shared/dtos';
+import { DEFAULT_ROOM_CODE } from '@shared/roomCode';
 import { useCallback, useEffect, useState } from 'react';
 
 export function formatElapsedSeconds(totalSeconds: number): string {
@@ -22,7 +23,7 @@ export interface UseClassSessionOptions {
 
 export function useClassSession({
   token,
-  roomId = 'SALA-01',
+  roomId = DEFAULT_ROOM_CODE,
 }: UseClassSessionOptions) {
   const [activeSession, setActiveSession] = useState<ClassSessionDTO | null>(
     null,

@@ -9,8 +9,8 @@ import {
   DialogTitle,
 } from '@client/components/ui/Dialog';
 import { api } from '@client/services/api';
-import { normalizeRoomCode } from '@client/services/roomStorage';
 import type { RoomDTO } from '@shared/dtos';
+import { normalizeRoomCode } from '@shared/roomCode';
 import { DoorOpen, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 

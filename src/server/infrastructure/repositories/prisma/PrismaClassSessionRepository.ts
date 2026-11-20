@@ -3,10 +3,10 @@ import type {
   PrismaClient,
 } from '@prisma/client';
 import { ClassSession } from '@server/domain/entities/ClassSession';
-import { normalizeRoomCode } from '@server/domain/entities/Room';
 import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import { getPrismaClient } from '@server/infrastructure/database/prismaClient';
 import { SessionStatus } from '@shared/enums';
+import { resolveRoomCode } from '@shared/roomCode';
 
 export class PrismaClassSessionRepository implements IClassSessionRepository {
   private prisma: PrismaClient;
@@ -57,7 +57,7 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
   public async findActiveByRoomId(
     roomId: string,
   ): Promise<ClassSession | null> {
-    const normalizedRoom = normalizeRoomCode(roomId.trim() || 'SALA-01');
+    const normalizedRoom = resolveRoomCode(roomId);
     const row = await this.prisma.classSession.findFirst({
       where: {
         roomId: normalizedRoom,

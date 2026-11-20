@@ -3,6 +3,7 @@ import type { IMovementRecordRepository } from '@server/domain/repositories/IMov
 import type { IRoomRepository } from '@server/domain/repositories/IRoomRepository';
 import type { ActiveRoomSessionSummaryDTO, MovementDTO } from '@shared/dtos';
 import { MovementStatus } from '@shared/enums';
+import { normalizeRoomCode } from '@shared/roomCode';
 
 export interface GetActiveMovementsOverviewInput {
   classCode?: string;
@@ -42,7 +43,9 @@ export class GetActiveMovementsOverviewUseCase {
     const now = this.clock();
 
     const normalizedClassCode = input.classCode?.trim().toLowerCase();
-    const normalizedRoomId = input.roomId?.trim().toUpperCase();
+    const normalizedRoomId = input.roomId
+      ? normalizeRoomCode(input.roomId)
+      : undefined;
 
     const filtered = allRecords.filter((record) => {
       // Status filter
@@ -69,7 +72,7 @@ export class GetActiveMovementsOverviewUseCase {
 
       // Room filter
       if (normalizedRoomId) {
-        if ((record.roomId ?? '').trim().toUpperCase() !== normalizedRoomId) {
+        if (normalizeRoomCode(record.roomId ?? '') !== normalizedRoomId) {
           return false;
         }
       }
@@ -120,7 +123,7 @@ export class GetActiveMovementsOverviewUseCase {
     ]);
 
     const roomNameByCode = new Map(
-      rooms.map((room) => [room.code.trim().toUpperCase(), room.name]),
+      rooms.map((room) => [normalizeRoomCode(room.code), room.name]),
     );
 
     return activeSessions
@@ -128,7 +131,7 @@ export class GetActiveMovementsOverviewUseCase {
         const sessionActiveMovements = allRecords.filter(
           (record) => record.sessionId === session.id && record.isActive(),
         );
-        const normalizedCode = session.roomId.trim().toUpperCase();
+        const normalizedCode = normalizeRoomCode(session.roomId);
 
         return {
           sessionId: session.id,
