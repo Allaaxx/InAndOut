@@ -1,11 +1,13 @@
 import type { INotificationSender } from '@server/application/contracts/INotificationSender';
 import type { ITokenService } from '@server/application/contracts/ITokenService';
+import type { IClassGroupRepository } from '@server/domain/repositories/IClassGroupRepository';
 import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 import type { IRoomRepository } from '@server/domain/repositories/IRoomRepository';
 import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 import type { IUserRepository } from '@server/domain/repositories/IUserRepository';
 import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
+import { InMemoryClassGroupRepository } from '@server/infrastructure/repositories/InMemoryClassGroupRepository';
 import { InMemoryClassSessionRepository } from '@server/infrastructure/repositories/InMemoryClassSessionRepository';
 import { InMemoryMovementRecordRepository } from '@server/infrastructure/repositories/InMemoryMovementRecordRepository';
 import { InMemoryRoomRepository } from '@server/infrastructure/repositories/InMemoryRoomRepository';
@@ -13,6 +15,7 @@ import { InMemoryStudentRepository } from '@server/infrastructure/repositories/I
 import { InMemoryUserRepository } from '@server/infrastructure/repositories/InMemoryUserRepository';
 import { InMemoryWaitingQueueRepository } from '@server/infrastructure/repositories/InMemoryWaitingQueueRepository';
 import {
+  PrismaClassGroupRepository,
   PrismaClassSessionRepository,
   PrismaMovementRecordRepository,
   PrismaRoomRepository,
@@ -27,6 +30,7 @@ export interface AppContainer {
   clock: () => Date;
   userRepo: IUserRepository;
   roomRepo: IRoomRepository;
+  classGroupRepo: IClassGroupRepository;
   sessionRepo: IClassSessionRepository;
   studentRepo: IStudentRepository;
   movementRepo: IMovementRecordRepository;
@@ -50,6 +54,12 @@ export function createContainer(
   const roomRepo =
     overrides.roomRepo ??
     (useDatabase ? new PrismaRoomRepository() : new InMemoryRoomRepository());
+
+  const classGroupRepo =
+    overrides.classGroupRepo ??
+    (useDatabase
+      ? new PrismaClassGroupRepository()
+      : new InMemoryClassGroupRepository());
 
   const sessionRepo =
     overrides.sessionRepo ??
@@ -83,6 +93,7 @@ export function createContainer(
     clock,
     userRepo,
     roomRepo,
+    classGroupRepo,
     sessionRepo,
     studentRepo,
     movementRepo,

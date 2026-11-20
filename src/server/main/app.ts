@@ -3,6 +3,7 @@ import { EvaluateOverdueMovementsUseCase } from '@server/application/use-cases/m
 import { setupFastifyErrorHandler } from '@server/presentation/errors/errorHandler';
 import { registerAnalyticsRoutes } from '@server/presentation/routes/analyticsRoutes';
 import { registerAuthRoutes } from '@server/presentation/routes/authRoutes';
+import { registerClassGroupRoutes } from '@server/presentation/routes/classGroupRoutes';
 import { registerCoordinationRoutes } from '@server/presentation/routes/coordinationRoutes';
 import { registerMovementEscalationRoutes } from '@server/presentation/routes/movementEscalationRoutes';
 import { registerMovementOverrideRoutes } from '@server/presentation/routes/movementOverrideRoutes';
@@ -66,6 +67,7 @@ export async function createApp(
 
   await registerAuthRoutes(app, container);
   await registerRoomRoutes(app, container);
+  await registerClassGroupRoutes(app, container);
   await registerSessionRoutes(app, container);
   await registerMovementRoutes(app, container);
   await registerMovementQueueRoutes(app, container);

@@ -96,6 +96,69 @@ export async function main(): Promise<void> {
     `✅ Seeded ${rooms.length} rooms (SALA-01, SALA-02, SALA-03, LAB-01).`,
   );
 
+  // 1.6. Seed Class Groups (Turmas)
+  const classGroups = [
+    {
+      id: 'class-2026-1a',
+      code: '1A',
+      name: '1º Ano A',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-1b',
+      code: '1B',
+      name: '1º Ano B',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-2a',
+      code: '2A',
+      name: '2º Ano A',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-2b',
+      code: '2B',
+      name: '2º Ano B',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-3a',
+      code: '3A',
+      name: '3º Ano A',
+      academicYear: 2026,
+      isActive: true,
+    },
+    {
+      id: 'class-2026-3b',
+      code: '3B',
+      name: '3º Ano B',
+      academicYear: 2026,
+      isActive: true,
+    },
+  ];
+
+  for (const classGroup of classGroups) {
+    await prisma.classGroup.upsert({
+      where: {
+        code_academicYear: {
+          code: classGroup.code,
+          academicYear: classGroup.academicYear,
+        },
+      },
+      create: classGroup,
+      update: classGroup,
+    });
+  }
+
+  console.log(
+    `✅ Seeded ${classGroups.length} class groups (1A, 1B, 2A, 2B, 3A, 3B - 2026).`,
+  );
+
   // 2. Seed Students (Turmas 1A, 2B, 3C)
   const students = [
     // Turma 1A

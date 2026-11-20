@@ -146,3 +146,18 @@ model Room {
   @@index([isActive])
   @@map("rooms")
 }
+
+model ClassGroup {
+  id           String   @id @default(uuid())
+  code         String
+  name         String
+  academicYear Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([code, academicYear])
+  @@index([academicYear])
+  @@index([isActive])
+  @@map("class_groups")
+}
