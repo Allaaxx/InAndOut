@@ -120,29 +120,6 @@ export function TerminalNavbar({
 
           {/* Status Badge & Teacher User Dropdown */}
           <div className="flex items-center gap-3 shrink-0">
-            {isSessionActive && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled
-                title={ROOM_SWITCH_LOCKED_TOOLTIP}
-                data-testid="navbar-change-room-button"
-                className="text-xs text-slate-500"
-              >
-                <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" />
-                Trocar de Sala
-              </Button>
-            )}
-
-            <Badge
-              variant={isOccupied ? 'warning' : 'success'}
-              data-testid="concurrency-badge"
-              className="text-xs px-2.5 py-1"
-            >
-              {isOccupied ? 'Em Atendimento' : 'Sala Liberada'}
-            </Badge>
-
             <UserMenuDropdown
               user={user}
               roleLabel="Docente"
