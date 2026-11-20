@@ -7,7 +7,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@client/components/ui/AlertDialog';
-import { Badge } from '@client/components/ui/Badge';
 import { Button } from '@client/components/ui/Button';
 import {
   DropdownMenuGroup,
@@ -40,7 +39,6 @@ export function TerminalNavbar({
   user,
   roomId = DEFAULT_ROOM_CODE,
   activeSession,
-  isOccupied = false,
   isLocked = false,
   onLock,
   onChangeRoom,

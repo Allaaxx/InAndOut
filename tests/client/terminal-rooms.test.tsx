@@ -344,11 +344,15 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
 
       expect(await screen.findByText(/Aula em Andamento/i)).toBeInTheDocument();
 
-      const changeRoomBtn = screen.getByRole('button', {
+      const user = userEvent.setup();
+      await user.click(
+        screen.getByRole('button', { name: /Ações do Professor/i }),
+      );
+      const changeRoomItem = await screen.findByRole('menuitem', {
         name: /Trocar de Sala/i,
       });
-      expect(changeRoomBtn).toBeDisabled();
-      expect(changeRoomBtn).toHaveAttribute(
+      expect(changeRoomItem).toHaveAttribute('aria-disabled', 'true');
+      expect(changeRoomItem).toHaveAttribute(
         'title',
         expect.stringMatching(/encerre/i),
       );
@@ -462,8 +466,8 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
       expect(await screen.findByText(/Aula em Andamento/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Turma 3B/i).length).toBeGreaterThanOrEqual(1);
       expect(
-        screen.getByRole('button', { name: /Trocar de Sala/i }),
-      ).toBeDisabled();
+        screen.queryByRole('button', { name: /Trocar de Sala/i }),
+      ).not.toBeInTheDocument();
     });
 
     it('reacts to remote SESSION_ENDED for its room cleanly and ignores SESSION_ENDED from other rooms', async () => {
@@ -632,15 +636,12 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
 
       render(<App initialEntries={['/terminal/SALA-02']} />);
 
-      // Verify active session, open movement, waiting queue, and locked room switch
+      // Verify active session, open movement, waiting queue, and no idle room-switch button
       expect(await screen.findByText('Lucas S.')).toBeInTheDocument();
       expect(screen.getAllByText('Marina P.').length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByTestId('concurrency-badge')).toHaveTextContent(
-        'Em Atendimento',
-      );
       expect(
-        screen.getByRole('button', { name: /Trocar de Sala/i }),
-      ).toBeDisabled();
+        screen.queryByRole('button', { name: /Trocar de Sala/i }),
+      ).not.toBeInTheDocument();
 
       // End the active session
       await user.click(screen.getByRole('button', { name: /Encerrar Aula/i }));
@@ -666,9 +667,6 @@ describe('Frontend Seam: Multi-Room Terminal Routing, Room Selection & Idle Wait
       );
       expect(screen.queryByText('Lucas S.')).not.toBeInTheDocument();
       expect(screen.queryByText('Marina P.')).not.toBeInTheDocument();
-      expect(screen.getByTestId('concurrency-badge')).toHaveTextContent(
-        'Sala Liberada',
-      );
 
       // Summary banner includes inTransitUnresolvedCount info without internal enum tokens
       const statusBanner = screen.getByRole('status');
