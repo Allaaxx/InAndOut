@@ -16,10 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@client/components/ui/Select';
+import { api } from '@client/services/api';
+import type { ClassGroupDTO } from '@shared/dtos';
 import type React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-const CLASS_OPTIONS = ['1A', '1B', '2A', '2B', '3A', '3B'];
 const DURATION_OPTIONS = [45, 50, 60, 90, 100];
 const SUBJECT_OPTIONS = [
   'Matemática',
@@ -36,9 +37,11 @@ export interface StartSessionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   roomId: string;
+  token: string;
   loading: boolean;
   error: string | null;
   onStartSession: (payload: {
+    classGroupId: string;
     classCode: string;
     subject: string;
     plannedDurationMinutes: number;
@@ -49,19 +52,74 @@ export function StartSessionModal({
   open,
   onOpenChange,
   roomId,
+  token,
   loading,
   error,
   onStartSession,
 }: StartSessionModalProps) {
-  const [selectedClassCode, setSelectedClassCode] = useState<string>('1A');
+  const [classes, setClasses] = useState<ClassGroupDTO[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [classesError, setClassesError] = useState<string | null>(null);
+  const [selectedClassGroupId, setSelectedClassGroupId] = useState<string>('');
   const [selectedSubject, setSelectedSubject] = useState<string>('Matemática');
   const [plannedDurationMinutes, setPlannedDurationMinutes] =
     useState<number>(50);
 
+  useEffect(() => {
+    if (!open || typeof api.listClasses !== 'function') {
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingClasses(true);
+    setClassesError(null);
+
+    api
+      .listClasses(token, { onlyActive: true })
+      .then((res) => {
+        if (cancelled) return;
+        const activeClasses = res.classes ?? [];
+        setClasses(activeClasses);
+        setSelectedClassGroupId((prev) => {
+          if (prev && activeClasses.some((item) => item.id === prev)) {
+            return prev;
+          }
+          return activeClasses[0]?.id ?? '';
+        });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setClasses([]);
+        setSelectedClassGroupId('');
+        setClassesError(
+          err instanceof Error
+            ? err.message
+            : 'Erro ao carregar turmas ativas.',
+        );
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingClasses(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, token]);
+
+  const selectedClassGroup = classes.find(
+    (item) => item.id === selectedClassGroupId,
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedClassGroup) {
+      return;
+    }
     await onStartSession({
-      classCode: selectedClassCode,
+      classGroupId: selectedClassGroup.id,
+      classCode: selectedClassGroup.code,
       subject: selectedSubject,
       plannedDurationMinutes,
     });
@@ -91,20 +149,35 @@ export function StartSessionModal({
               Turma
             </Label>
             <Select
-              value={selectedClassCode}
-              onValueChange={setSelectedClassCode}
+              value={selectedClassGroupId}
+              onValueChange={setSelectedClassGroupId}
+              disabled={loadingClasses || classes.length === 0}
             >
               <SelectTrigger id="session-class-select">
-                <SelectValue placeholder="Selecione a turma" />
+                <SelectValue
+                  placeholder={
+                    loadingClasses
+                      ? 'Carregando turmas ativas...'
+                      : classes.length === 0
+                        ? 'Nenhuma turma ativa disponível'
+                        : 'Selecione a turma'
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                {CLASS_OPTIONS.map((cls) => (
-                  <SelectItem key={cls} value={cls}>
-                    {cls}
+                {classes.map((cls) => (
+                  <SelectItem key={cls.id} value={cls.id}>
+                    {cls.code} — {cls.name} ({cls.academicYear})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {!loadingClasses && !classesError && classes.length === 0 && (
+              <p className="text-xs text-amber-700">
+                Nenhuma turma ativa cadastrada. Solicite à Coordenação a
+                ativação ou cadastro de turmas.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col space-y-1.5">
@@ -154,10 +227,13 @@ export function StartSessionModal({
             </Select>
           </div>
 
-          {error && (
-            <p role="alert" className="text-sm text-red-600">
-              {error}
-            </p>
+          {(classesError || error) && (
+            <div
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              {classesError || error}
+            </div>
           )}
 
           <DialogFooter>
@@ -169,7 +245,10 @@ export function StartSessionModal({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading || loadingClasses || !selectedClassGroup}
+            >
               Iniciar Sessão de Aula
             </Button>
           </DialogFooter>

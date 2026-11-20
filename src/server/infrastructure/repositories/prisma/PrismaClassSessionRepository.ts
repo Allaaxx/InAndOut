@@ -24,6 +24,7 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
       teacherId: session.teacherId,
       teacherName: session.teacherName,
       roomId: session.roomId,
+      classGroupId: session.classGroupId ?? null,
       classCode: session.classCode,
       subject: session.subject,
       status: session.status,
@@ -81,6 +82,19 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
     return row ? this.toDomain(row) : null;
   }
 
+  public async findActiveByClassGroupId(
+    classGroupId: string,
+  ): Promise<ClassSession | null> {
+    const row = await this.prisma.classSession.findFirst({
+      where: {
+        classGroupId,
+        status: SessionStatus.ACTIVE,
+      },
+      orderBy: { startedAt: 'desc' },
+    });
+    return row ? this.toDomain(row) : null;
+  }
+
   public async findAllActive(): Promise<ClassSession[]> {
     const rows = await this.prisma.classSession.findMany({
       where: { status: SessionStatus.ACTIVE },
@@ -102,6 +116,7 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
       teacherId: row.teacherId,
       teacherName: row.teacherName ?? undefined,
       roomId: row.roomId ?? undefined,
+      classGroupId: row.classGroupId ?? undefined,
       classCode: row.classCode,
       subject: row.subject,
       status: row.status as SessionStatus,
