@@ -135,6 +135,30 @@ export function useClassSession({
     }
   };
 
+  const applyRemoteSessionStarted = useCallback(
+    (session: ClassSessionDTO) => {
+      setError(null);
+      setLastEndedSummary(null);
+      setActiveSession(session);
+      setActiveMovements([]);
+      setQueue([]);
+      setElapsedSeconds(computeElapsedSeconds(session.startedAt));
+    },
+    [computeElapsedSeconds],
+  );
+
+  const applyRemoteSessionEnded = useCallback(
+    (summary: EndSessionResponseDTO) => {
+      setError(null);
+      setActiveSession(null);
+      setActiveMovements([]);
+      setQueue([]);
+      setElapsedSeconds(0);
+      setLastEndedSummary(summary);
+    },
+    [],
+  );
+
   return {
     activeSession,
     activeMovements,
@@ -149,5 +173,7 @@ export function useClassSession({
     startSession,
     endSession,
     refreshActiveSession,
+    applyRemoteSessionStarted,
+    applyRemoteSessionEnded,
   };
 }

@@ -14,12 +14,14 @@ import { useSocket } from '@client/hooks/useSocket';
 import { api } from '@client/services/api';
 import { normalizeRoomCode, saveRoomCode } from '@client/services/roomStorage';
 import type {
+  EndSessionResponseDTO,
   MovementDTO,
   RoomDTO,
+  StartSessionResponseDTO,
   UserDTO,
   WaitingQueueDTO,
 } from '@shared/dtos';
-import { QueueEntryStatus } from '@shared/enums';
+import { QueueEntryStatus, SessionStatus } from '@shared/enums';
 import { useCallback, useState } from 'react';
 
 const IDLE_NO_SESSION_FEEDBACK =
@@ -72,6 +74,8 @@ export function TerminalPage({
     lastEndedSummary,
     startSession,
     endSession,
+    applyRemoteSessionStarted,
+    applyRemoteSessionEnded,
   } = useClassSession({ token, roomId: normalizedRoomId });
 
   const handleMovementStarted = useCallback(
@@ -137,16 +141,66 @@ export function TerminalPage({
     [setQueue],
   );
 
+  const clearTransientTerminalFeedback = useCallback(() => {
+    setMovementError(null);
+    setQueueFeedback(null);
+    setReturnConfirmationMessage(null);
+    setLastReturnedMovement(null);
+    setIdleRaFeedback(null);
+  }, []);
+
+  const handleSessionStarted = useCallback(
+    (payload: StartSessionResponseDTO) => {
+      if (!payload?.session?.roomId) return;
+      if (normalizeRoomCode(payload.session.roomId) !== normalizedRoomId) {
+        return;
+      }
+      clearTransientTerminalFeedback();
+      setChangeRoomOpen(false);
+      setStartSessionOpen(false);
+      applyRemoteSessionStarted(payload.session);
+    },
+    [
+      normalizedRoomId,
+      clearTransientTerminalFeedback,
+      applyRemoteSessionStarted,
+    ],
+  );
+
+  const handleSessionEnded = useCallback(
+    (payload: EndSessionResponseDTO) => {
+      if (!payload?.session?.roomId) return;
+      if (normalizeRoomCode(payload.session.roomId) !== normalizedRoomId) {
+        return;
+      }
+      clearTransientTerminalFeedback();
+      applyRemoteSessionEnded(payload);
+    },
+    [normalizedRoomId, clearTransientTerminalFeedback, applyRemoteSessionEnded],
+  );
+
   useSocket({
+    roomCode: normalizedRoomId,
     sessionId: activeSession?.id ?? null,
-    enabled: Boolean(activeSession),
+    enabled: Boolean(normalizedRoomId),
     onMovementExit: handleMovementStarted,
     onMovementReturn: handleMovementReturn,
     onQueueUpdated: handleQueueUpdated,
     onQueueSlotCalled: handleQueueSlotCalled,
     onMovementOverdue: handleMovementUpdated,
     onMovementEscalated: handleMovementUpdated,
+    onSessionStarted: handleSessionStarted,
+    onSessionEnded: handleSessionEnded,
   });
+
+  const handleEndSession = useCallback(async () => {
+    const response = await endSession();
+    if (response) {
+      clearTransientTerminalFeedback();
+      setChangeRoomOpen(false);
+    }
+    return response;
+  }, [endSession, clearTransientTerminalFeedback]);
 
   const handleUnlock = async (pin: string) => {
     await onVerifyPin(pin);
@@ -180,7 +234,15 @@ export function TerminalPage({
     setIdleRaFeedback(IDLE_NO_SESSION_FEEDBACK);
   };
 
+  const isSessionActive = activeSession?.status === SessionStatus.ACTIVE;
+
+  const handleOpenChangeRoom = () => {
+    if (isSessionActive) return;
+    setChangeRoomOpen(true);
+  };
+
   const handleSelectNewRoom = (room: RoomDTO) => {
+    if (isSessionActive) return;
     const nextCode = normalizeRoomCode(room.code);
     saveRoomCode(nextCode);
     setChangeRoomOpen(false);
@@ -388,7 +450,8 @@ export function TerminalPage({
           isOccupied={isOccupied}
           isLocked={isLocked}
           onLock={() => setIsLocked(true)}
-          onEndSession={endSession}
+          onChangeRoom={handleOpenChangeRoom}
+          onEndSession={handleEndSession}
           onLogout={onLogout}
         />
 
@@ -407,6 +470,13 @@ export function TerminalPage({
                 saída(s) registrada(s) • Duração:{' '}
                 {lastEndedSummary.metrics.elapsedMinutes} min.
               </p>
+              {lastEndedSummary.metrics.inTransitUnresolvedCount > 0 && (
+                <p className="mt-1 font-medium text-amber-800">
+                  {lastEndedSummary.metrics.inTransitUnresolvedCount} saída(s)
+                  em trânsito encaminhada(s) à Coordenação
+                  (IN_TRANSIT_UNRESOLVED).
+                </p>
+              )}
             </div>
           )}
 
@@ -416,7 +486,7 @@ export function TerminalPage({
                 session={activeSession}
                 elapsedFormatted={elapsedFormatted}
                 loading={loading}
-                onEndSession={endSession}
+                onEndSession={handleEndSession}
               />
 
               <div className="grid gap-6 md:grid-cols-2">
@@ -462,7 +532,7 @@ export function TerminalPage({
               <TerminalIdleState
                 roomId={normalizedRoomId}
                 onStartSessionClick={() => setStartSessionOpen(true)}
-                onChangeRoomClick={() => setChangeRoomOpen(true)}
+                onChangeRoomClick={handleOpenChangeRoom}
               />
 
               <KeypadForm
@@ -488,7 +558,7 @@ export function TerminalPage({
       />
 
       <RoomSelectionModal
-        open={changeRoomOpen}
+        open={changeRoomOpen && !isSessionActive}
         onOpenChange={setChangeRoomOpen}
         token={token}
         currentRoomCode={normalizedRoomId}

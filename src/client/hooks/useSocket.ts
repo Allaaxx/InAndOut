@@ -16,6 +16,7 @@ const SOCKET_URL =
 
 export interface UseSocketOptions {
   sessionId?: string | null;
+  roomCode?: string | null;
   room?: string;
   isCoordination?: boolean;
   enabled?: boolean;
@@ -44,6 +45,7 @@ export interface UseSocketOptions {
 
 export function useSocket({
   sessionId,
+  roomCode,
   room,
   isCoordination = false,
   enabled = true,
@@ -108,15 +110,19 @@ export function useSocket({
   ]);
 
   useEffect(() => {
+    const normalizedRoomCode = roomCode?.trim()
+      ? roomCode.trim().toUpperCase()
+      : null;
+
     const targetRoom =
       room ??
       (isCoordination
         ? SOCKET_ROOMS.COORDINATION
-        : sessionId
+        : !normalizedRoomCode && sessionId
           ? SOCKET_ROOMS.sessionRoom(sessionId)
           : null);
 
-    if (!enabled || !targetRoom) {
+    if (!enabled || (!targetRoom && !normalizedRoomCode)) {
       return;
     }
 
@@ -204,7 +210,12 @@ export function useSocket({
     };
 
     const joinRooms = () => {
-      socket?.emit(SOCKET_EVENTS.JOIN_ROOM, targetRoom);
+      if (normalizedRoomCode) {
+        socket?.emit(SOCKET_EVENTS.JOIN_ROOM, { roomCode: normalizedRoomCode });
+      }
+      if (targetRoom) {
+        socket?.emit(SOCKET_EVENTS.JOIN_ROOM, targetRoom);
+      }
       if (isCoordination) {
         socket?.emit(SOCKET_EVENTS.JOIN_COORDINATION);
       } else if (sessionId) {
@@ -240,6 +251,11 @@ export function useSocket({
       if (targetRoom) {
         socket?.emit(SOCKET_EVENTS.LEAVE_ROOM, targetRoom);
       }
+      if (normalizedRoomCode) {
+        socket?.emit(SOCKET_EVENTS.LEAVE_ROOM, {
+          roomCode: normalizedRoomCode,
+        });
+      }
 
       socket?.off('connect', joinRooms);
       socket?.off(SOCKET_EVENTS.MOVEMENT_EXIT, handleStarted);
@@ -259,5 +275,5 @@ export function useSocket({
       socket?.off(SOCKET_EVENTS.SESSION_ENDED, handleSessionEnded);
       socket?.disconnect();
     };
-  }, [enabled, sessionId, room, isCoordination, url, autoConnect]);
+  }, [enabled, sessionId, roomCode, room, isCoordination, url, autoConnect]);
 }
