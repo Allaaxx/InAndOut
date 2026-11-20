@@ -321,6 +321,121 @@ describe('Server Seam: Socket.io Real-Time Rooms & NotificationSender Coupling',
     expect(returnB.id).toBe('mov-100');
   });
 
+  it('isolates session lifecycle events (session:started / session:ended) to physical room channels room:<roomCode> and coordination', async () => {
+    // Login teacher
+    const loginRes = await appInstance.app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: {
+        email: 'prof@linsdorego.edu.br',
+        password: 'senha123',
+      },
+    });
+    expect(loginRes.statusCode).toBe(200);
+    const { token } = loginRes.json() as { token: string };
+
+    // Client A joins physical room SALA-01 using roomCode payload
+    const clientA = createTestClient();
+    await waitForConnect(clientA);
+    const joinARes = await new Promise<Record<string, unknown>>((resolve) => {
+      clientA.emit(SOCKET_EVENTS.JOIN_ROOM, { roomCode: 'sala-01' }, resolve);
+    });
+    expect(joinARes).toEqual({ ok: true, room: 'room:SALA-01' });
+
+    const serverSocketA = appInstance.io.sockets.sockets.get(clientA.id ?? '');
+    expect(serverSocketA?.rooms.has('room:SALA-01')).toBe(true);
+
+    // Client B joins physical room SALA-02
+    const clientB = createTestClient();
+    await waitForConnect(clientB);
+    await new Promise<Record<string, unknown>>((resolve) => {
+      clientB.emit(SOCKET_EVENTS.JOIN_ROOM, 'room:SALA-02', resolve);
+    });
+
+    // Client C joins coordination
+    const clientC = createTestClient();
+    await waitForConnect(clientC);
+    await new Promise<Record<string, unknown>>((resolve) => {
+      clientC.emit(SOCKET_EVENTS.JOIN_COORDINATION, {}, resolve);
+    });
+
+    // 1. Start session in SALA-01 -> emits session:started to room:SALA-01 and coordination, NOT room:SALA-02
+    const startedPromises = Promise.all([
+      new Promise<{
+        session: { id: string; roomId: string; classCode: string };
+      }>((resolve) => clientA.once('session:started', resolve)),
+      new Promise<{
+        session: { id: string; roomId: string; classCode: string };
+      }>((resolve) => clientC.once('session:started', resolve)),
+    ]);
+
+    let clientBReceivedStarted = false;
+    clientB.once('session:started', () => {
+      clientBReceivedStarted = true;
+    });
+
+    const startRes = await appInstance.app.inject({
+      method: 'POST',
+      url: '/sessions/start',
+      headers: { authorization: `Bearer ${token}` },
+      payload: {
+        classCode: '1A',
+        subject: 'Matemática',
+        roomId: 'SALA-01',
+      },
+    });
+    expect(startRes.statusCode).toBe(201);
+    const startedSessionId = startRes.json().session.id as string;
+
+    const [startedA, startedC] = await startedPromises;
+    expect(startedA.session).toMatchObject({
+      id: startedSessionId,
+      roomId: 'SALA-01',
+      classCode: '1A',
+    });
+    expect(startedC.session.id).toBe(startedSessionId);
+    expect(clientBReceivedStarted).toBe(false);
+
+    // 2. End session in SALA-01 -> emits session:ended to room:SALA-01 and coordination, NOT room:SALA-02
+    const endedPromises = Promise.all([
+      new Promise<{ session: { id: string; roomId: string; status: string } }>(
+        (resolve) => clientA.once('session:ended', resolve),
+      ),
+      new Promise<{ session: { id: string; roomId: string; status: string } }>(
+        (resolve) => clientC.once('session:ended', resolve),
+      ),
+    ]);
+
+    let clientBReceivedEnded = false;
+    clientB.once('session:ended', () => {
+      clientBReceivedEnded = true;
+    });
+
+    const endRes = await appInstance.app.inject({
+      method: 'POST',
+      url: '/sessions/end',
+      headers: { authorization: `Bearer ${token}` },
+      payload: { sessionId: startedSessionId },
+    });
+    expect(endRes.statusCode).toBe(200);
+
+    const [endedA, endedC] = await endedPromises;
+    expect(endedA.session).toMatchObject({
+      id: startedSessionId,
+      roomId: 'SALA-01',
+      status: 'ENDED',
+    });
+    expect(endedC.session.id).toBe(startedSessionId);
+    expect(clientBReceivedEnded).toBe(false);
+
+    // 3. Leave room using roomCode payload
+    const leaveARes = await new Promise<Record<string, unknown>>((resolve) => {
+      clientA.emit(SOCKET_EVENTS.LEAVE_ROOM, { roomCode: 'sala-01' }, resolve);
+    });
+    expect(leaveARes).toEqual({ ok: true, room: 'room:SALA-01' });
+    expect(serverSocketA?.rooms.has('room:SALA-01')).toBe(false);
+  });
+
   it('shuts down SocketIOServer gracefully when app closes', async () => {
     const client = createTestClient();
     await waitForConnect(client);

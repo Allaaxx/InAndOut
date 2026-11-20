@@ -203,7 +203,7 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
 
     for (let i = 0; i < testCases.length; i++) {
       const { ra, outcome, notes } = testCases[i];
-      const roomId = `SALA-${i + 1}`;
+      const roomId = 'SALA-01';
 
       // Start session
       const startRes = await app.inject({
@@ -216,6 +216,7 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
           roomId,
         },
       });
+      expect(startRes.statusCode).toBe(201);
       const sessionId = startRes.json().session.id;
 
       // Student exit (use emergency or guest if 2001)
@@ -288,6 +289,15 @@ describe('Controller Seam: Movement Resolution & Saída em Trânsito (app.inject
           outcome,
         }),
       );
+
+      // End session before starting the next test case (strict room & teacher concurrency)
+      const endRes = await app.inject({
+        method: 'POST',
+        url: '/sessions/end',
+        headers: { authorization: `Bearer ${teacherToken}` },
+        payload: { sessionId },
+      });
+      expect(endRes.statusCode).toBe(200);
     }
 
     await app.close();

@@ -1,3 +1,4 @@
+import { normalizeRoomCode } from '@server/domain/entities/Room';
 import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 import type { IWaitingQueueRepository } from '@server/domain/repositories/IWaitingQueueRepository';
@@ -30,7 +31,9 @@ export class GetActiveSessionUseCase {
   public async execute(
     input: GetActiveSessionInput = {},
   ): Promise<ActiveSessionResponseDTO> {
-    const roomId = (input.roomId ?? 'SALA-01').trim() || 'SALA-01';
+    const roomId = normalizeRoomCode(
+      (input.roomId ?? 'SALA-01').trim() || 'SALA-01',
+    );
     const activeSession = await this.sessionRepo.findActiveByRoomId(roomId);
 
     if (!activeSession) {
