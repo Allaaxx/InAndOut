@@ -15,8 +15,12 @@ import {
 } from '@client/components/ui/DropdownMenu';
 import { cn } from '@client/components/ui/utils';
 import type { ClassSessionDTO, UserDTO } from '@shared/dtos';
-import { Lock, PowerOff, RefreshCwIcon } from 'lucide-react';
+import { SessionStatus } from '@shared/enums';
+import { ArrowLeftRight, Lock, PowerOff, RefreshCwIcon } from 'lucide-react';
 import { useState } from 'react';
+
+const ROOM_SWITCH_LOCKED_TOOLTIP =
+  'Encerre a sessão de aula atual antes de trocar de sala.';
 
 export interface TerminalNavbarProps {
   user: UserDTO;
@@ -25,6 +29,7 @@ export interface TerminalNavbarProps {
   isOccupied?: boolean;
   isLocked?: boolean;
   onLock: () => void;
+  onChangeRoom?: () => void;
   onEndSession?: () => unknown;
   onLogout: () => void;
   className?: string;
@@ -37,6 +42,7 @@ export function TerminalNavbar({
   isOccupied = false,
   isLocked = false,
   onLock,
+  onChangeRoom,
   onEndSession,
   onLogout,
   className,
@@ -51,6 +57,7 @@ export function TerminalNavbar({
   };
 
   const displayRoomId = activeSession?.roomId || roomId;
+  const isSessionActive = activeSession?.status === SessionStatus.ACTIVE;
 
   return (
     <>
@@ -112,6 +119,21 @@ export function TerminalNavbar({
 
           {/* Status Badge & Teacher User Dropdown */}
           <div className="flex items-center gap-3 shrink-0">
+            {isSessionActive && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled
+                title={ROOM_SWITCH_LOCKED_TOOLTIP}
+                data-testid="navbar-change-room-button"
+                className="text-xs text-slate-500"
+              >
+                <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" />
+                Trocar de Sala
+              </Button>
+            )}
+
             <Badge
               variant={isOccupied ? 'warning' : 'success'}
               data-testid="concurrency-badge"
@@ -133,6 +155,23 @@ export function TerminalNavbar({
                   <Lock className="h-4 w-4 shrink-0 text-slate-500" />
                   <span>Bloquear Terminal</span>
                 </DropdownMenuItem>
+
+                {onChangeRoom && (
+                  <DropdownMenuItem
+                    onSelect={() => {
+                      if (!isSessionActive) {
+                        onChangeRoom();
+                      }
+                    }}
+                    disabled={isSessionActive}
+                    title={
+                      isSessionActive ? ROOM_SWITCH_LOCKED_TOOLTIP : undefined
+                    }
+                  >
+                    <ArrowLeftRight className="h-4 w-4 shrink-0 text-slate-500" />
+                    <span>Trocar de Sala</span>
+                  </DropdownMenuItem>
+                )}
 
                 {activeSession && onEndSession && (
                   <DropdownMenuItem

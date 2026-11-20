@@ -232,6 +232,71 @@ describe('Kiosk Terminal: Minimalist Navbar & Footer Components (Ticket #37)', (
 
       expect(handleEndSession).toHaveBeenCalledTimes(1);
     });
+
+    it('disables "Trocar de Sala" in the navbar and discreet menu while a session is ACTIVE', async () => {
+      const user = userEvent.setup();
+      const handleChangeRoom = vi.fn();
+
+      render(
+        <TerminalNavbar
+          user={teacherUser}
+          roomId="SALA-01"
+          activeSession={activeSessionDTO}
+          isOccupied={false}
+          isLocked={false}
+          onLock={vi.fn()}
+          onChangeRoom={handleChangeRoom}
+          onLogout={vi.fn()}
+        />,
+      );
+
+      const headerChangeRoomBtn = screen.getByRole('button', {
+        name: /Trocar de Sala/i,
+      });
+      expect(headerChangeRoomBtn).toBeDisabled();
+      expect(headerChangeRoomBtn).toHaveAttribute(
+        'title',
+        expect.stringMatching(/encerre/i),
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: /Ações do Professor/i }),
+      );
+      const menuItem = await screen.findByRole('menuitem', {
+        name: /Trocar de Sala/i,
+      });
+      expect(menuItem).toHaveAttribute('aria-disabled', 'true');
+      expect(handleChangeRoom).not.toHaveBeenCalled();
+    });
+
+    it('enables "Trocar de Sala" in the discreet menu when no session is active', async () => {
+      const user = userEvent.setup();
+      const handleChangeRoom = vi.fn();
+
+      render(
+        <TerminalNavbar
+          user={teacherUser}
+          roomId="SALA-01"
+          activeSession={null}
+          isOccupied={false}
+          isLocked={false}
+          onLock={vi.fn()}
+          onChangeRoom={handleChangeRoom}
+          onLogout={vi.fn()}
+        />,
+      );
+
+      await user.click(
+        screen.getByRole('button', { name: /Ações do Professor/i }),
+      );
+      const menuItem = await screen.findByRole('menuitem', {
+        name: /Trocar de Sala/i,
+      });
+      expect(menuItem).not.toHaveAttribute('aria-disabled', 'true');
+      await user.click(menuItem);
+
+      expect(handleChangeRoom).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('TerminalFooter Unit Behavior', () => {
