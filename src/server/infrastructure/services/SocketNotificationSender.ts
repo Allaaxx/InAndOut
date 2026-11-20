@@ -110,4 +110,17 @@ export class SocketNotificationSender implements INotificationSender {
       .to(SOCKET_ROOMS.COORDINATION_ROOM)
       .emit(SOCKET_EVENTS.MOVEMENT_RESOLVED, movement);
   }
+
+  public async emitToRoom(
+    roomCode: string,
+    event: string,
+    payload: unknown,
+  ): Promise<void> {
+    if (!this.io) return;
+    this.io
+      .to(SOCKET_ROOMS.room(roomCode))
+      .to(SOCKET_ROOMS.COORDINATION)
+      .to(SOCKET_ROOMS.COORDINATION_ROOM)
+      .emit(event, payload);
+  }
 }

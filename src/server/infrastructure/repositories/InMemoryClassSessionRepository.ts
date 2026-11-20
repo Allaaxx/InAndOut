@@ -1,4 +1,5 @@
 import type { ClassSession } from '@server/domain/entities/ClassSession';
+import { normalizeRoomCode } from '@server/domain/entities/Room';
 import type { IClassSessionRepository } from '@server/domain/repositories/IClassSessionRepository';
 import { SessionStatus } from '@shared/enums';
 
@@ -24,7 +25,7 @@ export class InMemoryClassSessionRepository implements IClassSessionRepository {
   public async findActiveByRoomId(
     roomId: string,
   ): Promise<ClassSession | null> {
-    const normalizedRoom = roomId.trim() || 'SALA-01';
+    const normalizedRoom = normalizeRoomCode(roomId.trim() || 'SALA-01');
     for (const session of this.sessions.values()) {
       if (
         session.roomId === normalizedRoom &&

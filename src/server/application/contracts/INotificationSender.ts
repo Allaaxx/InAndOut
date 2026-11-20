@@ -17,4 +17,5 @@ export interface INotificationSender {
   notifyMovementEscalated(movement: MovementDTO): Promise<void>;
   notifyMovementInTransitUnresolved(movement: MovementDTO): Promise<void>;
   notifyMovementResolved(movement: MovementDTO): Promise<void>;
+  emitToRoom?(roomCode: string, event: string, payload: unknown): Promise<void>;
 }
