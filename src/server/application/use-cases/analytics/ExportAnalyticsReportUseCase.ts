@@ -3,7 +3,18 @@ import type { MovementRecord } from '@server/domain/entities/MovementRecord';
 import type { IMovementRecordRepository } from '@server/domain/repositories/IMovementRecordRepository';
 import type { IStudentRepository } from '@server/domain/repositories/IStudentRepository';
 import type { ExportAnalyticsQueryDTO } from '@shared/dtos';
-import { MovementStatus } from '@shared/enums';
+import {
+  getIncidentOutcomeLabel,
+  getMovementStatusLabel,
+  MovementStatus,
+} from '@shared/enums';
+import {
+  formatDateIsoInAppTimezone,
+  formatEmissionTimestampInAppTimezone,
+  formatTimeInAppTimezone,
+  getEndOfDayInAppTimezone,
+  getStartOfDayInAppTimezone,
+} from '@shared/timezone';
 import ExcelJS from 'exceljs';
 import React from 'react';
 import {
@@ -63,12 +74,13 @@ function escapeCsvCell(value: unknown): string {
 }
 
 function mapMovementToRowData(movement: MovementRecord): ReportRowData {
-  const exitDate = movement.startedAt.toISOString().slice(0, 10);
-  const exitTime = movement.startedAt.toISOString().slice(11, 16);
+  const exitDate = formatDateIsoInAppTimezone(movement.startedAt);
+  const exitTime = formatTimeInAppTimezone(movement.startedAt);
   const returnTime = movement.endedAt
-    ? movement.endedAt.toISOString().slice(11, 16)
+    ? formatTimeInAppTimezone(movement.endedAt)
     : '-';
-  const outcome = movement.outcome ?? '-';
+  const status = getMovementStatusLabel(movement.status);
+  const outcome = getIncidentOutcomeLabel(movement.outcome);
 
   return {
     id: movement.id,
@@ -81,7 +93,7 @@ function mapMovementToRowData(movement: MovementRecord): ReportRowData {
     subject: movement.subject,
     durationMinutes: movement.durationMinutes,
     allowedLimitMinutes: movement.allowedLimitMinutes,
-    status: movement.status,
+    status,
     outcome,
     attendancePercentage: movement.attendancePercentage,
   };
@@ -403,7 +415,7 @@ export class ExportAnalyticsReportUseCase {
     }
 
     const now = this.clock();
-    const dateStamp = now.toISOString().slice(0, 10);
+    const dateStamp = formatDateIsoInAppTimezone(now);
 
     let movements = query.ra
       ? await this.movementRepo.findByStudentRa(query.ra)
@@ -417,18 +429,14 @@ export class ExportAnalyticsReportUseCase {
       }
 
       if (query.startDate) {
-        const start = new Date(query.startDate);
+        const start = getStartOfDayInAppTimezone(query.startDate);
         if (movement.startedAt.getTime() < start.getTime()) {
           return false;
         }
       }
 
       if (query.endDate) {
-        const endDateStr =
-          query.endDate.length === 10
-            ? `${query.endDate}T23:59:59.999Z`
-            : query.endDate;
-        const end = new Date(endDateStr);
+        const end = getEndOfDayInAppTimezone(query.endDate);
         if (movement.startedAt.getTime() > end.getTime()) {
           return false;
         }
@@ -449,7 +457,7 @@ export class ExportAnalyticsReportUseCase {
         ? `Relatório de Movimentações — Turma ${query.classCode}`
         : 'Relatório Geral de Movimentações';
 
-    const emissionDate = `${now.toISOString().replace('T', ' ').slice(0, 19)} UTC`;
+    const emissionDate = formatEmissionTimestampInAppTimezone(now);
 
     const filterParts: string[] = [];
     if (query.ra) {

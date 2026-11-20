@@ -9,6 +9,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@client/components/ui/AlertDialog';
+import { Checkbox } from '@client/components/ui/Checkbox';
+import {
+  DatePicker,
+  DatePickerWithRange,
+} from '@client/components/ui/DatePicker';
 import {
   Dialog,
   DialogClose,
@@ -25,6 +30,16 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from '@client/components/ui/InputOTP';
+import { Label } from '@client/components/ui/Label';
+import { ScrollArea } from '@client/components/ui/ScrollArea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@client/components/ui/Select';
+import { Separator } from '@client/components/ui/Separator';
 import {
   Sheet,
   SheetClose,
@@ -35,6 +50,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@client/components/ui/Sheet';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@client/components/ui/Table';
+import { Textarea } from '@client/components/ui/Textarea';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -61,6 +87,27 @@ function ControlledOTP({ mask = true }: { mask?: boolean }) {
         </InputOTPGroup>
       </InputOTP>
       <span data-testid="otp-val">{value}</span>
+    </div>
+  );
+}
+
+function ControlledDatePicker({
+  onChange,
+}: {
+  onChange: (date: Date | undefined) => void;
+}) {
+  const [date, setDate] = useState<Date | undefined>(new Date(2026, 10, 10));
+  return (
+    <div>
+      <Label htmlFor="ref-date">Data de Referência</Label>
+      <DatePicker
+        id="ref-date"
+        value={date}
+        onChange={(next) => {
+          setDate(next);
+          onChange(next);
+        }}
+      />
     </div>
   );
 }
@@ -288,6 +335,215 @@ describe('UI Primitives: Radix Dialog, AlertDialog & input-otp', () => {
       expect(closeButton).toBeInTheDocument();
       await user.click(closeButton);
       expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+  });
+
+  describe('Select (Radix Select)', () => {
+    it('renders select with options and handles selection changes', async () => {
+      const user = userEvent.setup();
+      const handleChange = vi.fn();
+
+      render(
+        <div>
+          <Label htmlFor="turma-select">Turma</Label>
+          <Select defaultValue="1A" onValueChange={handleChange}>
+            <SelectTrigger id="turma-select" data-testid="turma-select">
+              <SelectValue placeholder="Selecione a turma" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1A">Turma 1A</SelectItem>
+              <SelectItem value="2B">Turma 2B</SelectItem>
+              <SelectItem value="3C">Turma 3C</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>,
+      );
+
+      const trigger = screen.getByLabelText('Turma');
+      expect(trigger).toBeInTheDocument();
+      expect(trigger).toHaveTextContent('Turma 1A');
+
+      await user.click(trigger);
+      await user.click(await screen.findByRole('option', { name: 'Turma 2B' }));
+
+      expect(trigger).toHaveTextContent('Turma 2B');
+      expect(handleChange).toHaveBeenCalledWith('2B');
+    });
+
+    it('supports disabled state and custom classNames', () => {
+      render(
+        <Select disabled>
+          <SelectTrigger
+            className="border-red-500"
+            data-testid="disabled-select"
+          >
+            <SelectValue placeholder="Opção" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="opt">Opção</SelectItem>
+          </SelectContent>
+        </Select>,
+      );
+
+      const trigger = screen.getByTestId('disabled-select');
+      expect(trigger).toBeDisabled();
+      expect(trigger.className).toContain('border-red-500');
+    });
+  });
+
+  describe('Textarea', () => {
+    it('renders textarea, applies styles, and accepts user typing', async () => {
+      const user = userEvent.setup();
+      const handleChange = vi.fn();
+
+      render(
+        <div>
+          <Label htmlFor="obs">Observações</Label>
+          <Textarea
+            id="obs"
+            placeholder="Digite suas observações..."
+            onChange={handleChange}
+          />
+        </div>,
+      );
+
+      const textarea = screen.getByLabelText('Observações');
+      expect(textarea).toBeInTheDocument();
+      expect(textarea).toHaveAttribute(
+        'placeholder',
+        'Digite suas observações...',
+      );
+
+      await user.type(textarea, 'Aluno liberado para enfermaria.');
+      expect(textarea).toHaveValue('Aluno liberado para enfermaria.');
+      expect(handleChange).toHaveBeenCalled();
+    });
+  });
+
+  describe('Table', () => {
+    it('renders table structure with header, body, rows, cells, and caption', () => {
+      render(
+        <Table data-testid="custom-table">
+          <TableCaption>Lista de Turmas</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Turma</TableHead>
+              <TableHead>Alunos</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow>
+              <TableCell>1A</TableCell>
+              <TableCell>32</TableCell>
+            </TableRow>
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell>Total</TableCell>
+              <TableCell>32</TableCell>
+            </TableRow>
+          </TableFooter>
+        </Table>,
+      );
+
+      expect(screen.getByTestId('custom-table')).toBeInTheDocument();
+      expect(screen.getByText('Lista de Turmas')).toBeInTheDocument();
+      expect(screen.getByText('Turma')).toBeInTheDocument();
+      expect(screen.getByText('1A')).toBeInTheDocument();
+      expect(screen.getByText('Total')).toBeInTheDocument();
+    });
+  });
+
+  describe('Checkbox & Separator', () => {
+    it('renders checkbox and updates checked state on click', async () => {
+      const user = userEvent.setup();
+      const handleChange = vi.fn();
+
+      render(
+        <div>
+          <Checkbox
+            id="accept-terms"
+            aria-label="Aceitar termos"
+            onChange={handleChange}
+          />
+          <Label htmlFor="accept-terms">Termos</Label>
+        </div>,
+      );
+
+      const checkbox = screen.getByRole('checkbox', { name: 'Aceitar termos' });
+      expect(checkbox).not.toBeChecked();
+
+      await user.click(checkbox);
+      expect(checkbox).toBeChecked();
+      expect(handleChange).toHaveBeenCalled();
+    });
+
+    it('renders separator with horizontal and vertical orientations', () => {
+      render(
+        <div>
+          <Separator data-testid="sep-h" />
+          <Separator orientation="vertical" data-testid="sep-v" />
+        </div>,
+      );
+
+      const sepH = screen.getByTestId('sep-h');
+      const sepV = screen.getByTestId('sep-v');
+
+      expect(sepH).toBeInTheDocument();
+      expect(sepH.className).toContain('h-[1px] w-full');
+      expect(sepV.className).toContain('h-full w-[1px]');
+    });
+  });
+
+  describe('DatePicker (Popover + Calendar)', () => {
+    it('opens calendar popover, allows selecting a date, and formats in pt-BR', async () => {
+      const user = userEvent.setup();
+      const handleChange = vi.fn();
+
+      render(<ControlledDatePicker onChange={handleChange} />);
+
+      const trigger = screen.getByLabelText('Data de Referência');
+      expect(trigger).toHaveTextContent('10/11/2026');
+
+      await user.click(trigger);
+
+      const day15 = await screen.findByRole('button', { name: /15/ });
+      await user.click(day15);
+
+      expect(handleChange).toHaveBeenCalledTimes(1);
+      expect(trigger).toHaveTextContent('15/11/2026');
+    });
+
+    it('shows placeholder when no date is selected', () => {
+      render(<DatePicker placeholder="Escolha uma data" />);
+      expect(screen.getByText('Escolha uma data')).toBeInTheDocument();
+    });
+
+    it('renders DatePickerWithRange with formatted range in pt-BR', () => {
+      render(
+        <DatePickerWithRange
+          value={{
+            from: new Date(2026, 10, 10),
+            to: new Date(2026, 10, 20),
+          }}
+        />,
+      );
+      expect(screen.getByText('10/11/2026 - 20/11/2026')).toBeInTheDocument();
+    });
+  });
+
+  describe('ScrollArea (Radix ScrollArea)', () => {
+    it('renders scrollable viewport with children and custom className', () => {
+      render(
+        <ScrollArea className="h-40" data-testid="custom-scroll-area">
+          <div>Conteúdo rolável</div>
+        </ScrollArea>,
+      );
+
+      const scrollArea = screen.getByTestId('custom-scroll-area');
+      expect(scrollArea).toBeInTheDocument();
+      expect(scrollArea.className).toContain('h-40');
+      expect(screen.getByText('Conteúdo rolável')).toBeInTheDocument();
     });
   });
 });

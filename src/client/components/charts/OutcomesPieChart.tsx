@@ -36,7 +36,7 @@ export function OutcomesPieChart({ data }: OutcomesPieChartProps) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col md:flex-row items-center gap-6">
+        <div className="flex flex-col lg:flex-row items-center gap-6">
           <div className="h-60 w-full md:w-1/2">
             {totalCount > 0 ? (
               <ResponsiveContainer
@@ -91,7 +91,7 @@ export function OutcomesPieChart({ data }: OutcomesPieChartProps) {
             )}
           </div>
 
-          <div className="w-full md:w-1/2 space-y-3">
+          <div className="w-full lg:w-1/2 space-y-3">
             {data.map((item) => {
               const color = OUTCOME_COLORS[item.outcome] || '#94a3b8';
               return (

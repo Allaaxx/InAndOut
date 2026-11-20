@@ -115,10 +115,10 @@ export function WaitingQueuePanel({
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-base font-bold text-slate-900">
-              Fila de Espera Virtual (FIFO)
+              Fila de Espera
             </CardTitle>
             <CardDescription className="text-xs text-slate-500">
-              Ordem de saída com reserva automática e janela de 2 minutos.
+              Ordem de saída com reserva automática.
             </CardDescription>
           </div>
           <Badge variant={queue.length > 0 ? 'warning' : 'outline'}>

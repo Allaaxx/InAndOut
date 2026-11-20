@@ -159,7 +159,7 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
       clock: () => fixedClock,
     });
 
-    // 3 departures at 08h (UTC or local)
+    // 3 departures at 08h (America/Sao_Paulo)
     for (let i = 0; i < 3; i++) {
       const mov = MovementRecord.create({
         sessionId: 'sess-1',
@@ -168,12 +168,12 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
         studentFullName: `Aluno ${i}`,
         classCode: '1A',
         subject: 'Matemática',
-        startedAt: new Date('2026-03-10T08:15:00.000Z'),
+        startedAt: new Date('2026-03-10T08:15:00.000-03:00'),
       });
       await movementRepo.save(mov);
     }
 
-    // 5 departures at 10h
+    // 5 departures at 10h (America/Sao_Paulo)
     for (let i = 0; i < 5; i++) {
       const mov = MovementRecord.create({
         sessionId: 'sess-1',
@@ -182,7 +182,7 @@ describe('Domain Seam: GetSchoolOverviewAnalyticsUseCase', () => {
         studentFullName: `Aluno B${i}`,
         classCode: '2B',
         subject: 'Física',
-        startedAt: new Date('2026-03-10T10:20:00.000Z'),
+        startedAt: new Date('2026-03-10T10:20:00.000-03:00'),
       });
       await movementRepo.save(mov);
     }

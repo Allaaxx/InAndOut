@@ -57,7 +57,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
   });
 
   it('calculates statistical aggregations, peak hours, and outcome distribution across real movement lifecycles', async () => {
-    let currentTime = new Date('2026-03-10T08:00:00.000Z');
+    let currentTime = new Date('2026-03-10T08:00:00.000-03:00');
     const { app } = await createApp({ clock: () => currentTime });
 
     const teacherToken = await loginAs(
@@ -85,7 +85,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     });
 
     // Student 1001 exits at 08:05
-    currentTime = new Date('2026-03-10T08:05:00.000Z');
+    currentTime = new Date('2026-03-10T08:05:00.000-03:00');
     await app.inject({
       method: 'POST',
       url: '/movements/exit',
@@ -93,7 +93,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     });
 
     // Student 1001 returns at 08:10 (5 mins duration -> compliant)
-    currentTime = new Date('2026-03-10T08:10:00.000Z');
+    currentTime = new Date('2026-03-10T08:10:00.000-03:00');
     await app.inject({
       method: 'POST',
       url: '/movements/return',
@@ -101,7 +101,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     });
 
     // Student 1002 exits at 08:12
-    currentTime = new Date('2026-03-10T08:12:00.000Z');
+    currentTime = new Date('2026-03-10T08:12:00.000-03:00');
     const exitRes2 = await app.inject({
       method: 'POST',
       url: '/movements/exit',
@@ -110,7 +110,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     const mov2Id = exitRes2.json().movement.id;
 
     // Fast-forward to 08:25 (13 mins later, exceeding 10m limit) and escalate to coordination
-    currentTime = new Date('2026-03-10T08:25:00.000Z');
+    currentTime = new Date('2026-03-10T08:25:00.000-03:00');
     await app.inject({
       method: 'POST',
       url: `/movements/${mov2Id}/escalate`,
@@ -119,7 +119,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     });
 
     // Coordinator resolves mov2 as SENT_TO_INFIRMARY at 08:28 (16 min duration -> not compliant)
-    currentTime = new Date('2026-03-10T08:28:00.000Z');
+    currentTime = new Date('2026-03-10T08:28:00.000-03:00');
     await app.inject({
       method: 'POST',
       url: `/coordination/movements/${mov2Id}/resolve`,
@@ -131,7 +131,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     });
 
     // Student 1001 exits again at 08:30 (10 min standard limit)
-    currentTime = new Date('2026-03-10T08:30:00.000Z');
+    currentTime = new Date('2026-03-10T08:30:00.000-03:00');
     const exitRes3 = await app.inject({
       method: 'POST',
       url: '/movements/exit',
@@ -140,7 +140,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     const _mov3Id = exitRes3.json().movement.id;
 
     // Student 1001 is still out and becomes overdue at 08:42 (12 mins > 10 mins allowed limit)
-    currentTime = new Date('2026-03-10T08:42:00.000Z');
+    currentTime = new Date('2026-03-10T08:42:00.000-03:00');
     await app.inject({
       method: 'POST',
       url: '/movements/check-overdue',
@@ -148,7 +148,7 @@ describe('Controller Seam: School Analytics Overview (GET /analytics/overview)',
     });
 
     // Fetch Analytics Overview at 08:45
-    currentTime = new Date('2026-03-10T08:45:00.000Z');
+    currentTime = new Date('2026-03-10T08:45:00.000-03:00');
     const analyticsRes = await app.inject({
       method: 'GET',
       url: '/analytics/overview?date=2026-03-10',

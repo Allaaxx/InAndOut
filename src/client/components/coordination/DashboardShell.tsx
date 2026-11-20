@@ -1,3 +1,4 @@
+import { ScrollArea } from '@client/components/ui/ScrollArea';
 import type { UserDTO } from '@shared/dtos';
 import {
   Activity,
@@ -5,12 +6,12 @@ import {
   Bell,
   BellOff,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   GraduationCap,
   LogOut,
   Menu,
-  School,
+  PanelLeftClose,
+  PanelRightClose,
+  RefreshCwIcon,
   Settings,
   X,
 } from 'lucide-react';
@@ -82,7 +83,7 @@ export function DashboardShell({
     () => [
       {
         id: 'live',
-        label: 'Monitoramento em Tempo Real',
+        label: 'Tempo Real',
         ariaLabel: 'Monitoramento em Tempo Real',
         path: '/coordination/live',
         icon: Activity,
@@ -97,7 +98,7 @@ export function DashboardShell({
       {
         id: 'students',
         label: 'Consulta por Aluno',
-        ariaLabel: 'Consulta por Aluno',
+        ariaLabel: 'Consultar Aluno',
         path: '/coordination/students',
         icon: GraduationCap,
       },
@@ -136,7 +137,7 @@ export function DashboardShell({
       currentPath === '/analytics'
     ) {
       return {
-        title: 'Visão Geral da Escola',
+        title: 'Visão Geral',
         subtitle:
           'Métricas consolidadas de horários de pico e desfechos de saídas',
       };
@@ -187,42 +188,43 @@ export function DashboardShell({
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+    <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden md:flex flex-col border-r border-slate-200 bg-white transition-all duration-200 z-20 ${
-          isCollapsed ? 'w-20' : 'w-64'
+        className={`hidden md:flex shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white transition-[width] duration-300 ease-in-out z-20 ${
+          isCollapsed ? 'w-16' : 'w-64'
         }`}
         data-testid="coordination-sidebar"
       >
         {/* Sidebar Brand Header */}
-        <div
-          className={`flex h-16 items-center border-b border-slate-200 transition-all ${
-            isCollapsed ? 'justify-center px-2' : 'justify-between px-4'
-          }`}
-        >
-          {!isCollapsed && (
-            <div className="flex items-center gap-3 overflow-hidden">
+        <div className="flex h-16 items-center border-b border-slate-200 px-3">
+          <div
+            aria-hidden={isCollapsed}
+            className={`flex items-center gap-3 overflow-hidden whitespace-nowrap transition-all duration-200 ${
+              isCollapsed ? 'w-0 opacity-0' : 'flex-1 pl-1 opacity-100'
+            }`}
+          >
+            <div className="flex items-center gap-3">
               <div
                 data-testid="sidebar-school-icon"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs"
               >
-                <School className="h-6 w-6" />
+                <RefreshCwIcon className="h-4 w-4" />
               </div>
-              <div className="truncate">
-                <span className="text-sm font-bold tracking-tight text-slate-900 block truncate">
+              <div>
+                <span className="text-sm font-bold tracking-tight text-slate-900 block">
                   InAndOut
                 </span>
-                <span className="text-xs text-slate-500 block truncate">
+                <span className="text-xs text-slate-500 block">
                   Painel da Coordenação
                 </span>
               </div>
             </div>
-          )}
+          </div>
           <button
             type="button"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus:outline-hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-hidden"
             data-testid="sidebar-collapse-toggle"
             aria-label={
               isCollapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'
@@ -232,16 +234,16 @@ export function DashboardShell({
             }
           >
             {isCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
+              <PanelRightClose className="h-4 w-4" />
             ) : (
-              <ChevronLeft className="h-4 w-4" />
+              <PanelLeftClose className="h-4 w-4" />
             )}
           </button>
         </div>
 
         {/* Sidebar Navigation Links */}
         <nav
-          className="flex-1 space-y-1 p-3 overflow-y-auto"
+          className="flex-1 space-y-1 p-2 overflow-y-auto overflow-x-hidden"
           aria-label="Navegação da Coordenação"
         >
           {navItems.map((item) => {
@@ -256,34 +258,44 @@ export function DashboardShell({
                 aria-label={item.ariaLabel}
                 aria-current={active ? 'page' : undefined}
                 title={item.label}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex w-full items-center gap-3 overflow-hidden rounded-lg py-3 pl-4 pr-3 text-sm font-medium transition-colors ${
                   active
                     ? 'bg-indigo-50 text-indigo-700 shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                } ${isCollapsed ? 'justify-center' : ''}`}
+                }`}
               >
                 <Icon
-                  className={`h-5 w-5 shrink-0 ${
-                    active ? 'text-indigo-600' : 'text-slate-400'
+                  className={`h-4 w-4 shrink-0 ${
+                    active ? 'text-indigo-600' : 'text-slate-600'
                   }`}
                 />
-                {!isCollapsed && <span className="truncate">{item.label}</span>}
+                <span
+                  aria-hidden={isCollapsed}
+                  className={`truncate whitespace-nowrap transition-opacity duration-200 ${
+                    isCollapsed ? 'opacity-0' : 'opacity-100'
+                  }`}
+                >
+                  {item.label}
+                </span>
               </button>
             );
           })}
         </nav>
 
         {/* Sidebar Footer Info */}
-        {!isCollapsed && (
-          <div className="border-t border-slate-200 p-4">
-            <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
-              <p className="font-semibold text-slate-700">
-                Escola Lins do Rego
-              </p>
-              <p>Módulo de Gestão Ativa</p>
-            </div>
+        <div
+          aria-hidden={isCollapsed}
+          className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${
+            isCollapsed
+              ? 'max-h-0 border-t-0 p-0 opacity-0'
+              : 'max-h-24 border-t border-slate-200 p-4 opacity-100'
+          }`}
+        >
+          <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
+            <p className="font-semibold text-slate-700">Escola Lins do Rego</p>
+            <p>Módulo de Gestão Ativa</p>
           </div>
-        )}
+        </div>
       </aside>
 
       {/* Mobile Drawer Backdrop and Sidebar */}
@@ -299,7 +311,7 @@ export function DashboardShell({
             <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs">
-                  <School className="h-6 w-6" />
+                  <RefreshCwIcon className="h-4 w-4" />
                 </div>
                 <div>
                   <span className="text-sm font-bold tracking-tight text-slate-900 block">
@@ -353,10 +365,10 @@ export function DashboardShell({
       )}
 
       {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 min-w-0 flex-col overflow-hidden">
         {/* Top Contextual Header */}
         <header
-          className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-xs sm:px-6 lg:px-8"
+          className="z-10 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 shadow-xs sm:px-6 lg:px-8"
           data-testid="coordination-header"
         >
           {/* Left section: mobile hamburger & title */}
@@ -492,9 +504,9 @@ export function DashboardShell({
         </header>
 
         {/* Page Content Body */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
+        <ScrollArea className="flex-1 min-h-0">
+          <main className="p-4 sm:p-6 lg:p-8">{children}</main>
+        </ScrollArea>
       </div>
     </div>
   );

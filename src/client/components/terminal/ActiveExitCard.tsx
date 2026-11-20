@@ -10,6 +10,7 @@ import {
 import { api } from '@client/services/api';
 import type { MovementDTO } from '@shared/dtos';
 import { AlertLevel, MovementStatus } from '@shared/enums';
+import { formatTimeInAppTimezone } from '@shared/timezone';
 import React, { useState } from 'react';
 
 export interface ActiveExitCardProps {
@@ -157,11 +158,7 @@ function ActiveMovementItem({
           {movement.abbreviatedName ?? movement.studentPublicName}
         </span>
         <Badge variant="outline">
-          Saída às{' '}
-          {new Date(movement.startedAt).toLocaleTimeString('pt-BR', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+          Saída às {formatTimeInAppTimezone(movement.startedAt)}
         </Badge>
       </div>
 
@@ -286,16 +283,14 @@ export function ActiveExitCard({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="flex lg:flex-row md:flex-col lg:items-center justify-between space-y-0 pb-2">
         <div>
           <CardTitle>Status de Ocupação da Sala</CardTitle>
-          <CardDescription>
-            Exibição pública em conformidade com a LGPD (apenas nome abreviado).
-          </CardDescription>
+          <CardDescription>Alunos fora de sala.</CardDescription>
         </div>
         <div className="flex items-center gap-2">
           {activeMovements.length > 1 && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs text-center">
               {activeMovements.length} Alunos Fora
             </Badge>
           )}

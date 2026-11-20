@@ -49,3 +49,27 @@ export const INCIDENT_OUTCOME_LABELS: Record<IncidentOutcome, string> = {
   [IncidentOutcome.SENT_TO_INFIRMARY]: 'Encaminhado à Enfermaria',
   [IncidentOutcome.EVASION]: 'Evasão',
 };
+
+export const MOVEMENT_STATUS_LABELS: Record<MovementStatus, string> = {
+  [MovementStatus.REQUESTED]: 'Solicitada',
+  [MovementStatus.WAITING_QUEUE]: 'Na Fila',
+  [MovementStatus.IN_TRANSIT]: 'Em Trânsito',
+  [MovementStatus.RETURNED_NORMAL]: 'Retorno Normal',
+  [MovementStatus.OVERDUE]: 'Atrasada',
+  [MovementStatus.ESCALATED_TO_COORDINATION]: 'Escalada à Coordenação',
+  [MovementStatus.IN_TRANSIT_UNRESOLVED]: 'Pendente de Resolução',
+  [MovementStatus.RESOLVED]: 'Resolvida',
+};
+
+export function getMovementStatusLabel(
+  status: MovementStatus | string,
+): string {
+  return MOVEMENT_STATUS_LABELS[status as MovementStatus] ?? status;
+}
+
+export function getIncidentOutcomeLabel(
+  outcome?: IncidentOutcome | string | null,
+): string {
+  if (!outcome) return '-';
+  return INCIDENT_OUTCOME_LABELS[outcome as IncidentOutcome] ?? outcome;
+}

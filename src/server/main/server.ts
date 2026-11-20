@@ -1,5 +1,8 @@
 import { disconnectPrisma } from '@server/infrastructure/database/prismaClient';
+import { APP_TIMEZONE } from '@shared/timezone';
 import { createApp } from './app';
+
+process.env.TZ = process.env.TZ || APP_TIMEZONE;
 
 async function bootstrap() {
   const port = Number(process.env.PORT || 3000);

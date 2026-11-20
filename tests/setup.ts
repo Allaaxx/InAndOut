@@ -4,6 +4,21 @@ if (typeof document !== 'undefined' && !document.elementFromPoint) {
   document.elementFromPoint = () => null;
 }
 
+if (typeof Element !== 'undefined') {
+  if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = () => false;
+  }
+  if (!Element.prototype.setPointerCapture) {
+    Element.prototype.setPointerCapture = () => {};
+  }
+  if (!Element.prototype.releasePointerCapture) {
+    Element.prototype.releasePointerCapture = () => {};
+  }
+  if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = () => {};
+  }
+}
+
 globalThis.ResizeObserver = class ResizeObserver {
   private callback: ResizeObserverCallback;
   constructor(callback: ResizeObserverCallback) {

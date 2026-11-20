@@ -1,6 +1,8 @@
 import React from 'react';
 import { cn } from './utils';
 
+export { Label, type LabelProps } from './Label';
+
 export const Input = React.forwardRef<
   HTMLInputElement,
   React.InputHTMLAttributes<HTMLInputElement>
@@ -16,16 +18,3 @@ export const Input = React.forwardRef<
   />
 ));
 Input.displayName = 'Input';
-
-export const Label = React.forwardRef<
-  HTMLLabelElement,
-  React.LabelHTMLAttributes<HTMLLabelElement>
->(({ className, ...props }, ref) => (
-  // biome-ignore lint/a11y/noLabelWithoutControl: Reusable component receives htmlFor or children via props
-  <label
-    ref={ref}
-    className={cn('text-sm font-medium leading-none text-slate-700', className)}
-    {...props}
-  />
-));
-Label.displayName = 'Label';

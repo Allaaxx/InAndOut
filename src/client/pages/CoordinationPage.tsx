@@ -227,7 +227,7 @@ function CoordinationPageContent({
       soundEnabled={soundEnabled}
       onToggleSound={() => setSoundEnabled((prev) => !prev)}
     >
-      <Toaster position="top-right" richColors />
+      <Toaster position="bottom-center" richColors />
 
       <Routes>
         {/* Relative Subroutes (when under /coordination/*) */}

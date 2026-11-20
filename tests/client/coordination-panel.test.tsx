@@ -128,23 +128,29 @@ describe('Frontend Seam: CoordinationPage Real-Time Panel & Alerts (DataTable + 
       expect(screen.getByText('Pedro A.')).toBeInTheDocument();
     });
 
-    // Filter by classCode
-    const classFilterInput = screen.getByPlaceholderText(/Filtrar por turma/i);
-    await user.type(classFilterInput, '1A');
+    // Filter by classCode dropdown/select
+    const classSelect = screen.getByRole('combobox', {
+      name: /Filtrar por Turma/i,
+    });
+    await user.click(classSelect);
+    await user.click(await screen.findByRole('option', { name: 'Turma 1A' }));
 
     expect(screen.getByText('Lucas S.')).toBeInTheDocument();
     expect(screen.queryByText('Pedro A.')).not.toBeInTheDocument();
 
-    await user.clear(classFilterInput);
+    await user.click(classSelect);
+    await user.click(
+      await screen.findByRole('option', { name: 'Todas as Turmas' }),
+    );
     expect(screen.getByText('Pedro A.')).toBeInTheDocument();
 
     // Filter by status dropdown/select
     const statusSelect = screen.getByRole('combobox', {
       name: /Filtrar por status/i,
     });
-    await user.selectOptions(
-      statusSelect,
-      MovementStatus.ESCALATED_TO_COORDINATION,
+    await user.click(statusSelect);
+    await user.click(
+      await screen.findByRole('option', { name: /Crítico \/ Escaladas/i }),
     );
 
     expect(screen.queryByText('Lucas S.')).not.toBeInTheDocument();

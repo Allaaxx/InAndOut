@@ -225,7 +225,7 @@ describe('Domain Seam: Student History Report & Export Use Cases', () => {
       expect(csvText).toContain('Lucas Silva Pereira');
       expect(csvText).toContain('1001');
       expect(csvText).toContain('Matemática');
-      expect(csvText).toContain('RETURNED_NORMAL');
+      expect(csvText).toContain('Retorno Normal');
     });
 
     it('generates a valid structured Excel (.xlsx) file with worksheets and metadata', async () => {
