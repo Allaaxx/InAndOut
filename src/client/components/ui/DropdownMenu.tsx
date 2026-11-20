@@ -11,7 +11,7 @@ export const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof RadixDropdown.Content>,
   React.ComponentPropsWithoutRef<typeof RadixDropdown.Content>
 >(({ className, sideOffset = 6, collisionPadding = 12, ...props }, ref) => (
-  <RadixDropdown.Portal>
+  <DropdownMenuPortal>
     <RadixDropdown.Content
       ref={ref}
       sideOffset={sideOffset}
@@ -22,7 +22,7 @@ export const DropdownMenuContent = React.forwardRef<
       )}
       {...props}
     />
-  </RadixDropdown.Portal>
+  </DropdownMenuPortal>
 ));
 DropdownMenuContent.displayName = 'DropdownMenuContent';
 

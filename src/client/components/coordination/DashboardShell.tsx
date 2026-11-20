@@ -10,6 +10,7 @@ import {
   BarChart3,
   Bell,
   BellOff,
+  DoorOpen,
   GraduationCap,
   Menu,
   PanelLeftClose,
@@ -76,6 +77,13 @@ export function DashboardShell({
         icon: GraduationCap,
       },
       {
+        id: 'rooms',
+        label: 'Salas de Aula',
+        ariaLabel: 'Salas de Aula',
+        path: '/coordination/rooms',
+        icon: DoorOpen,
+      },
+      {
         id: 'settings',
         label: 'Configurações',
         ariaLabel: 'Configurações',
@@ -123,6 +131,13 @@ export function DashboardShell({
         title: 'Consulta por Aluno',
         subtitle:
           'Histórico individual de movimentações, assiduidade e exportação de relatórios',
+      };
+    }
+    if (currentPath === '/coordination/rooms' || currentPath === '/rooms') {
+      return {
+        title: 'Salas de Aula',
+        subtitle:
+          'Cadastro e gerenciamento das salas físicas disponíveis para os terminais',
       };
     }
     if (
