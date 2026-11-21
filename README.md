@@ -64,8 +64,7 @@ pnpm db:migrate
 pnpm db:seed
 
 # 5. Iniciar backend e frontend (em dois terminais)
-pnpm dev:server   # API em http://localhost:3000
-pnpm dev:client   # SPA em http://localhost:5173 (porta padrão do Vite)
+docker compose --profile app up --build
 ```
 
 ### Usuários de exemplo (seed)
