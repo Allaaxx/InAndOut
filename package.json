@@ -15,7 +15,7 @@
     "lint:check": "biome check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "[ \"$NODE_ENV\" = \"production\" ] || husky",
+    "prepare": "husky",
     "pre-commit": "lint-staged && pnpm run typecheck",
     "audit:deps": "knip",
     "db:up": "docker compose up -d postgres",
