@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: inandout-api
+    runtime: node
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm prisma generate && pnpm prisma migrate deploy
+    startCommand: node --import tsx src/server/main/server.ts
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # cole a connection string do Neon
+
+  - type: web
+    name: inandout-web
+    runtime: static
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # URL da API, ex.: https://inandout-api.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
